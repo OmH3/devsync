@@ -4,7 +4,9 @@ import RoleModel from "../models/Role-permissions.model";
 import UserModel from "../models/User.model";
 import WorkspaceModel from "../models/Workspace.model";
 import { NotFoundException } from "../utils/app-error";
-
+import DocModel from "../models/Docs.model";
+import WhiteboardModel from "../models/Whiteboard.model";
+import CodeEditorModel from "../models/CodeEditor.model";
 export const createWorkspaceService = async (userId, body) => {
   const { name, description } = body;
   const user = await UserModel.findById(userId);
@@ -54,9 +56,8 @@ export const getAllWorkspacesUserIsMemberService = async (userId) => {
   return { workspaces };
 };
 
-
-export const getWorkspaceByIdService = async(workspaceId) => {
-    const workspace = await WorkspaceModel.findById(workspaceId);
+export const getWorkspaceByIdService = async (workspaceId) => {
+  const workspace = await WorkspaceModel.findById(workspaceId);
 
   if (!workspace) {
     throw new NotFoundException("Workspace not found");
@@ -74,4 +75,132 @@ export const getWorkspaceByIdService = async(workspaceId) => {
   return {
     workspace: workspaceWithMembers,
   };
+};
+
+export const getWorkspaceMembersService = async (workspaceId) => {
+  const members = await MemberModel.find({
+    workspaceId,
+  })
+    .populate("userId", "name email profilePicture -password")
+    .populate("role", "name");
+
+  const roles = await RoleModel.find({}, { name: 1, _id: 1 })
+    .select("-permission")
+    .lean();
+  //   name: 1 - Include the name field
+  // _id: 1 - Include the _id field
+  // Any field not specified (or set to 0) is excluded
+  //   name: 1 - Include the name field
+  // _id: 1 - Include the _id field
+  // Any field not specified (or set to 0) is excluded
+
+  return { members, roles };
+};
+
+export const changeMemberRoleService = async (
+  workspaceId,
+  memberId,
+  roleId
+) => {
+  const workspace = await WorkspaceModel.findById(workspaceId);
+  if (!workspace) {
+    throw new NotFoundException("Workspace not found");
+  }
+
+  const role = await RoleModel.findById(roleId);
+  if (!role) {
+    throw new NotFoundException("Role not found");
+  }
+
+  const member = await MemberModel.findOne({
+    userId: memberId,
+    workspaceId: workspaceId,
+  });
+
+  if (!member) {
+    throw new Error("Member not found in the workspace");
+  }
+
+  member.role = role;
+  await member.save();
+  // optimization needed to just store roleId in member role as ref and access whenever needed
+  return {
+    member,
+  };
+};
+
+
+export const updateWorkspaceByIdService = async (
+  workspaceId,
+  name,
+  description,
+) => {
+  const workspace = await WorkspaceModel.findById(workspaceId);
+  if (!workspace) {
+    throw new NotFoundException("Workspace not found");
+  }
+
+  // Update the workspace details
+  workspace.name = name || workspace.name;
+  workspace.description = description || workspace.description;
+  await workspace.save();
+
+  return {
+    workspace,
+  };
+};
+
+
+export const deleteWorkspaceByIdService = async (workspaceId, userId) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  try {
+    const workspace = await WorkspaceModel.findById(workspaceId).session(
+      session
+    );
+    if (!workspace) {
+      throw new NotFoundException("Workspace not found");
+    }
+
+    // Check if the user owns the workspace
+    if (!workspace.owner.equals(new mongoose.Types.ObjectId(userId))) { 
+      throw new BadRequestException(
+        "You are not authorized to delete this workspace"
+      );
+    }
+
+    const user = await UserModel.findById(userId).session(session);
+    if (!user) {
+      throw new NotFoundException("User not found");
+    }
+
+    // Delete all related documents in workspace
+    await DocModel.deleteMany({ workspaceId: workspace._id }).session(session);
+    await WhiteboardModel.deleteMany({ workspaceId: workspace._id }).session(session);
+    await CodeEditorModel.deleteMany({ workspaceId: workspace._id }).session(session);
+    
+    await MemberModel.deleteMany({
+      workspaceId: workspace._id,
+    }).session(session);
+
+    // Delete the workspace itself
+    await WorkspaceModel.findByIdAndDelete(workspaceId).session(session);
+
+    // Clear user's currentWorkspace if it was the deleted workspace
+    if (user.currentWorkspace && user.currentWorkspace.equals(workspace._id)) {
+      user.currentWorkspace = null;
+      await user.save({ session });
+    }
+
+    await session.commitTransaction();
+    session.endSession();
+
+    return {
+      currentWorkspace: user.currentWorkspace,
+    };
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    throw error;
+  }
 }
