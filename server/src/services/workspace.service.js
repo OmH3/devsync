@@ -1,12 +1,13 @@
-import { Roles } from "../enums/role.enum";
-import MemberModel from "../models/Member.model";
-import RoleModel from "../models/Role-permissions.model";
-import UserModel from "../models/User.model";
-import WorkspaceModel from "../models/Workspace.model";
-import { NotFoundException } from "../utils/app-error";
-import DocModel from "../models/Docs.model";
-import WhiteboardModel from "../models/Whiteboard.model";
-import CodeEditorModel from "../models/CodeEditor.model";
+import mongoose from "mongoose";
+import { Roles } from "../enums/role.enum.js";
+import MemberModel from "../models/Member.model.js";
+import RoleModel from "../models/Role-permissions.model.js";
+import UserModel from "../models/User.model.js";
+import WorkspaceModel from "../models/Workspace.model.js";
+import { NotFoundException, BadRequestException } from "../utils/app-error.js";
+import DocModel from "../models/Docs.model.js";
+import WhiteboardModel from "../models/Whiteboard.model.js";
+import CodeEditorModel from "../models/CodeEditor.model.js";
 export const createWorkspaceService = async (userId, body) => {
   const { name, description } = body;
   const user = await UserModel.findById(userId);
@@ -81,7 +82,7 @@ export const getWorkspaceMembersService = async (workspaceId) => {
   const members = await MemberModel.find({
     workspaceId,
   })
-    .populate("userId", "name email profilePicture -password")
+    .populate("userId", "name email profilePicture")
     .populate("role", "name");
 
   const roles = await RoleModel.find({}, { name: 1, _id: 1 })

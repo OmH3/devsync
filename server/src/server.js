@@ -14,6 +14,8 @@ import authRoutes from './routes/auth.routes.js';
 import userRoutes from './routes/user.routes.js';
 import isAuthenticated from './middleware/isAuthenticated.middleware.js';
 import workspaceRoutes from './routes/workspace.routes.js';
+import memberRoutes from './routes/member.routes.js';
+import docsRoutes from './routes/docs.routes.js'
 const app = express();
 const BASE_PATH = config.BASE_PATH;
 
@@ -57,6 +59,8 @@ app.get('/', asyncHandler(async(req, res, next)=>{
 app.use(`${BASE_PATH}/auth`, authRoutes);
 app.use(`${BASE_PATH}/user`,isAuthenticated, userRoutes);
 app.use(`${BASE_PATH}/workspace`, isAuthenticated, workspaceRoutes);
+app.use(`${BASE_PATH}/member`, isAuthenticated, memberRoutes);
+app.use(`${BASE_PATH}/docs`, isAuthenticated, docsRoutes);
 
 // create error handler
 app.use(errorHandler);

@@ -37,6 +37,11 @@ const codeEditorSchema = new mongoose.Schema({
     ref: "Workspace",
     required: true,
   },
+  fileSystemId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "FileSystem",
+    required: true, // Links to the file in the file system
+  },
   isActive: {
     type: Boolean,
     default: true,
@@ -55,4 +60,4 @@ const codeEditorSchema = new mongoose.Schema({
 });
 
 const CodeEditorModel = mongoose.model('CodeEditor', codeEditorSchema);
-export default codeEditorSchema;
+export default CodeEditorModel;

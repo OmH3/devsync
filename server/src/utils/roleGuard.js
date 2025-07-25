@@ -1,5 +1,5 @@
-import { UnauthorizedException } from "./app-error";
-import { RolePermissions } from "./role-permissions";
+import { UnauthorizedException } from "./app-error.js";
+import { RolePermissions } from "./role-permissions.js";
 
 export const roleGuard = (role, requiredPermissions) => {
   const permissions = RolePermissions[role];

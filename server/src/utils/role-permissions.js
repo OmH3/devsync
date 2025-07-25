@@ -5,6 +5,7 @@ export const RolePermissions = {
     Permissions.CREATE_WORKSPACE,
     Permissions.MANAGE_WORKSPACE_SETTINGS,
     Permissions.DELETE_WORKSPACE,
+    Permissions.EDIT_WORKSPACE,
 
     Permissions.ADD_MEMBER,
     Permissions.CHANGE_MEMBER_ROLE,
@@ -34,8 +35,10 @@ export const RolePermissions = {
     Permissions.EDIT_CODE_EDITOR,
     Permissions.START_VIDEO_CALL,
     Permissions.JOIN_VIDEO_CALL,
+    Permissions.VIEW_ONLY,
   ],
   MEMBER: [
+    Permissions.VIEW_ONLY,
     Permissions.USE_DOCS,
     Permissions.USE_WHITEBOARD,
     Permissions.USE_CODE_EDITOR,

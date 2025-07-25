@@ -7,12 +7,12 @@ import {
   getWorkspaceByIdController,
   getWorkspaceMembersController,
   updateWorkspaceByIdController,
-} from "../controllers/workspace.controller";
+} from "../controllers/workspace.controller.js";
 
 const router = Router();
 
 router.post("/create/new", createWorskpaceController);
-router.put("/all", getAllWorkspacesUserIsMemberController);
+router.get("/all", getAllWorkspacesUserIsMemberController);
 router.get("/:id", getWorkspaceByIdController);
 router.get("/members/:id", getWorkspaceMembersController);
 router.put(

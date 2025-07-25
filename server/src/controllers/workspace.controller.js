@@ -1,7 +1,7 @@
-import { HTTPSTATUS } from "../config/http.config";
-import { Permissions } from "../enums/role.enum";
-import { asyncHandler } from "../middleware/async-handler.middleware";
-import { getMemberRoleInWorkspace } from "../services/member.service";
+import { HTTPSTATUS } from "../config/http.config.js";
+import { Permissions } from "../enums/role.enum.js";
+import { asyncHandler } from "../middleware/async-handler.middleware.js";
+import { getMemberRoleInWorkspace } from "../services/member.service.js";
 import {
   changeMemberRoleService,
   createWorkspaceService,
@@ -10,13 +10,14 @@ import {
   getWorkspaceByIdService,
   getWorkspaceMembersService,
   updateWorkspaceByIdService,
-} from "../services/workspace.service";
-import { roleGuard } from "../utils/roleGuard";
+} from "../services/workspace.service.js";
+import { roleGuard } from "../utils/roleGuard.js";
 import {
+  changeRoleSchema,
   createWorkspaceSchema,
   updateWorkspaceSchema,
   workspaceIdSchema,
-} from "../validation/workspace.validation";
+} from "../validation/workspace.validation.js";
 
 export const createWorskpaceController = asyncHandler(async (req, res) => {
   const body = createWorkspaceSchema.parse(req.body);
@@ -104,7 +105,7 @@ export const updateWorkspaceByIdController = asyncHandler(async (req, res) => {
   const userId = req.user?._id;
 
   const { role } = await getMemberRoleInWorkspace(userId, workspaceId);
-  roleGuard(role, [Permissions.MANAGE_WORKSPACE_SETTINGS]);
+  roleGuard(role, [Permissions.EDIT_WORKSPACE]);
 
   const { workspace } = await updateWorkspaceByIdService(
     workspaceId,
