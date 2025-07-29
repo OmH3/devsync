@@ -17,14 +17,12 @@ export const typeSchema = z
 export const createFileSystemItemSchema = z.object({
   name: nameSchema,
   type: typeSchema,
-  path: pathSchema,
-  parentId: z.string().trim().optional(),
-  workspaceId: z.string().trim().min(1, { message: "Workspace ID is required" }),
+  path: pathSchema.optional(),
+  parentId: z.string().trim().nullable().optional()
 });
 
 export const updateFileSystemItemSchema = z.object({
-  name: nameSchema.optional(),
-  path: pathSchema.optional(),
+  name: nameSchema.optional()
 });
 
 export const fileSystemIdSchema = z
@@ -33,6 +31,5 @@ export const fileSystemIdSchema = z
   .min(1, { message: "File system ID is required" });
 
 export const moveFileSystemItemSchema = z.object({
-  newParentId: z.string().trim().optional(),
-  newPath: pathSchema,
+  newParentId: z.string().trim().nullable().optional()
 });

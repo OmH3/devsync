@@ -4,9 +4,25 @@ import WorkspaceModel from "../models/Workspace.model.js";
 import MemberModel from "../models/Member.model.js";
 import CodeEditorModel from "../models/CodeEditor.model.js";
 import { NotFoundException, BadRequestException } from "../utils/app-error.js";
+import { updateChildrenPaths } from "../utils/filesystem.utils.js";
 
 export const createFileSystemItemService = async (userId, body) => {
-  const { name, type, path, parentId, workspaceId } = body;
+  const { name, type, parentId, workspaceId } = body;
+  let { path } = body;
+
+  // Auto-generate path if not provided
+  if (!path) {
+    if (parentId) {
+      const parent = await FileSystemModel.findById(parentId);
+      if (!parent) {
+        throw new BadRequestException("Parent directory not found");
+      }
+      path = `${parent.path}/${name}`;
+    } else {
+      // Root level item
+      path = `/${name}`;
+    }
+  }
 
   // Verify workspace exists
   const workspace = await WorkspaceModel.findById(workspaceId);
@@ -41,7 +57,9 @@ export const createFileSystemItemService = async (userId, body) => {
   });
 
   if (existingItem) {
-    throw new BadRequestException(`A ${type} with this name already exists in this directory`);
+    throw new BadRequestException(
+      `A ${type} with this name already exists in this directory`
+    );
   }
 
   const fileSystemItem = new FileSystemModel({
@@ -52,7 +70,7 @@ export const createFileSystemItemService = async (userId, body) => {
     workspaceId,
     creatorId: userId,
     metadata: {
-      extension: type === "file" ? name.split('.').pop() || "" : "",
+      extension: type === "file" ? name.split(".").pop() || "" : "",
     },
   });
 
@@ -90,8 +108,12 @@ export const getFileSystemItemByIdService = async (fileSystemId) => {
   return { fileSystemItem };
 };
 
-export const updateFileSystemItemService = async (fileSystemId, userId, body) => {
-  const { name, path } = body;
+export const updateFileSystemItemService = async (
+  fileSystemId,
+  userId,
+  body
+) => {
+  const { name } = body;
 
   const fileSystemItem = await FileSystemModel.findById(fileSystemId);
   if (!fileSystemItem) {
@@ -119,19 +141,34 @@ export const updateFileSystemItemService = async (fileSystemId, userId, body) =>
     });
 
     if (existingItem) {
-      throw new BadRequestException(`A ${fileSystemItem.type} with this name already exists in this directory`);
+      throw new BadRequestException(
+        `A ${fileSystemItem.type} with this name already exists in this directory`
+      );
     }
 
     fileSystemItem.name = name;
-    
+
+    // Auto-generate new path when name changes
+    if (fileSystemItem.parentId) {
+      const parent = await FileSystemModel.findById(fileSystemItem.parentId);
+      if (!parent) {
+        throw new BadRequestException("Parent directory not found");
+      }
+      fileSystemItem.path = `${parent.path}/${name}`;
+    } else {
+      // Root level item
+      fileSystemItem.path = `/${name}`;
+    }
+
     // Update extension for files
     if (fileSystemItem.type === "file") {
-      fileSystemItem.metadata.extension = name.split('.').pop() || "";
+      fileSystemItem.metadata.extension = name.split(".").pop() || "";
     }
-  }
 
-  if (path) {
-    fileSystemItem.path = path;
+    // If this is a folder being renamed, update all children's paths
+    if (fileSystemItem.type === "folder") {
+      await updateChildrenPaths(fileSystemId, fileSystemItem.path);
+    }
   }
 
   await fileSystemItem.save();
@@ -140,7 +177,12 @@ export const updateFileSystemItemService = async (fileSystemId, userId, body) =>
 };
 
 export const moveFileSystemItemService = async (fileSystemId, userId, body) => {
-  const { newParentId, newPath } = body;
+  const { newParentId } = body;
+
+  // Ensure empty string or undefined becomes null
+  if (newParentId === "" || newParentId === undefined) {
+    newParentId = null;
+  }
 
   const fileSystemItem = await FileSystemModel.findById(fileSystemId);
   if (!fileSystemItem) {
@@ -157,29 +199,53 @@ export const moveFileSystemItemService = async (fileSystemId, userId, body) => {
     throw new BadRequestException("You are not authorized to move this item");
   }
 
-  // Verify new parent exists and is a folder
+  // Verify new parent exists and is a folder (if provided)
   if (newParentId) {
     const newParent = await FileSystemModel.findById(newParentId);
-    if (!newParent || newParent.type !== "folder") {
-      throw new BadRequestException("Invalid destination directory");
+    if (!newParent) {
+      throw new BadRequestException("New parent directory not found");
+    }
+    if (newParent.type !== "folder") {
+      throw new BadRequestException("New parent must be a folder");
+    }
+    if (newParent.workspaceId.toString() !== fileSystemItem.workspaceId.toString()) {
+      throw new BadRequestException("Cannot move items between workspaces");
     }
   }
 
   // Check for duplicate names in new location
   const existingItem = await FileSystemModel.findOne({
     name: fileSystemItem.name,
-    parentId: newParentId || null,
+    parentId: newParentId, // This will be null for root
     workspaceId: fileSystemItem.workspaceId,
     isActive: true,
     _id: { $ne: fileSystemId },
   });
 
   if (existingItem) {
-    throw new BadRequestException(`A ${fileSystemItem.type} with this name already exists in the destination directory`);
+    throw new BadRequestException(
+      `A ${fileSystemItem.type} with this name already exists in the destination directory`
+    );
   }
 
-  fileSystemItem.parentId = newParentId || null;
+  // Auto-generate new path based on new parent
+  let newPath;
+  if (newParentId) {
+    const newParent = await FileSystemModel.findById(newParentId);
+    newPath = `${newParent.path}/${fileSystemItem.name}`;
+  } else {
+    // Moving to root
+    newPath = `/${fileSystemItem.name}`;
+  }
+
+  // Update the item
+  fileSystemItem.parentId = newParentId; // null for root
   fileSystemItem.path = newPath;
+
+  // If moving a folder, update all children paths recursively
+  if (fileSystemItem.type === "folder") {
+    await updateChildrenPaths(fileSystemId, newPath);
+  }
 
   await fileSystemItem.save();
 
@@ -191,7 +257,9 @@ export const deleteFileSystemItemService = async (fileSystemId, userId) => {
   session.startTransaction();
 
   try {
-    const fileSystemItem = await FileSystemModel.findById(fileSystemId).session(session);
+    const fileSystemItem = await FileSystemModel.findById(fileSystemId).session(
+      session
+    );
     if (!fileSystemItem) {
       throw new NotFoundException("File system item not found");
     }
@@ -203,7 +271,9 @@ export const deleteFileSystemItemService = async (fileSystemId, userId) => {
     }).session(session);
 
     if (!member) {
-      throw new BadRequestException("You are not authorized to delete this item");
+      throw new BadRequestException(
+        "You are not authorized to delete this item"
+      );
     }
 
     // If it's a folder, recursively delete all children

@@ -21,11 +21,17 @@ import {
 export const createFileSystemItemController = asyncHandler(async (req, res) => {
   const body = createFileSystemItemSchema.parse(req.body);
   const userId = req.user?._id;
+  const workspaceId = req.user?.currentWorkspace;
 
-  const { role } = await getMemberRoleInWorkspace(userId, body.workspaceId);
+  const { role } = await getMemberRoleInWorkspace(userId, workspaceId);
   roleGuard(role, [Permissions.USE_CODE_EDITOR]);
 
-  const { fileSystemItem } = await createFileSystemItemService(userId, body);
+  const dataWithWorkspace = {
+    ...body,
+    workspaceId
+  };
+
+  const { fileSystemItem } = await createFileSystemItemService(userId, dataWithWorkspace);
 
   return res.status(HTTPSTATUS.CREATED).json({
     message: "File system item created successfully",

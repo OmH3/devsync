@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { createDocController, deleteDocController, getDocByIdController, getWorkspaceDocsController, updateDocController } from "../controllers/docs.controllers.js";
 
 const router = Router()
 

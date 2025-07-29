@@ -59,5 +59,9 @@ const codeEditorSchema = new mongoose.Schema({
   timestamps: true,
 });
 
+// Index for better performance
+codeEditorSchema.index({ workspaceId: 1, fileSystemId: 1 });
+codeEditorSchema.index({ roomId: 1 });
+
 const CodeEditorModel = mongoose.model('CodeEditor', codeEditorSchema);
 export default CodeEditorModel;

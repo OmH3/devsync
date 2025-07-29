@@ -1,23 +1,28 @@
-import { HTTPSTATUS } from "../config/http.config";
-import { Permissions } from "../enums/role.enum";
-import { asyncHandler } from "../middleware/async-handler.middleware";
+import { HTTPSTATUS } from "../config/http.config.js";
+import { Permissions } from "../enums/role.enum.js";
+import { asyncHandler } from "../middleware/async-handler.middleware.js";
+import UserModel from "../models/User.model.js";
 import {
   createDocService,
   getDocByIdService,
   getWorkspaceDocsService,
-} from "../services/docs.service";
-import { getMemberRoleInWorkspace } from "../services/member.service";
-import { roleGuard } from "../utils/roleGuard";
-import { docIdSchema, updateDocSchema } from "../validation/docs.validation";
+  updateDocService,
+  deleteDocService,
+} from "../services/docs.service.js";
+import { getMemberRoleInWorkspace } from "../services/member.service.js";
+import { roleGuard } from "../utils/roleGuard.js";
+import { createDocSchema, docIdSchema, updateDocSchema } from "../validation/docs.validation.js";
 
 export const createDocController = asyncHandler(async (req, res) => {
   const body = createDocSchema.parse(req.body);
   const userId = req.user?._id;
+  const currentUser = await UserModel.findById(userId).select('currentWorkspace');
+  const workspaceId = currentUser.currentWorkspace;
 
-  const { role } = await getMemberRoleInWorkspace(userId, body.workspaceId);
+  const { role } = await getMemberRoleInWorkspace(userId, workspaceId);
   roleGuard(role, [Permissions.USE_DOCS]);
 
-  const { doc } = await createDocService(userId, body);
+  const { doc } = await createDocService(userId, { ...body, workspaceId });
 
   return res.status(HTTPSTATUS.CREATED).json({
     message: "Document created successfully",
@@ -30,7 +35,7 @@ export const getWorkspaceDocsController = asyncHandler(async (req, res) => {
   const userId = req.user?._id;
 
   // Check if user is a member of the workspace
-  const { role } = await getMemberRoleInWorkspace(userId, doc.workspaceId);
+  const { role } = await getMemberRoleInWorkspace(userId, workspaceId);
   roleGuard(role, [Permissions.VIEW_ONLY]);
 
   const { docs } = await getWorkspaceDocsService(workspaceId);

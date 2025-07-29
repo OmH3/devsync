@@ -1,7 +1,7 @@
-import DocModel from "../models/Docs.model";
-import MemberModel from "../models/Member.model";
-import WorkspaceModel from "../models/Workspace.model";
-
+import DocModel from "../models/Docs.model.js";
+import MemberModel from "../models/Member.model.js";
+import WorkspaceModel from "../models/Workspace.model.js";
+import { v4 as uuidv4 } from 'uuid';
 export const createDocService = async (
   userId,
   { title, content, workspaceId }
@@ -131,6 +131,8 @@ export const deleteDocService = async (docId, userId) => {
   }
 
   doc.isActive = false;
+  // But for collaborative documents, soft delete with 
+  // isActive: false is definitely the right approach! 👍
   await doc.save();
 
   return { message: "Document deleted successfully" };

@@ -1,4 +1,9 @@
-import express from 'express'
+import express from 'express';
+import workspaceRoutes from './routes/workspace.routes.js';
+import memberRoutes from './routes/member.routes.js';
+import docsRoutes from './routes/docs.routes.js';
+import filesystemRoutes from './routes/filesystem.routes.js';
+import codeeditorRoutes from './routes/codeeditor.routes.js';
 import 'dotenv/config';
 import { config } from './config/app.config.js';
 import session from "express-session";
@@ -7,15 +12,13 @@ import cors from 'cors';
 import "./config/passport.config.js";
 import { asyncHandler } from './middleware/async-handler.middleware.js';
 import { BadRequestException } from './utils/app-error.js';
+import { ErrorCodeEnum } from './enums/error-code.enum.js';
 import { HTTPSTATUS } from './config/http.config.js';
 import connectDatabase from './config/database.config.js';
 import { errorHandler } from './middleware/error-handler.middleware.js';
 import authRoutes from './routes/auth.routes.js';
 import userRoutes from './routes/user.routes.js';
 import isAuthenticated from './middleware/isAuthenticated.middleware.js';
-import workspaceRoutes from './routes/workspace.routes.js';
-import memberRoutes from './routes/member.routes.js';
-import docsRoutes from './routes/docs.routes.js'
 const app = express();
 const BASE_PATH = config.BASE_PATH;
 
@@ -61,6 +64,8 @@ app.use(`${BASE_PATH}/user`,isAuthenticated, userRoutes);
 app.use(`${BASE_PATH}/workspace`, isAuthenticated, workspaceRoutes);
 app.use(`${BASE_PATH}/member`, isAuthenticated, memberRoutes);
 app.use(`${BASE_PATH}/docs`, isAuthenticated, docsRoutes);
+app.use(`${BASE_PATH}/filesystem`, isAuthenticated, filesystemRoutes);
+app.use(`${BASE_PATH}/codeeditor`, isAuthenticated, codeeditorRoutes);
 
 // create error handler
 app.use(errorHandler);
