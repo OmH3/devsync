@@ -4,7 +4,7 @@ import WorkspaceModel from "../models/Workspace.model.js";
 import MemberModel from "../models/Member.model.js";
 import CodeEditorModel from "../models/CodeEditor.model.js";
 import { NotFoundException, BadRequestException } from "../utils/app-error.js";
-import { updateChildrenPaths } from "../utils/filesystem.utils.js";
+import { getLanguageFromExtension, updateChildrenPaths } from "../utils/filesystem.utils.js";
 
 export const createFileSystemItemService = async (userId, body) => {
   const { name, type, parentId, workspaceId } = body;
@@ -62,6 +62,10 @@ export const createFileSystemItemService = async (userId, body) => {
     );
   }
 
+  // Generate roomId
+  const roomPrefix = type === 'file' ? 'file' : 'folder';
+  const roomId = `${roomPrefix}_${new mongoose.Types.ObjectId()}_${Date.now()}`;
+
   const fileSystemItem = new FileSystemModel({
     name,
     type,
@@ -69,12 +73,31 @@ export const createFileSystemItemService = async (userId, body) => {
     parentId: parentId || null,
     workspaceId,
     creatorId: userId,
+    roomId,
     metadata: {
       extension: type === "file" ? name.split(".").pop() || "" : "",
     },
   });
 
   await fileSystemItem.save();
+
+  // Auto-create code editor for files
+  if (type === "file") {
+    const codeEditor = new CodeEditorModel({
+      title: name,
+      content: "",
+      language: getLanguageFromExtension(name.split(".").pop() || ""),
+      workspaceId,
+      fileSystemId: fileSystemItem._id,
+      creatorId: userId,
+      roomId: `editor_${fileSystemItem._id}_${Date.now()}`, // Separate roomId for code editor
+      collaborators: [userId], // Add creator as collaborator
+    });
+
+    await codeEditor.save();
+    fileSystemItem.codeEditorId = codeEditor._id;
+    await fileSystemItem.save();
+  }
 
   return { fileSystemItem };
 };

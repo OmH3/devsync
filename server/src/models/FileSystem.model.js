@@ -30,6 +30,11 @@ const fileSystemSchema = new mongoose.Schema({
     ref: "CodeEditor",
     default: null, // Only for files with content, null for folders
   },
+  roomId: {
+    type: String,
+    required: true,
+    unique: true,
+  },
   creatorId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
@@ -47,9 +52,7 @@ const fileSystemSchema = new mongoose.Schema({
   timestamps: true,
 });
 
-// Index for better query performance
-fileSystemSchema.index({ workspaceId: 1, parentId: 1 });
-fileSystemSchema.index({ path: 1, workspaceId: 1 });
+
 
 const FileSystemModel = mongoose.model('FileSystem', fileSystemSchema);
 export default FileSystemModel;

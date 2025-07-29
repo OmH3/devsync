@@ -5,69 +5,6 @@ import MemberModel from "../models/Member.model.js";
 import WorkspaceModel from "../models/Workspace.model.js";
 import { NotFoundException, BadRequestException } from "../utils/app-error.js";
 
-export const createCodeEditorService = async (userId, body) => {
-  const { title, content, language, workspaceId, fileSystemId } = body;
-
-  // Verify workspace exists
-  const workspace = await WorkspaceModel.findById(workspaceId);
-  if (!workspace) {
-    throw new NotFoundException("Workspace not found");
-  }
-
-  // Verify file system item exists and is a file
-  const fileSystemItem = await FileSystemModel.findById(fileSystemId);
-  if (!fileSystemItem || fileSystemItem.type !== "file") {
-    throw new NotFoundException("File system item not found or is not a file");
-  }
-
-  // Check if file already has a code editor
-  if (fileSystemItem.codeEditorId) {
-    throw new BadRequestException("This file already has a code editor associated with it");
-  }
-
-  // Check if user is a member of the workspace
-  const member = await MemberModel.findOne({
-    userId,
-    workspaceId,
-  });
-
-  if (!member) {
-    throw new BadRequestException("You are not a member of this workspace");
-  }
-
-  const roomId = uuidv4();
-
-  const codeEditor = new CodeEditorModel({
-    title: title || fileSystemItem.name,
-    content: content || "",
-    language: language || "javascript",
-    creatorId: userId,
-    roomId,
-    workspaceId,
-    fileSystemId,
-    collaborators: [member._id],
-    lastEditedBy: userId,
-    metadata: {
-      lineCount: content ? content.split('\n').length : 0,
-      characterCount: content ? content.length : 0,
-    },
-  });
-
-  await codeEditor.save();
-
-  // Update file system item to reference this code editor
-  fileSystemItem.codeEditorId = codeEditor._id;
-  await fileSystemItem.save();
-
-  // Update workspace to reference this editor if it's the first one
-  if (!workspace.tools.editor.editorId) {
-    workspace.tools.editor.editorId = codeEditor._id;
-    await workspace.save();
-  }
-
-  return { codeEditor };
-};
-
 export const getWorkspaceCodeEditorsService = async (workspaceId) => {
   const workspace = await WorkspaceModel.findById(workspaceId);
   if (!workspace) {
@@ -154,7 +91,9 @@ export const updateCodeEditorService = async (codeEditorId, userId, body) => {
   }
 
   if (title !== undefined) codeEditor.title = title;
+
   if (language !== undefined) codeEditor.language = language;
+  
   if (content !== undefined) {
     codeEditor.content = content;
     codeEditor.metadata.lineCount = content.split('\n').length;

@@ -14,14 +14,6 @@ export const languageSchema = z
   .min(1, { message: "Language is required" })
   .default("javascript");
 
-export const createCodeEditorSchema = z.object({
-  title: titleSchema.optional(),
-  content: contentSchema.optional(),
-  language: languageSchema.optional(),
-  workspaceId: z.string().trim().min(1, { message: "Workspace ID is required" }),
-  fileSystemId: z.string().trim().min(1, { message: "File system ID is required" }),
-});
-
 export const updateCodeEditorSchema = z.object({
   title: titleSchema.optional(),
   content: contentSchema.optional(),

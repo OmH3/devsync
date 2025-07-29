@@ -4,36 +4,19 @@ import { asyncHandler } from "../middleware/async-handler.middleware.js";
 import { getMemberRoleInWorkspace } from "../services/member.service.js";
 import {
   addCollaboratorService,
-  createCodeEditorService,
   deleteCodeEditorService,
   getCodeEditorByFileSystemIdService,
   getCodeEditorByIdService,
   getWorkspaceCodeEditorsService,
   removeCollaboratorService,
-  updateCodeEditorService,
+  updateCodeEditorService
 } from "../services/codeeditor.service.js";
 import { roleGuard } from "../utils/roleGuard.js";
 import {
   codeEditorIdSchema,
-  createCodeEditorSchema,
-  updateCodeEditorSchema,
+  updateCodeEditorSchema
 } from "../validation/codeeditor.validation.js";
 import { fileSystemIdSchema } from "../validation/filesystem.validation.js";
-
-export const createCodeEditorController = asyncHandler(async (req, res) => {
-  const body = createCodeEditorSchema.parse(req.body);
-  const userId = req.user?._id;
-
-  const { role } = await getMemberRoleInWorkspace(userId, body.workspaceId);
-  roleGuard(role, [Permissions.USE_CODE_EDITOR]);
-
-  const { codeEditor } = await createCodeEditorService(userId, body);
-
-  return res.status(HTTPSTATUS.CREATED).json({
-    message: "Code editor created successfully",
-    codeEditor,
-  });
-});
 
 export const getWorkspaceCodeEditorsController = asyncHandler(async (req, res) => {
   const workspaceId = req.params.workspaceId;
@@ -81,7 +64,7 @@ export const getCodeEditorByFileSystemIdController = asyncHandler(async (req, re
 });
 
 export const updateCodeEditorController = asyncHandler(async (req, res) => {
-  const codeEditorId = codeEditorIdSchema.parse(req.params.id);
+  const codeEditorId = codeEditorIdSchema.parse(req.params.codeEditorId);
   const body = updateCodeEditorSchema.parse(req.body);
   const userId = req.user?._id;
 
