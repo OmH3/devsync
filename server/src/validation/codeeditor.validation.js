@@ -24,3 +24,9 @@ export const codeEditorIdSchema = z
   .string()
   .trim()
   .min(1, { message: "Code editor ID is required" });
+
+
+export const executeCodeSchema = z.object({
+  input: z.string().optional(),
+  saveBeforeExecution: z.boolean().default(true),
+});

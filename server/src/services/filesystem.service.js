@@ -4,7 +4,7 @@ import WorkspaceModel from "../models/Workspace.model.js";
 import MemberModel from "../models/Member.model.js";
 import CodeEditorModel from "../models/CodeEditor.model.js";
 import { NotFoundException, BadRequestException } from "../utils/app-error.js";
-import { getLanguageFromExtension, updateChildrenPaths } from "../utils/filesystem.utils.js";
+import { deleteChildrenRecursively, getLanguageFromExtension, updateChildrenPaths } from "../utils/filesystem.utils.js";
 
 export const createFileSystemItemService = async (userId, body) => {
   const { name, type, parentId, workspaceId } = body;
@@ -91,7 +91,7 @@ export const createFileSystemItemService = async (userId, body) => {
       fileSystemId: fileSystemItem._id,
       creatorId: userId,
       roomId: `editor_${fileSystemItem._id}_${Date.now()}`, // Separate roomId for code editor
-      collaborators: [userId], // Add creator as collaborator
+      collaborators: [member._id], // Add creator as collaborator
     });
 
     await codeEditor.save();
@@ -299,18 +299,18 @@ export const deleteFileSystemItemService = async (fileSystemId, userId) => {
       );
     }
 
-    // If it's a folder, recursively delete all children
-    if (fileSystemItem.type === "folder") {
-      await deleteChildrenRecursively(fileSystemId, session);
-    }
-
-    // If it's a file with a code editor, delete the code editor too
+    // If it's a file with a code editor, delete the editor first
     if (fileSystemItem.type === "file" && fileSystemItem.codeEditorId) {
       await CodeEditorModel.findByIdAndUpdate(
         fileSystemItem.codeEditorId,
         { isActive: false },
         { session }
       );
+    }
+
+    // If it's a folder, recursively delete all children
+    if (fileSystemItem.type === "folder") {
+      await deleteChildrenRecursively(fileSystemId, session);
     }
 
     // Mark the item as inactive instead of deleting
@@ -328,24 +328,4 @@ export const deleteFileSystemItemService = async (fileSystemId, userId) => {
   }
 };
 
-// Helper function to recursively delete children
-const deleteChildrenRecursively = async (parentId, session) => {
-  const children = await FileSystemModel.find({
-    parentId,
-    isActive: true,
-  }).session(session);
 
-  for (const child of children) {
-    if (child.type === "folder") {
-      await deleteChildrenRecursively(child._id, session);
-    } else if (child.codeEditorId) {
-      await CodeEditorModel.findByIdAndUpdate(
-        child.codeEditorId,
-        { isActive: false },
-        { session }
-      );
-    }
-    child.isActive = false;
-    await child.save({ session });
-  }
-};

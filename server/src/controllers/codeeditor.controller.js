@@ -3,20 +3,20 @@ import { Permissions } from "../enums/role.enum.js";
 import { asyncHandler } from "../middleware/async-handler.middleware.js";
 import { getMemberRoleInWorkspace } from "../services/member.service.js";
 import {
-  addCollaboratorService,
-  deleteCodeEditorService,
   getCodeEditorByFileSystemIdService,
   getCodeEditorByIdService,
   getWorkspaceCodeEditorsService,
-  removeCollaboratorService,
   updateCodeEditorService
 } from "../services/codeeditor.service.js";
 import { roleGuard } from "../utils/roleGuard.js";
 import {
   codeEditorIdSchema,
+  executeCodeSchema,
   updateCodeEditorSchema
 } from "../validation/codeeditor.validation.js";
 import { fileSystemIdSchema } from "../validation/filesystem.validation.js";
+import { executeCodeService } from "../services/codeExecutor.service.js";
+import { getExecutionHistoryService } from "../services/codeExecutor.service.js";
 
 export const getWorkspaceCodeEditorsController = asyncHandler(async (req, res) => {
   const workspaceId = req.params.workspaceId;
@@ -81,52 +81,37 @@ export const updateCodeEditorController = asyncHandler(async (req, res) => {
   });
 });
 
-export const deleteCodeEditorController = asyncHandler(async (req, res) => {
-  const codeEditorId = codeEditorIdSchema.parse(req.params.id);
+export const executeCodeController = asyncHandler(async (req, res) => {
+  const codeEditorId = codeEditorIdSchema.parse(req.params.codeEditorId);
+  const body = executeCodeSchema.parse(req.body);
   const userId = req.user?._id;
 
   const { codeEditor } = await getCodeEditorByIdService(codeEditorId);
-
   const { role } = await getMemberRoleInWorkspace(userId, codeEditor.workspaceId);
-  roleGuard(role, [Permissions.EDIT_CODE_EDITOR]);
+  roleGuard(role, [Permissions.USE_CODE_EDITOR]); // Add this permission
 
-  const result = await deleteCodeEditorService(codeEditorId, userId);
-
-  return res.status(HTTPSTATUS.OK).json(result);
-});
-
-export const addCollaboratorController = asyncHandler(async (req, res) => {
-  const codeEditorId = codeEditorIdSchema.parse(req.params.id);
-  const { collaboratorUserId } = req.body;
-  const userId = req.user?._id;
-
-  const { codeEditor: existingEditor } = await getCodeEditorByIdService(codeEditorId);
-
-  const { role } = await getMemberRoleInWorkspace(userId, existingEditor.workspaceId);
-  roleGuard(role, [Permissions.EDIT_CODE_EDITOR]);
-
-  const { codeEditor } = await addCollaboratorService(codeEditorId, userId, collaboratorUserId);
+  const { execution } = await executeCodeService(codeEditorId, userId, body);
 
   return res.status(HTTPSTATUS.OK).json({
-    message: "Collaborator added successfully",
-    codeEditor,
+    message: "Code executed successfully",
+    execution,
   });
 });
 
-export const removeCollaboratorController = asyncHandler(async (req, res) => {
-  const codeEditorId = codeEditorIdSchema.parse(req.params.id);
-  const { collaboratorUserId } = req.body;
+
+
+export const getExecutionHistoryController = asyncHandler(async (req, res) => {
+  const codeEditorId = codeEditorIdSchema.parse(req.params.codeEditorId);
   const userId = req.user?._id;
 
-  const { codeEditor: existingEditor } = await getCodeEditorByIdService(codeEditorId);
+  const { codeEditor } = await getCodeEditorByIdService(codeEditorId);
+  const { role } = await getMemberRoleInWorkspace(userId, codeEditor.workspaceId);
+  roleGuard(role, [Permissions.VIEW_ONLY]);
 
-  const { role } = await getMemberRoleInWorkspace(userId, existingEditor.workspaceId);
-  roleGuard(role, [Permissions.EDIT_CODE_EDITOR]);
-
-  const { codeEditor } = await removeCollaboratorService(codeEditorId, userId, collaboratorUserId);
+  const { executions } = await getExecutionHistoryService(codeEditorId, userId);
 
   return res.status(HTTPSTATUS.OK).json({
-    message: "Collaborator removed successfully",
-    codeEditor,
+    message: "Execution history fetched successfully",
+    executions,
   });
 });

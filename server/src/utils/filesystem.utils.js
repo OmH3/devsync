@@ -1,3 +1,4 @@
+import CodeEditorModel from "../models/CodeEditor.model.js";
 import FileSystemModel from "../models/FileSystem.model.js";
 
 
@@ -83,4 +84,30 @@ export const getLanguageFromExtension = (extension) => {
   };
   
   return languageMap[extension.toLowerCase()] || "text";
+};
+
+// In filesystem.utils.js
+export const deleteChildrenRecursively = async (parentId, session) => {
+  const children = await FileSystemModel.find({
+    parentId,
+    isActive: true,
+  }).session(session);
+
+  for (const child of children) {
+    if (child.type === "folder") {
+      // Recursively delete folder children
+      await deleteChildrenRecursively(child._id, session);
+    } else if (child.type === "file" && child.codeEditorId) {
+      // Delete associated code editor
+      await CodeEditorModel.findByIdAndUpdate(
+        child.codeEditorId,
+        { isActive: false },
+        { session }
+      );
+    }
+    
+    // Soft delete the child
+    child.isActive = false;
+    await child.save({ session });
+  }
 };

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { deleteCodeEditorController, getCodeEditorByFileSystemIdController, updateCodeEditorController } from "../controllers/codeeditor.controller.js";
+import { executeCodeController, getCodeEditorByFileSystemIdController,getExecutionHistoryController, updateCodeEditorController } from "../controllers/codeeditor.controller.js";
 
 const router = Router();
 
@@ -9,7 +9,10 @@ router.get("/file/:fileSystemId", getCodeEditorByFileSystemIdController);
 // Update code editor
 router.put("/:codeEditorId", updateCodeEditorController);
 
-// Delete code editor
-router.delete("/:codeEditorId", deleteCodeEditorController);
+// Execute code from code editor
+router.post("/:codeEditorId/execute", executeCodeController);
+
+// Get execution history
+router.get("/:codeEditorId/executions", getExecutionHistoryController);
 
 export default router;
