@@ -1,4 +1,8 @@
 import express from 'express';
+// socket
+import { createServer } from 'http';
+import { Server } from 'socket.io';
+
 import workspaceRoutes from './routes/workspace.routes.js';
 import memberRoutes from './routes/member.routes.js';
 import docsRoutes from './routes/docs.routes.js';
@@ -19,13 +23,34 @@ import { errorHandler } from './middleware/error-handler.middleware.js';
 import authRoutes from './routes/auth.routes.js';
 import userRoutes from './routes/user.routes.js';
 import isAuthenticated from './middleware/isAuthenticated.middleware.js';
+import whiteboardRoutes from './routes/whiteboard.routes.js';
+import { setupSocketIO } from './socket/socket.config.js';
+
+import { setSocketIO as setWhiteboardSocketIO } from './controllers/whiteboard.controller.js';
+import { setSocketIO as setDocsSocketIO } from './controllers/docs.controllers.js';
+import { setSocketIO as setCodeEditorSocketIO } from './controllers/codeeditor.controller.js';
+
+import videocallRoutes from './routes/videocall.routes.js';
+import { setSocketIO as setVideoCallSocketIO } from './controllers/videocall.controller.js';
+
 const app = express();
+const server = createServer(app); // ✅ Create HTTP server
+const io = new Server(server, {
+  cors: {
+    origin: config.FRONTEND_ORIGIN,
+    credentials: true,
+    methods: ["GET", "POST"]
+  }
+});
+
+
 const BASE_PATH = config.BASE_PATH;
 
 app.use(express.json());
 app.use(express.urlencoded({extended: true}));
 
-app.use(session({
+// Session configuration
+const sessionMiddleware = session({
   secret: config.SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
@@ -37,8 +62,8 @@ app.use(session({
     sameSite: "lax",
     path: '/',
   },
-}));
-
+});
+app.use(sessionMiddleware);
 app.use(passport.initialize());
 app.use(passport.session());
 
@@ -46,6 +71,19 @@ app.use(cors({
     origin: config.FRONTEND_ORIGIN,
     credentials: true,
 }));
+
+// ✅ Setup Socket.IO with session sharing
+io.use((socket, next) => {
+  sessionMiddleware(socket.request, {}, next);
+});
+
+// ✅ Initialize Socket.IO handlers
+setupSocketIO(io);
+
+// ✅ Pass Socket.IO instance to controllers
+setWhiteboardSocketIO(io);
+setDocsSocketIO(io);
+setCodeEditorSocketIO(io);
 
 app.get('/', asyncHandler(async(req, res, next)=>{
     if (req.query.error === 'true') {
@@ -66,12 +104,14 @@ app.use(`${BASE_PATH}/member`, isAuthenticated, memberRoutes);
 app.use(`${BASE_PATH}/docs`, isAuthenticated, docsRoutes);
 app.use(`${BASE_PATH}/filesystem`, isAuthenticated, filesystemRoutes);
 app.use(`${BASE_PATH}/codeeditor`, isAuthenticated, codeeditorRoutes);
+app.use(`${BASE_PATH}/whiteboard`, isAuthenticated, whiteboardRoutes);
+app.use(`${BASE_PATH}/videocall`, isAuthenticated, videocallRoutes); // ✅ Add this
 
 // create error handler
 app.use(errorHandler);
 
-// create app listener
-app.listen(config.PORT, async()=>{
+// ✅ Use server instead of app for listening
+server.listen(config.PORT, async()=>{
     console.log(`Server listening on port ${config.PORT} in ${config.NODE_ENV}`);
     await connectDatabase();
 })

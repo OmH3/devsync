@@ -19,6 +19,7 @@ export const RolePermissions = {
     Permissions.EDIT_CODE_EDITOR,
     Permissions.START_VIDEO_CALL,
     Permissions.JOIN_VIDEO_CALL,
+    Permissions.END_VIDEO_CALL, // ✅ Only owners can end calls
 
     Permissions.VIEW_ONLY,
   ],
@@ -35,6 +36,7 @@ export const RolePermissions = {
     Permissions.EDIT_CODE_EDITOR,
     Permissions.START_VIDEO_CALL,
     Permissions.JOIN_VIDEO_CALL,
+    Permissions.END_VIDEO_CALL, // ✅ Admins can end calls too
     Permissions.VIEW_ONLY,
   ],
   MEMBER: [

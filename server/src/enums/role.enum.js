@@ -25,6 +25,7 @@ export const Permissions = {
 
   START_VIDEO_CALL: "START_VIDEO_CALL",
   JOIN_VIDEO_CALL: "JOIN_VIDEO_CALL",
+  END_VIDEO_CALL: "END_VIDEO_CALL", // ✅ Add this
 
   VIEW_ONLY: "VIEW_ONLY",
 }
