@@ -1,9 +1,9 @@
-import { authenticateSocket } from './middleware/auth.middleware.js';
-import { setupWhiteboardHandlers } from './handlers/whiteboard.handlers.js';
-import { setupDocsHandlers } from './handlers/docs.handlers.js';
-import { setupCodeEditorHandlers } from './handlers/codeeditor.handlers.js';
-import { setupWorkspaceHandlers } from './handlers/workspace.handlers.js';
-import { setupVideoCallHandlers } from './handlers/videocall.handlers.js'; // ✅ Add this
+import { authenticateSocket } from '../middleware/isAuthenticated.middleware.js';
+import { setupWhiteboardHandlers } from '../handlers/whiteboard.handlers.js';
+import { setupDocsHandlers } from '../handlers/docs.handlers.js';
+import { setupCodeEditorHandlers } from '../handlers/codeeditor.handlers.js';
+import { setupWorkspaceHandlers } from '../handlers/workspace.handlers.js';
+import { setupVideoCallHandlers } from '../handlers/videocall.handlers.js';
 
 export const setupSocketIO = (io) => {
   // Authentication middleware

@@ -1,5 +1,5 @@
-import WhiteboardModel from '../../models/Whiteboard.model.js';
-import MemberModel from '../../models/Member.model.js';
+import WhiteboardModel from '../models/Whiteboard.model.js';
+import MemberModel from '../models/Member.model.js';
 
 export const setupWhiteboardHandlers = (socket, io) => {
   // Join whiteboard room

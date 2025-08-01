@@ -1,5 +1,5 @@
-import asyncHandler from "../middleware/async-handler.middleware.js";
-import { HTTPSTATUS } from "../utils/http-status-code.js";
+import {asyncHandler} from "../middleware/async-handler.middleware.js";
+import { HTTPSTATUS } from "../config/http.config.js";
 import { Permissions } from "../enums/role.enum.js";
 import { getMemberRoleInWorkspace } from "../services/member.service.js";
 import { roleGuard } from "../utils/roleGuard.js";

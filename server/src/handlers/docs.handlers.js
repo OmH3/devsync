@@ -1,5 +1,5 @@
-import DocModel from '../../models/Docs.model.js';
-import MemberModel from '../../models/Member.model.js';
+import DocModel from '../models/Docs.model.js';
+import MemberModel from '../models/Member.model.js';
 
 export const setupDocsHandlers = (socket, io) => {
   // Join document room

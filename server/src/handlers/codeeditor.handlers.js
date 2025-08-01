@@ -1,5 +1,5 @@
-import CodeEditorModel from '../../models/CodeEditor.model.js';
-import MemberModel from '../../models/Member.model.js';
+import CodeEditorModel from '../models/CodeEditor.model.js';
+import MemberModel from '../models/Member.model.js';
 
 export const setupCodeEditorHandlers = (socket, io) => {
   // Join code editor room

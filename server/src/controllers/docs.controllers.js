@@ -13,6 +13,12 @@ import { getMemberRoleInWorkspace } from "../services/member.service.js";
 import { roleGuard } from "../utils/roleGuard.js";
 import { createDocSchema, docIdSchema, updateDocSchema } from "../validation/docs.validation.js";
 
+// ✅ Add socket instance management
+let io;
+export const setSocketIO = (socketIO) => {
+  io = socketIO;
+};
+
 export const createDocController = asyncHandler(async (req, res) => {
   const body = createDocSchema.parse(req.body);
   const userId = req.user?._id;

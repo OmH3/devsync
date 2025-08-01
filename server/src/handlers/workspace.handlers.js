@@ -1,4 +1,4 @@
-import MemberModel from '../../models/Member.model.js';
+import MemberModel from '../models/Member.model.js';
 
 export const setupWorkspaceHandlers = (socket, io) => {
   // Join workspace room

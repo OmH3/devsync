@@ -18,6 +18,12 @@ import { fileSystemIdSchema } from "../validation/filesystem.validation.js";
 import { executeCodeService } from "../services/codeExecutor.service.js";
 import { getExecutionHistoryService } from "../services/codeExecutor.service.js";
 
+// ✅ Add socket instance management
+let io;
+export const setSocketIO = (socketIO) => {
+  io = socketIO;
+};
+
 export const getWorkspaceCodeEditorsController = asyncHandler(async (req, res) => {
   const workspaceId = req.params.workspaceId;
   const userId = req.user?._id;

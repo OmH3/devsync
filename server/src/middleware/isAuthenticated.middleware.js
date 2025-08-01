@@ -1,5 +1,5 @@
 import { UnauthorizedException } from "../utils/app-error.js"
-import UserModel from '../../models/User.model.js';
+import UserModel from '../models/User.model.js';
 
 const isAuthenticated = (req, res, next)=>{
     if(!req.user || !req.user._id){

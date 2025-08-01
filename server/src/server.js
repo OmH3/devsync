@@ -24,8 +24,8 @@ import authRoutes from './routes/auth.routes.js';
 import userRoutes from './routes/user.routes.js';
 import isAuthenticated from './middleware/isAuthenticated.middleware.js';
 import whiteboardRoutes from './routes/whiteboard.routes.js';
-import { setupSocketIO } from './socket/socket.config.js';
-
+// Fix this import path
+import { setupSocketIO } from './config/socket.config.js';
 import { setSocketIO as setWhiteboardSocketIO } from './controllers/whiteboard.controller.js';
 import { setSocketIO as setDocsSocketIO } from './controllers/docs.controllers.js';
 import { setSocketIO as setCodeEditorSocketIO } from './controllers/codeeditor.controller.js';

@@ -1,5 +1,5 @@
-import WorkspaceModel from '../../models/Workspace.model.js';
-import MemberModel from '../../models/Member.model.js';
+import WorkspaceModel from '../models/Workspace.model.js';
+import MemberModel from '../models/Member.model.js';
 
 export const setupVideoCallHandlers = (socket, io) => {
   // Join video call room
