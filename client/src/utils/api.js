@@ -27,3 +27,35 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+// Get Stream token from backend
+export const getStreamToken = async () => {
+  try {
+    const response = await api.get('/stream/token');
+    return response.data;
+  } catch (error) {
+    console.error('Error getting stream token:', error);
+    throw error;
+  }
+};
+
+// Keep only these functions:
+export const joinCall = async (callId) => {
+  try {
+    const response = await api.post(`/stream/join-call/${callId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error joining call:', error);
+    throw error;
+  }
+};
+
+export const getCallStatus = async (callId) => {
+  try {
+    const response = await api.get(`/stream/call-status/${callId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error getting call status:', error);
+    throw error;
+  }
+};

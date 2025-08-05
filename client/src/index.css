@@ -1,1 +1,4 @@
 @import "tailwindcss";
+
+/* Use the correct CSS path from the working example */
+@import "@stream-io/video-react-sdk/dist/css/styles.css";

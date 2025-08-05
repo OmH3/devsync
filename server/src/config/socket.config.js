@@ -3,7 +3,8 @@ import { setupWhiteboardHandlers } from '../handlers/whiteboard.handlers.js';
 import { setupDocsHandlers } from '../handlers/docs.handlers.js';
 import { setupCodeEditorHandlers } from '../handlers/codeeditor.handlers.js';
 import { setupWorkspaceHandlers } from '../handlers/workspace.handlers.js';
-import { setupVideoCallHandlers } from '../handlers/videocall.handlers.js';
+import { Server } from 'socket.io';
+import { setupCallSocketEvents } from '../controllers/stream.controller.js';
 
 export const setupSocketIO = (io) => {
   // Authentication middleware
@@ -17,7 +18,7 @@ export const setupSocketIO = (io) => {
     setupWhiteboardHandlers(socket, io);
     setupDocsHandlers(socket, io);
     setupCodeEditorHandlers(socket, io);
-    setupVideoCallHandlers(socket, io); // ✅ Add this
+    setupCallSocketEvents(socket);
 
     // Handle disconnection
     socket.on('disconnect', () => {

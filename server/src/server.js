@@ -29,9 +29,9 @@ import { setupSocketIO } from './config/socket.config.js';
 import { setSocketIO as setWhiteboardSocketIO } from './controllers/whiteboard.controller.js';
 import { setSocketIO as setDocsSocketIO } from './controllers/docs.controllers.js';
 import { setSocketIO as setCodeEditorSocketIO } from './controllers/codeeditor.controller.js';
+import streamRoutes from './routes/stream.routes.js';
 
-import videocallRoutes from './routes/videocall.routes.js';
-import { setSocketIO as setVideoCallSocketIO } from './controllers/videocall.controller.js';
+import { setSocketIO as setStreamSocketIO } from './controllers/stream.controller.js';
 
 const app = express();
 const server = createServer(app); // ✅ Create HTTP server
@@ -84,6 +84,7 @@ setupSocketIO(io);
 setWhiteboardSocketIO(io);
 setDocsSocketIO(io);
 setCodeEditorSocketIO(io);
+setStreamSocketIO(io); // Add this line
 
 app.get('/', asyncHandler(async(req, res, next)=>{
     if (req.query.error === 'true') {
@@ -105,7 +106,7 @@ app.use(`${BASE_PATH}/docs`, isAuthenticated, docsRoutes);
 app.use(`${BASE_PATH}/filesystem`, isAuthenticated, filesystemRoutes);
 app.use(`${BASE_PATH}/codeeditor`, isAuthenticated, codeeditorRoutes);
 app.use(`${BASE_PATH}/whiteboard`, isAuthenticated, whiteboardRoutes);
-app.use(`${BASE_PATH}/videocall`, isAuthenticated, videocallRoutes); // ✅ Add this
+app.use(`${BASE_PATH}/stream`, isAuthenticated, streamRoutes);
 
 // create error handler
 app.use(errorHandler);

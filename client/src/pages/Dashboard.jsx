@@ -4,6 +4,10 @@ import { useWorkspaceStore } from '../store/workspaceStore.js';
 import CreateWorkspaceForm from '../components/CreateWorkspaceForm.jsx';
 import WorkspaceList from '../components/WorkspaceList.jsx';
 import JoinWorkspace from '../components/JoinWorkspace.jsx';
+import DocumentsList from '../components/DocumentsList.jsx';
+import CodeEditorMain from '../components/CodeEditorMain.jsx';
+import WhiteboardMain from '../components/WhiteboardMain.jsx';
+import VideoCallMain from '../components/VideoCallMain.jsx';
 
 const Dashboard = () => {
   const { user, logout } = useAuth();
@@ -11,12 +15,14 @@ const Dashboard = () => {
     workspaces, 
     currentWorkspace, 
     fetchUserWorkspaces, 
+    setCurrentWorkspace,
     isLoading, 
     error 
   } = useWorkspaceStore();
   
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [showJoinForm, setShowJoinForm] = useState(false);
+  const [activeView, setActiveView] = useState('overview'); // 'overview', 'documents', 'whiteboard', 'code', 'video'
 
   useEffect(() => {
     // Fetch user workspaces when component mounts
@@ -37,6 +43,8 @@ const Dashboard = () => {
 
   const handleWorkspaceCreated = (newWorkspace) => {
     console.log('New workspace created:', newWorkspace);
+    // Refresh workspace list
+    fetchUserWorkspaces();
   };
 
   const handleWorkspaceJoined = (result) => {
@@ -47,13 +55,129 @@ const Dashboard = () => {
 
   const handleSelectWorkspace = (workspace) => {
     console.log('Selected workspace:', workspace);
-    // You can add navigation logic here to go to workspace detail page
+    setCurrentWorkspace(workspace);
+    setActiveView('overview'); // Reset to overview when selecting workspace
   };
 
   const copyInviteCode = (code) => {
     navigator.clipboard.writeText(code);
-    // You could add a toast notification here
     alert('Invite code copied to clipboard!');
+  };
+
+  const handleToolClick = (tool) => {
+    setActiveView(tool);
+  };
+
+  const renderMainContent = () => {
+    if (!currentWorkspace) {
+      return (
+        <div className="lg:col-span-2">
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-semibold text-gray-900">Workspaces</h2>
+              <div className="space-x-2">
+                <button
+                  onClick={handleJoinWorkspace}
+                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+                >
+                  Join Workspace
+                </button>
+                <button
+                  onClick={handleCreateWorkspace}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+                >
+                  Create Workspace
+                </button>
+              </div>
+            </div>
+            
+            {isLoading ? (
+              <div className="flex justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+              </div>
+            ) : error ? (
+              <div className="text-red-600 text-center py-4">
+                Error: {error}
+              </div>
+            ) : (
+              <WorkspaceList onSelectWorkspace={handleSelectWorkspace} />
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    // If workspace is selected, show the tool content
+    switch (activeView) {
+      case 'documents':
+        return (
+          <div className="lg:col-span-3">
+            <div className="bg-white rounded-lg shadow p-6">
+              <DocumentsList workspaceId={currentWorkspace._id} workspace={currentWorkspace} />
+            </div>
+          </div>
+        );
+      case 'whiteboard':
+        return (
+          <div className="lg:col-span-3">
+            <div className="bg-white rounded-lg shadow overflow-hidden" style={{ height: '600px' }}>
+              <WhiteboardMain workspaceId={currentWorkspace._id} workspace={currentWorkspace} />
+            </div>
+          </div>
+        );
+      case 'code':
+        return (
+          <div className="lg:col-span-3">
+            <div className="bg-white rounded-lg shadow overflow-hidden" style={{ height: '600px' }}>
+              <CodeEditorMain workspaceId={currentWorkspace._id} workspace={currentWorkspace} />
+            </div>
+          </div>
+        );
+      case 'video':
+        return (
+          <div className="lg:col-span-3">
+            <div className="bg-white rounded-lg shadow overflow-hidden" style={{ height: '600px' }}>
+              <VideoCallMain workspaceId={currentWorkspace._id} workspace={currentWorkspace} />
+            </div>
+          </div>
+        );
+      default:
+        return (
+          <div className="lg:col-span-2">
+            <div className="bg-white rounded-lg shadow p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-lg font-semibold text-gray-900">Workspaces</h2>
+                <div className="space-x-2">
+                  <button
+                    onClick={handleJoinWorkspace}
+                    className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+                  >
+                    Join Workspace
+                  </button>
+                  <button
+                    onClick={handleCreateWorkspace}
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+                  >
+                    Create Workspace
+                  </button>
+                </div>
+              </div>
+              
+              {isLoading ? (
+                <div className="flex justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                </div>
+              ) : error ? (
+                <div className="text-red-600 text-center py-4">
+                  Error: {error}
+                </div>
+              ) : (
+                <WorkspaceList onSelectWorkspace={handleSelectWorkspace} />
+              )}
+            </div>
+          </div>
+        );
+    }
   };
 
   return (
@@ -116,16 +240,44 @@ const Dashboard = () => {
               </div>
               
               <div className="mt-4 flex space-x-4">
-                <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium">
+                <button 
+                  onClick={() => handleToolClick('whiteboard')}
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                    activeView === 'whiteboard' 
+                      ? 'bg-indigo-700 text-white' 
+                      : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                  }`}
+                >
                   Open Whiteboard
                 </button>
-                <button className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium">
+                <button 
+                  onClick={() => handleToolClick('documents')}
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                    activeView === 'documents' 
+                      ? 'bg-green-700 text-white' 
+                      : 'bg-green-600 hover:bg-green-700 text-white'
+                  }`}
+                >
                   Open Documents
                 </button>
-                <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium">
+                <button 
+                  onClick={() => handleToolClick('code')}
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                    activeView === 'code' 
+                      ? 'bg-blue-700 text-white' 
+                      : 'bg-blue-600 hover:bg-blue-700 text-white'
+                  }`}
+                >
                   Open Code Editor
                 </button>
-                <button className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md text-sm font-medium">
+                <button 
+                  onClick={() => handleToolClick('video')}
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                    activeView === 'video' 
+                      ? 'bg-purple-700 text-white' 
+                      : 'bg-purple-600 hover:bg-purple-700 text-white'
+                  }`}
+                >
                   Start Video Call
                 </button>
               </div>
@@ -133,87 +285,77 @@ const Dashboard = () => {
           )}
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Workspace Management */}
-            <div className="lg:col-span-2">
-              <div className="bg-white rounded-lg shadow p-6">
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-lg font-semibold text-gray-900">Workspaces</h2>
-                  <div className="space-x-2">
-                    <button
+            {/* Main Content Area */}
+            {renderMainContent()}
+
+            {/* Quick Actions Sidebar - Only show when not in full-width mode */}
+            {currentWorkspace && (activeView === 'overview' || !currentWorkspace) && (
+              <div className="lg:col-span-1">
+                <div className="bg-white rounded-lg shadow p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+                  <div className="space-y-3">
+                    <button 
                       onClick={handleJoinWorkspace}
-                      className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+                      className="w-full text-left p-3 rounded-md border border-gray-200 hover:bg-gray-50"
                     >
-                      Join Workspace
+                      <div className="font-medium">Join Workspace</div>
+                      <div className="text-sm text-gray-500">Enter an invite code</div>
                     </button>
-                    <button
-                      onClick={handleCreateWorkspace}
-                      className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+                    <button 
+                      onClick={() => handleToolClick('documents')}
+                      className="w-full text-left p-3 rounded-md border border-gray-200 hover:bg-gray-50"
                     >
-                      Create Workspace
+                      <div className="font-medium">Open Documents</div>
+                      <div className="text-sm text-gray-500">Collaborative document editing</div>
+                    </button>
+                    <button 
+                      onClick={() => handleToolClick('whiteboard')}
+                      className="w-full text-left p-3 rounded-md border border-gray-200 hover:bg-gray-50"
+                    >
+                      <div className="font-medium">Open Whiteboard</div>
+                      <div className="text-sm text-gray-500">Visual collaboration</div>
                     </button>
                   </div>
                 </div>
-                
-                {isLoading ? (
-                  <div className="flex justify-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+
+                {/* Current Workspace Invite Code (Alternative Location) */}
+                {currentWorkspace && (
+                  <div className="bg-white rounded-lg shadow p-6 mt-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Share Workspace</h3>
+                    <div className="text-center">
+                      <p className="text-sm text-gray-600 mb-3">
+                        Current workspace invite code:
+                      </p>
+                      <div className="bg-gray-50 p-3 rounded-md border">
+                        <code className="text-lg font-mono font-bold text-indigo-700">
+                          {currentWorkspace.inviteCode}
+                        </code>
+                      </div>
+                      <button
+                        onClick={() => copyInviteCode(currentWorkspace.inviteCode)}
+                        className="mt-3 w-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+                      >
+                        Copy Invite Code
+                      </button>
+                    </div>
                   </div>
-                ) : error ? (
-                  <div className="text-red-600 text-center py-4">
-                    Error: {error}
-                  </div>
-                ) : (
-                  <WorkspaceList onSelectWorkspace={handleSelectWorkspace} />
                 )}
               </div>
-            </div>
+            )}
 
-            {/* Quick Actions */}
-            <div className="lg:col-span-1">
-              <div className="bg-white rounded-lg shadow p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
-                <div className="space-y-3">
-                  <button 
-                    onClick={handleJoinWorkspace}
-                    className="w-full text-left p-3 rounded-md border border-gray-200 hover:bg-gray-50"
+            {/* Back to Overview Button for Full-Width Views */}
+            {currentWorkspace && ['documents', 'whiteboard', 'code', 'video'].includes(activeView) && (
+              <div className="lg:col-span-3">
+                <div className="mb-4">
+                  <button
+                    onClick={() => setActiveView('overview')}
+                    className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md text-sm font-medium"
                   >
-                    <div className="font-medium">Join Workspace</div>
-                    <div className="text-sm text-gray-500">Enter an invite code</div>
-                  </button>
-                  <button className="w-full text-left p-3 rounded-md border border-gray-200 hover:bg-gray-50">
-                    <div className="font-medium">Recent Files</div>
-                    <div className="text-sm text-gray-500">View recent documents</div>
-                  </button>
-                  <button className="w-full text-left p-3 rounded-md border border-gray-200 hover:bg-gray-50">
-                    <div className="font-medium">Settings</div>
-                    <div className="text-sm text-gray-500">Manage your account</div>
+                    ← Back to Overview
                   </button>
                 </div>
               </div>
-
-              {/* Current Workspace Invite Code (Alternative Location) */}
-              {currentWorkspace && (
-                <div className="bg-white rounded-lg shadow p-6 mt-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Share Workspace</h3>
-                  <div className="text-center">
-                    <p className="text-sm text-gray-600 mb-3">
-                      Current workspace invite code:
-                    </p>
-                    <div className="bg-gray-50 p-3 rounded-md border">
-                      <code className="text-lg font-mono font-bold text-indigo-700">
-                        {currentWorkspace.inviteCode}
-                      </code>
-                    </div>
-                    <button
-                      onClick={() => copyInviteCode(currentWorkspace.inviteCode)}
-                      className="mt-3 w-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium"
-                    >
-                      Copy Invite Code
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
+            )}
           </div>
         </div>
       </main>

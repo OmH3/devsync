@@ -4,6 +4,7 @@ import VideoCall from './pages/VideoCall'
 import Login from './pages/Login.jsx'
 import Register from './pages/Register.jsx'
 import Dashboard from './pages/Dashboard.jsx'
+import CallPage from './components/CallPage.jsx' // Add this import
 import ProtectedRoute from './components/ProtectedRoute.jsx'
 import { useAuth } from './hooks/useAuth.js'
 
@@ -46,6 +47,15 @@ function App() {
         element={
           <ProtectedRoute>
             <VideoCall />
+          </ProtectedRoute>
+        } 
+      />
+      {/* Add the new CallPage route */}
+      <Route 
+        path="/call/:callId" 
+        element={
+          <ProtectedRoute>
+            <CallPage />
           </ProtectedRoute>
         } 
       />
