@@ -14,20 +14,20 @@ const WhiteboardList = ({ workspaceId, onWhiteboardSelect }) => {
     clearError 
   } = useWhiteboardStore();
 
-  // Memoize the fetch function to prevent infinite calls
-  const fetchWhiteboards = useCallback(() => {
+  // Fetch whiteboards when component mounts or workspaceId changes
+  useEffect(() => {
     if (workspaceId && !isLoading) {
       fetchWorkspaceWhiteboards(workspaceId);
     }
-  }, [workspaceId]); // Remove fetchWorkspaceWhiteboards from dependencies
-
-  useEffect(() => {
-    fetchWhiteboards();
-  }, [fetchWhiteboards]);
+  }, [workspaceId]); // Remove fetchWorkspaceWhiteboards from dependencies to prevent infinite calls
 
   const handleCreateSuccess = useCallback((newWhiteboard) => {
     console.log('New whiteboard created:', newWhiteboard);
-  }, []);
+    // Refresh the list
+    if (workspaceId) {
+      fetchWorkspaceWhiteboards(workspaceId);
+    }
+  }, [workspaceId, fetchWorkspaceWhiteboards]);
 
   const handleDeleteWhiteboard = useCallback(async (whiteboardId, whiteboardTitle) => {
     const confirmMessage = `Are you sure you want to delete "${whiteboardTitle}"?\n\nThis action cannot be undone.`;

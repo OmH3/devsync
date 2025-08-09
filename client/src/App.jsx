@@ -1,6 +1,5 @@
 import React from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
-import VideoCall from './pages/VideoCall'
 import Login from './pages/Login.jsx'
 import Register from './pages/Register.jsx'
 import Dashboard from './pages/Dashboard.jsx'
@@ -42,14 +41,7 @@ function App() {
           </ProtectedRoute>
         } 
       />
-      <Route 
-        path="/videocall" 
-        element={
-          <ProtectedRoute>
-            <VideoCall />
-          </ProtectedRoute>
-        } 
-      />
+      
       {/* Add the new CallPage route */}
       <Route 
         path="/call/:callId" 

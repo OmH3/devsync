@@ -1,190 +1,145 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useWhiteboardStore } from '../store/whiteboardStore.js';
+import EnhancedDrawingCanvas from './EnhancedDrawingCanvas.jsx';
 
 const WhiteboardCanvas = ({ whiteboard }) => {
-  const canvasRef = useRef(null);
-  const [isDrawing, setIsDrawing] = useState(false);
-  const [lastPosition, setLastPosition] = useState({ x: 0, y: 0 });
+  const [userCount, setUserCount] = useState(1);
   
   const { 
-    canvasElements,
     selectedTool,
     selectedColor,
     strokeWidth,
-    addCanvasElement,
-    updateWhiteboard
+    setSelectedTool,
+    setSelectedColor,
+    setStrokeWidth,
+    clearDrawingData,
+    saveDrawingData
   } = useWhiteboardStore();
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    
-    // Set canvas size
-    canvas.width = canvas.offsetWidth;
-    canvas.height = canvas.offsetHeight;
-    
-    // Clear canvas
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    // Draw all elements
-    canvasElements.forEach(element => {
-      drawElement(ctx, element);
-    });
-  }, [canvasElements]);
-
-  const drawElement = (ctx, element) => {
-    ctx.strokeStyle = element.color;
-    ctx.lineWidth = element.strokeWidth;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-
-    switch (element.type) {
-      case 'path':
-        ctx.beginPath();
-        element.points.forEach((point, index) => {
-          if (index === 0) {
-            ctx.moveTo(point.x, point.y);
-          } else {
-            ctx.lineTo(point.x, point.y);
-          }
-        });
-        ctx.stroke();
-        break;
-      
-      case 'rectangle':
-        ctx.strokeRect(
-          element.x,
-          element.y,
-          element.width,
-          element.height
-        );
-        break;
-      
-      case 'circle':
-        ctx.beginPath();
-        ctx.arc(element.x, element.y, element.radius, 0, 2 * Math.PI);
-        ctx.stroke();
-        break;
-      
-      case 'text':
-        ctx.font = `${element.fontSize}px Arial`;
-        ctx.fillStyle = element.color;
-        ctx.fillText(element.text, element.x, element.y);
-        break;
-    }
+  const handleUserCountChange = (count) => {
+    setUserCount(count);
   };
 
-  const getMousePosition = (e) => {
-    const canvas = canvasRef.current;
-    const rect = canvas.getBoundingClientRect();
-    return {
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top
-    };
-  };
-
-  const handleMouseDown = (e) => {
-    const pos = getMousePosition(e);
-    setIsDrawing(true);
-    setLastPosition(pos);
-
-    if (selectedTool === 'pen') {
-      const newElement = {
-        id: `element_${Date.now()}`,
-        type: 'path',
-        points: [pos],
-        color: selectedColor,
-        strokeWidth: strokeWidth,
-        timestamp: new Date()
-      };
-      addCanvasElement(newElement);
-    }
-  };
-
-  const handleMouseMove = (e) => {
-    if (!isDrawing) return;
-
-    const pos = getMousePosition(e);
-
-    if (selectedTool === 'pen') {
-      const lastElement = canvasElements[canvasElements.length - 1];
-      if (lastElement && lastElement.type === 'path') {
-        const updatedElement = {
-          ...lastElement,
-          points: [...lastElement.points, pos]
-        };
-        
-        // Update the last element
-        const updatedElements = [...canvasElements.slice(0, -1), updatedElement];
-        useWhiteboardStore.getState().setCanvasElements(updatedElements);
-      }
-    }
-
-    setLastPosition(pos);
-  };
-
-  const handleMouseUp = () => {
-    setIsDrawing(false);
-    
-    // Save to backend
-    if (whiteboard && canvasElements.length > 0) {
-      updateWhiteboard(whiteboard._id, {
-        boardElements: canvasElements
-      });
-    }
-  };
-
-  const handleClearCanvas = () => {
-    if (window.confirm('Are you sure you want to clear the canvas?')) {
-      useWhiteboardStore.getState().clearCanvas();
-      
-      if (whiteboard) {
-        updateWhiteboard(whiteboard._id, {
-          boardElements: []
-        });
+  const handleClearCanvas = async () => {
+    if (window.confirm('Are you sure you want to clear the entire canvas?')) {
+      clearDrawingData();
+      if (whiteboard?._id) {
+        await saveDrawingData(whiteboard._id, []);
       }
     }
   };
+
+  const tools = [
+    { id: 'pen', name: 'Pen', icon: '✏️' },
+    { id: 'eraser', name: 'Eraser', icon: '🧽' },
+    { id: 'rectangle', name: 'Rectangle', icon: '▭' },
+    { id: 'circle', name: 'Circle', icon: '○' },
+    { id: 'text', name: 'Text', icon: '📝' },
+  ];
+
+  const colors = ['#000000', '#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF', '#FFA500'];
 
   return (
     <div className="h-full flex flex-col bg-white">
-      {/* Toolbar */}
-      <div className="flex items-center justify-between p-3 border-b border-gray-200">
-        <div className="flex items-center space-x-4">
+      {/* Header */}
+      <div className="flex items-center justify-between p-4 border-b border-gray-200">
+        <div>
           <h3 className="text-lg font-semibold text-gray-900">
             {whiteboard?.boardTitle || 'Whiteboard'}
           </h3>
+          {whiteboard?.boardDescription && (
+            <p className="text-sm text-gray-600">{whiteboard.boardDescription}</p>
+          )}
         </div>
         
         <div className="flex items-center space-x-4">
-          <button
-            onClick={handleClearCanvas}
-            className="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md text-sm font-medium"
-          >
-            Clear Canvas
-          </button>
+          <div className="text-sm text-gray-600">
+            Room: {whiteboard?.roomId}
+          </div>
+          <div className="text-sm font-medium text-indigo-600">
+            {userCount} active user{userCount !== 1 ? 's' : ''}
+          </div>
         </div>
+      </div>
+
+      {/* Toolbar */}
+      <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gray-50">
+        {/* Tools */}
+        <div className="flex items-center space-x-2">
+          <span className="text-sm font-medium text-gray-700 mr-2">Tools:</span>
+          {tools.map(tool => (
+            <button
+              key={tool.id}
+              onClick={() => setSelectedTool(tool.id)}
+              className={`p-2 rounded-md text-sm font-medium transition-colors ${
+                selectedTool === tool.id
+                  ? 'bg-indigo-100 text-indigo-700 border-2 border-indigo-500'
+                  : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+              }`}
+              title={tool.name}
+            >
+              <span className="text-lg">{tool.icon}</span>
+            </button>
+          ))}
+        </div>
+
+        {/* Colors */}
+        <div className="flex items-center space-x-2">
+          <span className="text-sm font-medium text-gray-700 mr-2">Color:</span>
+          {colors.map((color) => (
+            <button
+              key={color}
+              className={`w-8 h-8 rounded-md border-2 ${
+                selectedColor === color ? 'border-gray-900' : 'border-gray-300'
+              }`}
+              style={{ backgroundColor: color }}
+              onClick={() => setSelectedColor(color)}
+              title={color}
+            />
+          ))}
+        </div>
+
+        {/* Stroke Width */}
+        <div className="flex items-center space-x-2">
+          <span className="text-sm font-medium text-gray-700">Size:</span>
+          <input
+            type="range"
+            min="1"
+            max="20"
+            value={strokeWidth}
+            onChange={(e) => setStrokeWidth(parseInt(e.target.value))}
+            className="w-20"
+          />
+          <span className="text-sm text-gray-700 w-8">{strokeWidth}px</span>
+        </div>
+
+        {/* Clear Button */}
+        <button
+          onClick={handleClearCanvas}
+          className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+        >
+          Clear Canvas
+        </button>
       </div>
 
       {/* Canvas */}
       <div className="flex-1 relative overflow-hidden">
-        <canvas
-          ref={canvasRef}
-          className="absolute inset-0 w-full h-full cursor-crosshair"
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
+        <EnhancedDrawingCanvas 
+          whiteboard={whiteboard}
+          selectedTool={selectedTool}
+          selectedColor={selectedColor}
+          strokeWidth={strokeWidth}
+          onUserCountChange={handleUserCountChange}
         />
       </div>
 
       {/* Status Bar */}
       <div className="flex items-center justify-between p-2 border-t border-gray-200 bg-gray-50">
         <div className="text-sm text-gray-600">
-          Elements: {canvasElements.length}
+          Tool: {selectedTool} | Color: {selectedColor} | Width: {strokeWidth}px
         </div>
         <div className="text-sm text-gray-600">
-          Tool: {selectedTool} | Color: {selectedColor} | Width: {strokeWidth}px
+          Collaborators: {whiteboard?.collaborators?.length || 0}
         </div>
       </div>
     </div>
