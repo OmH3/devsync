@@ -9,11 +9,13 @@ const EnhancedDrawingCanvas = ({
   selectedTool, 
   selectedColor, 
   strokeWidth,
-  onUserCountChange 
+  onUserCountChange,
+  canEdit = false,
+  userRole = null
 }) => {
   const canvasRef = useRef(null);
   const ctxRef = useRef(null);
-  const textInputRef = useRef(null); // Add ref for text input
+  const textInputRef = useRef(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [cursors, setCursors] = useState({});
   const [userCount, setUserCount] = useState(1);
@@ -32,7 +34,8 @@ const EnhancedDrawingCanvas = ({
     addDrawingElement, 
     saveDrawingData,
     clearDrawingData,
-    setDrawingData
+    setDrawingData,
+    setError
   } = useWhiteboardStore();
 
   // Auto-focus text input when typing starts
@@ -234,10 +237,21 @@ const EnhancedDrawingCanvas = ({
 
   // Save element and persist to backend
   const saveElement = async (element) => {
+    // ✅ Check permissions before saving
+    if (!canEdit || userRole === 'MEMBER') {
+      console.log('Save prevented: User does not have edit permissions');
+      setError && setError('You do not have permission to edit this whiteboard');
+      return;
+    }
+
     console.log('Saving element:', element);
     
     // Add to local store first
-    addDrawingElement(element);
+    const success = addDrawingElement(element);
+    if (!success) {
+      console.log('Failed to add element to local store');
+      return;
+    }
     
     // Wait for state update and then save to backend
     setTimeout(async () => {
@@ -296,11 +310,13 @@ const EnhancedDrawingCanvas = ({
     };
 
     const handleClearCanvas = () => {
-      clearDrawingData();
-      const canvas = canvasRef.current;
-      const ctx = ctxRef.current;
-      if (canvas && ctx) {
-        ctx.clearRect(0, 0, canvas.width / window.devicePixelRatio, canvas.height / window.devicePixelRatio);
+      const success = clearDrawingData();
+      if (success) {
+        const canvas = canvasRef.current;
+        const ctx = ctxRef.current;
+        if (canvas && ctx) {
+          ctx.clearRect(0, 0, canvas.width / window.devicePixelRatio, canvas.height / window.devicePixelRatio);
+        }
       }
     };
 
@@ -318,10 +334,15 @@ const EnhancedDrawingCanvas = ({
       }
     };
 
-    const handleWhiteboardJoined = ({ userCount }) => {
-      console.log('Joined whiteboard, user count:', userCount);
+    const handleWhiteboardJoined = ({ userCount, canEdit: serverCanEdit }) => {
+      console.log('Joined whiteboard, user count:', userCount, 'canEdit:', serverCanEdit);
       setUserCount(userCount);
       onUserCountChange?.(userCount);
+    };
+
+    const handleSocketError = ({ message }) => {
+      console.error('Socket error:', message);
+      setError && setError(message);
     };
 
     // Register event listeners
@@ -333,6 +354,7 @@ const EnhancedDrawingCanvas = ({
     socket.on('cursor-update', handleCursorUpdate);
     socket.on('whiteboard-joined', handleWhiteboardJoined);
     socket.on('whiteboard-cleared', handleClearCanvas);
+    socket.on('error', handleSocketError);
 
     return () => {
       socket.off('draw-start', handleDrawStart);
@@ -343,8 +365,9 @@ const EnhancedDrawingCanvas = ({
       socket.off('cursor-update', handleCursorUpdate);
       socket.off('whiteboard-joined', handleWhiteboardJoined);
       socket.off('whiteboard-cleared', handleClearCanvas);
+      socket.off('error', handleSocketError);
     };
-  }, [socket, whiteboard?._id, onUserCountChange, clearDrawingData]);
+  }, [socket, whiteboard?._id, onUserCountChange, clearDrawingData, setError]);
 
   // Clean up old cursors
   useEffect(() => {
@@ -364,8 +387,14 @@ const EnhancedDrawingCanvas = ({
     return () => clearInterval(interval);
   }, []);
 
-  // Mouse event handlers
+  // ✅ Mouse event handlers with permission checks
   const startDrawing = useCallback((e) => {
+    // ✅ Prevent all drawing interactions for members
+    if (!canEdit || userRole === 'MEMBER') {
+      console.log('Drawing prevented: User does not have edit permissions');
+      return;
+    }
+
     // Don't start drawing if we're typing text
     if (isTyping) return;
 
@@ -404,15 +433,12 @@ const EnhancedDrawingCanvas = ({
     } else if (selectedTool === 'rectangle' || selectedTool === 'circle') {
       setIsDrawing(true);
     }
-  }, [selectedTool, selectedColor, strokeWidth, socket, whiteboard?._id, isTyping]);
+  }, [selectedTool, selectedColor, strokeWidth, socket, whiteboard?._id, isTyping, canEdit, userRole]);
 
   const draw = useCallback((e) => {
-    // Don't draw if we're typing text
-    if (isTyping) return;
-
     const currentPos = getMousePos(e);
 
-    // Handle cursor movement for all users
+    // ✅ Allow cursor movement for all users (members can see other cursors)
     if (socket?.connected && whiteboard?._id) {
       socket.emit('cursor-move', {
         whiteboardId: whiteboard._id,
@@ -422,6 +448,14 @@ const EnhancedDrawingCanvas = ({
         color: colorRef.current,
       });
     }
+
+    // ✅ Only prevent actual drawing for members
+    if (!canEdit || userRole === 'MEMBER') {
+      return;
+    }
+
+    // Don't draw if we're typing text
+    if (isTyping) return;
 
     if (!isDrawing) return;
 
@@ -445,9 +479,12 @@ const EnhancedDrawingCanvas = ({
     } else if (selectedTool === 'rectangle' || selectedTool === 'circle') {
       drawPreviewShape(currentPos);
     }
-  }, [isDrawing, selectedTool, socket, whiteboard?._id, drawPreviewShape, isTyping]);
+  }, [isDrawing, selectedTool, socket, whiteboard?._id, drawPreviewShape, isTyping, canEdit, userRole]);
 
   const endDrawing = useCallback((e) => {
+    // ✅ Prevent drawing end for members
+    if (!canEdit || userRole === 'MEMBER') return;
+
     // Don't end drawing if we're typing text
     if (isTyping) return;
     
@@ -523,9 +560,18 @@ const EnhancedDrawingCanvas = ({
         setTimeout(redrawCanvas, 50); // Redraw to remove preview
       }
     }
-  }, [isDrawing, selectedTool, selectedColor, strokeWidth, startPosition, currentPath, socket, whiteboard?._id, redrawCanvas, saveElement, isTyping]);
+  }, [isDrawing, selectedTool, selectedColor, strokeWidth, startPosition, currentPath, socket, whiteboard?._id, redrawCanvas, saveElement, isTyping, canEdit, userRole]);
 
   const handleTextSubmit = useCallback(() => {
+    // ✅ Check permissions before submitting text
+    if (!canEdit || userRole === 'MEMBER') {
+      console.log('Text submit prevented: User does not have edit permissions');
+      setError && setError('You do not have permission to edit this whiteboard');
+      setIsTyping(false);
+      setTextInput('');
+      return;
+    }
+
     if (textInput.trim()) {
       const newElement = {
         id: Date.now().toString(),
@@ -543,7 +589,7 @@ const EnhancedDrawingCanvas = ({
     
     setIsTyping(false);
     setTextInput('');
-  }, [textInput, textPosition, selectedColor, saveElement]);
+  }, [textInput, textPosition, selectedColor, saveElement, canEdit, userRole, setError]);
 
   // Handle text input key events
   const handleTextKeyDown = useCallback((e) => {
@@ -602,14 +648,13 @@ const EnhancedDrawingCanvas = ({
         onMouseMove={draw}
         onMouseUp={endDrawing}
         onMouseLeave={endDrawing}
-        className="absolute inset-0 w-full h-full bg-white"
-        style={{ 
-          cursor: selectedTool === 'text' ? 'text' : 'crosshair'
-        }}
+        className={`absolute inset-0 w-full h-full bg-white ${
+          canEdit && userRole !== 'MEMBER' ? 'cursor-crosshair' : 'cursor-default'
+        } ${selectedTool === 'text' && canEdit && userRole !== 'MEMBER' ? 'cursor-text' : ''}`}
       />
       
-      {/* Text Input Overlay */}
-      {isTyping && (
+      {/* Text Input Overlay - Only show for users who can edit */}
+      {isTyping && canEdit && userRole !== 'MEMBER' && (
         <div
           className="absolute bg-white border-2 border-indigo-500 rounded-lg px-3 py-2 shadow-xl z-50"
           style={{
@@ -641,7 +686,7 @@ const EnhancedDrawingCanvas = ({
         </div>
       )}
       
-      {/* User Cursors */}
+      {/* User Cursors - Show for all users */}
       {Object.entries(cursors).map(([userId, { x, y, color }]) => (
         <div
           key={userId}
@@ -663,13 +708,23 @@ const EnhancedDrawingCanvas = ({
       ))}
       
       {/* User Count Display */}
-      <div className="absolute top-4 right-4 bg-black bg-opacity-75 text-white px-3 py-2 rounded-lg text-sm font-medium pointer-events-none">
+      <div className="absolute top-4 right-4 bg-black bg-opacity-75 text-white px-3 py-2 rounded-lg text-sm font-medium pointer-events-none z-30">
         👥 {userCount} user{userCount !== 1 ? 's' : ''}
+        {userRole === 'MEMBER' && (
+          <div className="text-xs mt-1 text-yellow-300">
+            (View Only)
+          </div>
+        )}
       </div>
 
       {/* Debug Info */}
-      <div className="absolute bottom-4 left-4 bg-black bg-opacity-75 text-white px-3 py-2 rounded-lg text-xs pointer-events-none">
+      <div className="absolute bottom-4 left-4 bg-black bg-opacity-75 text-white px-3 py-2 rounded-lg text-xs pointer-events-none z-30">
         Elements: {drawingData.length} | Tool: {selectedTool}
+        {userRole && (
+          <div className="mt-1">
+            Role: {userRole} | Edit: {canEdit ? 'Yes' : 'No'}
+          </div>
+        )}
       </div>
     </div>
   );
