@@ -7,20 +7,134 @@ export const useDocumentStore = create(
     (set, get) => ({
       documents: [],
       currentDocument: null,
+      documentContent: '', // ✅ Add content state
+      documentTitle: '', // ✅ Add title state
       isLoading: false,
       error: null,
+      userCount: 1, // ✅ Add user count for collaboration
+      isConnected: false, // ✅ Add connection status
+      userRole: null, // ✅ Add user role state
+      canEdit: false, // ✅ Add edit permission state
+      canView: false, // ✅ Add view permission state
+      canCreate: false, // ✅ Add create permission state
+      canDelete: false, // ✅ Add delete permission state
+      isDocumentOwner: false, // ✅ Add ownership state
+      isWorkspaceOwner: false, // ✅ Add workspace ownership state
+      isAdmin: false, // ✅ Add admin state
+      activeUsers: [], // ✅ Add active users list
+      hasUnsavedChanges: false, // ✅ Add unsaved changes state
+      lastSaved: null, // ✅ Add last saved timestamp
 
-      // Actions
-      setCurrentDocument: (document) => set({ currentDocument: document }),
+      // ✅ Connection and user management actions
+      setUserCount: (count) => set({ userCount: count }),
+      setIsConnected: (connected) => set({ isConnected: connected }),
+      setActiveUsers: (users) => set({ activeUsers: users || [] }),
       
+      // ✅ Permission management actions
+      setUserRole: (role) => set({ userRole: role }),
+      setPermissions: (permissions) => set({
+        canEdit: permissions.canEdit || false,
+        canView: permissions.canView || false,
+        canCreate: permissions.canCreate || false,
+        canDelete: permissions.canDelete || false
+      }),
+      setOwnershipStatus: (isDocumentOwner, isWorkspaceOwner, isAdmin) => set({
+        isDocumentOwner,
+        isWorkspaceOwner,
+        isAdmin
+      }),
+
+      // ✅ Document content management
+      setCurrentDocument: (document) => set({ 
+        currentDocument: document,
+        documentTitle: document?.title || '',
+        documentContent: document?.content || '',
+        hasUnsavedChanges: false
+      }),
+      setDocumentContent: (content) => set({ 
+        documentContent: content,
+        hasUnsavedChanges: true
+      }),
+      setDocumentTitle: (title) => set({ 
+        documentTitle: title,
+        hasUnsavedChanges: true
+      }),
+      setHasUnsavedChanges: (hasChanges) => set({ hasUnsavedChanges: hasChanges }),
+      setLastSaved: (timestamp) => set({ lastSaved: timestamp }),
+
+      // ✅ Basic state management
       setLoading: (isLoading) => set({ isLoading }),
-      
       setError: (error) => set({ error }),
-
       clearError: () => set({ error: null }),
 
-      // Create new document
+      // ✅ Fetch user role in document (matching whiteboard pattern)
+      fetchUserRoleInDocument: async (documentId) => {
+        try {
+          const response = await documentService.getUserRoleInDocument(documentId);
+          const { role, permissions, isDocumentOwner, isWorkspaceOwner, isAdmin } = response;
+          
+          set({ 
+            userRole: role,
+            canEdit: permissions.canEdit,
+            canView: permissions.canView,
+            canCreate: permissions.canCreate,
+            canDelete: permissions.canDelete,
+            isDocumentOwner,
+            isWorkspaceOwner,
+            isAdmin
+          });
+          
+          return { 
+            success: true, 
+            role, 
+            canEdit: permissions.canEdit,
+            permissions 
+          };
+        } catch (error) {
+          console.error('Failed to fetch user role:', error);
+          const errorMessage = error.response?.data?.message || 'Failed to fetch user role';
+          set({ error: errorMessage });
+          return { success: false, error: errorMessage };
+        }
+      },
+
+      // ✅ Document content actions with permission checks
+      updateContentWithPermissionCheck: (content) => {
+        const { canEdit } = get();
+        if (!canEdit) {
+          set({ error: 'You do not have permission to edit this document' });
+          return false;
+        }
+        
+        set({ 
+          documentContent: content,
+          hasUnsavedChanges: true
+        });
+        return true;
+      },
+
+      updateTitleWithPermissionCheck: (title) => {
+        const { canEdit } = get();
+        if (!canEdit) {
+          set({ error: 'You do not have permission to edit this document' });
+          return false;
+        }
+        
+        set({ 
+          documentTitle: title,
+          hasUnsavedChanges: true
+        });
+        return true;
+      },
+
+      // ✅ Create document with role check (matching whiteboard pattern)
       createDocument: async (documentData) => {
+        const { userRole } = get();
+        if (userRole === 'MEMBER') {
+          set({ error: 'Members cannot create documents' });
+          return { success: false, error: 'Permission denied' };
+        }
+
         set({ isLoading: true, error: null });
         try {
           const response = await documentService.createDocument(documentData);
@@ -29,6 +143,9 @@ export const useDocumentStore = create(
           set(state => ({ 
             documents: [newDocument, ...state.documents],
             currentDocument: newDocument,
+            documentTitle: newDocument.title || '',
+            documentContent: newDocument.content || '',
+            hasUnsavedChanges: false,
             isLoading: false 
           }));
           
@@ -40,7 +157,7 @@ export const useDocumentStore = create(
         }
       },
 
-      // Fetch workspace documents
+      // ✅ Fetch workspace documents
       fetchWorkspaceDocuments: async (workspaceId) => {
         set({ isLoading: true, error: null });
         try {
@@ -57,16 +174,22 @@ export const useDocumentStore = create(
         }
       },
 
-      // Fetch document by ID
+      // ✅ Fetch document by ID
       fetchDocumentById: async (documentId) => {
         set({ isLoading: true, error: null });
         try {
           const response = await documentService.getDocumentById(documentId);
+          const document = response.doc;
+
           set({ 
-            currentDocument: response.doc, 
+            currentDocument: document,
+            documentTitle: document.title || '',
+            documentContent: document.content || '',
+            hasUnsavedChanges: false,
             isLoading: false 
           });
-          return { success: true, document: response.doc };
+          
+          return { success: true, document };
         } catch (error) {
           const errorMessage = error.response?.data?.message || 'Failed to fetch document';
           set({ error: errorMessage, isLoading: false });
@@ -74,8 +197,14 @@ export const useDocumentStore = create(
         }
       },
 
-      // Update document
+      // ✅ Update document with permission check
       updateDocument: async (documentId, documentData) => {
+        const { canEdit } = get();
+        if (!canEdit) {
+          set({ error: 'You do not have permission to edit this document' });
+          return { success: false, error: 'Permission denied' };
+        }
+
         set({ error: null });
         try {
           const response = await documentService.updateDocument(documentId, documentData);
@@ -87,7 +216,15 @@ export const useDocumentStore = create(
             ),
             currentDocument: state.currentDocument?._id === documentId 
               ? updatedDocument 
-              : state.currentDocument
+              : state.currentDocument,
+            documentTitle: state.currentDocument?._id === documentId 
+              ? updatedDocument.title || ''
+              : state.documentTitle,
+            documentContent: state.currentDocument?._id === documentId 
+              ? updatedDocument.content || ''
+              : state.documentContent,
+            hasUnsavedChanges: false,
+            lastSaved: new Date()
           }));
           
           return { success: true, document: updatedDocument };
@@ -98,8 +235,14 @@ export const useDocumentStore = create(
         }
       },
 
-      // Delete document
+      // ✅ Delete document with role check (matching whiteboard pattern)
       deleteDocument: async (documentId) => {
+        const { userRole, isDocumentOwner } = get();
+        if (userRole === 'MEMBER' && !isDocumentOwner) {
+          set({ error: 'Members cannot delete documents unless they own them' });
+          return { success: false, error: 'Permission denied' };
+        }
+
         set({ error: null });
         try {
           await documentService.deleteDocument(documentId);
@@ -108,7 +251,10 @@ export const useDocumentStore = create(
             documents: state.documents.filter(doc => doc._id !== documentId),
             currentDocument: state.currentDocument?._id === documentId 
               ? null 
-              : state.currentDocument
+              : state.currentDocument,
+            documentTitle: state.currentDocument?._id === documentId ? '' : state.documentTitle,
+            documentContent: state.currentDocument?._id === documentId ? '' : state.documentContent,
+            hasUnsavedChanges: false
           }));
           
           return { success: true };
@@ -119,29 +265,114 @@ export const useDocumentStore = create(
         }
       },
 
-      // Real-time document updates (for socket integration)
-      updateDocumentContent: (documentId, content) => {
+      // ✅ Save document content to backend with permission check
+      saveDocumentContent: async (documentId, title, content) => {
+        const { canEdit } = get();
+        if (!canEdit) {
+          set({ error: 'You do not have permission to edit this document' });
+          return { success: false, error: 'Permission denied' };
+        }
+
+        try {
+          const response = await documentService.updateDocument(documentId, {
+            title: title.trim(),
+            content: content
+          });
+          
+          set(state => ({
+            currentDocument: response.doc,
+            documentTitle: response.doc.title || '',
+            documentContent: response.doc.content || '',
+            hasUnsavedChanges: false,
+            lastSaved: new Date(),
+            documents: state.documents.map(doc => 
+              doc._id === documentId ? response.doc : doc
+            )
+          }));
+          
+          return { success: true, document: response.doc };
+        } catch (error) {
+          console.error('Failed to save document:', error);
+          const errorMessage = error.response?.data?.message || 'Failed to save document';
+          set({ error: errorMessage });
+          return { success: false, error: error.message };
+        }
+      },
+
+      // ✅ Real-time document updates (for socket integration)
+      updateDocumentContentFromSocket: (documentId, title, content, userId) => {
+        // Don't update if this is our own change
+        const { currentDocument } = get();
+        if (currentDocument?._id === documentId) {
+          set({
+            documentTitle: title || '',
+            documentContent: content || '',
+            // Don't mark as unsaved changes if it's from socket
+          });
+        }
+        
+        // Update in documents list
         set(state => ({
           documents: state.documents.map(doc => 
-            doc._id === documentId ? { ...doc, content } : doc
-          ),
-          currentDocument: state.currentDocument?._id === documentId 
-            ? { ...state.currentDocument, content }
-            : state.currentDocument
+            doc._id === documentId ? { ...doc, title, content } : doc
+          )
         }));
       },
 
+      // ✅ Handle user join/leave events
+      handleUserJoined: (userData) => {
+        set(state => ({
+          activeUsers: [...state.activeUsers.filter(u => u.userId !== userData.userId), userData]
+        }));
+      },
+
+      handleUserLeft: (userData) => {
+        set(state => ({
+          activeUsers: state.activeUsers.filter(u => u.userId !== userData.userId)
+        }));
+      },
+
+      // ✅ Clear all document data (matching whiteboard pattern)
       clearDocuments: () => set({ 
         documents: [], 
-        currentDocument: null, 
-        error: null 
+        currentDocument: null,
+        documentContent: '',
+        documentTitle: '',
+        error: null,
+        userRole: null,
+        canEdit: false,
+        canView: false,
+        canCreate: false,
+        canDelete: false,
+        isDocumentOwner: false,
+        isWorkspaceOwner: false,
+        isAdmin: false,
+        activeUsers: [],
+        hasUnsavedChanges: false,
+        lastSaved: null,
+        userCount: 1,
+        isConnected: false
       }),
+
+      // ✅ Reset document editing state
+      resetDocumentState: () => set({
+        currentDocument: null,
+        documentContent: '',
+        documentTitle: '',
+        hasUnsavedChanges: false,
+        lastSaved: null,
+        activeUsers: [],
+        userCount: 1,
+        isConnected: false,
+        error: null
+      })
     }),
     {
       name: 'document-storage',
       partialize: (state) => ({ 
         documents: state.documents,
-        currentDocument: state.currentDocument 
+        // Don't persist sensitive states like permissions
+        userRole: state.userRole
       }),
     }
   )
