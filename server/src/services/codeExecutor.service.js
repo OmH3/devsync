@@ -4,9 +4,21 @@ import CodeEditorModel from "../models/CodeEditor.model.js";
 import { NotFoundException, BadRequestException } from "../utils/app-error.js";
 import MemberModel from "../models/Member.model.js";
 import { executeByLanguage } from "../coderunners/scripts.runner.js";
+import { getMemberRoleInWorkspace } from "./member.service.js";
 
+// ✅ FIXED: Execute code service with proper workspace permissions
 export const executeCodeService = async (codeEditorId, userId, body) => {
-  const { input = "", saveBeforeExecution = true } = body;
+  // ✅ Extract parameters correctly (matching your original structure)
+  const { code, input = "", language, saveBeforeExecution = true } = body;
+
+  console.log('🔍 Execute service received:', { 
+    codeEditorId, 
+    userId, 
+    codeLength: code?.length || 'undefined',
+    inputLength: input?.length || 'undefined',
+    language,
+    fromBody: !!code // Check if code came from request body
+  });
 
   // Get code editor
   const codeEditor = await CodeEditorModel.findById(codeEditorId);
@@ -14,71 +26,123 @@ export const executeCodeService = async (codeEditorId, userId, body) => {
     throw new NotFoundException("Code editor not found");
   }
 
-  // Check if user has permission to execute
+  // ✅ FIXED: Use workspace role-based permissions (allows ADMIN)
+  const { role } = await getMemberRoleInWorkspace(userId, codeEditor.workspaceId);
+  
+  if (!role) {
+    throw new BadRequestException("You are not a member of this workspace");
+  }
+
+  console.log('✅ User role for execution:', role, '- execution allowed');
+
+  // ✅ Get member for additional checks if needed
   const member = await MemberModel.findOne({
     userId,
     workspaceId: codeEditor.workspaceId,
   });
 
   if (!member) {
-    throw new BadRequestException("You are not authorized to execute this code");
+    throw new BadRequestException("Member record not found");
   }
 
   const isCreator = codeEditor.creatorId.toString() === userId.toString();
-
   const isCollaborator = codeEditor.collaborators.some(
     collaboratorId => collaboratorId.toString() === member._id.toString()
   );
 
-  if (!isCreator && !isCollaborator) {
+  // ✅ FIXED: Allow OWNER, ADMIN, creator, or collaborator to execute
+  const canExecute = role === 'OWNER' || role === 'ADMIN' || isCreator || isCollaborator;
+  
+  if (!canExecute) {
     throw new BadRequestException("You are not authorized to execute this code");
   }
 
-  // Create execution record
+  // ✅ Use code from request body OR fallback to editor content
+  const codeToExecute = code || codeEditor.content;
+  const languageToUse = language || codeEditor.language;
+
+  if (!codeToExecute || !codeToExecute.trim()) {
+    throw new BadRequestException("No code to execute");
+  }
+
+  // ✅ Create execution record (matching your original structure)
   const execution = new CodeExecutionModel({
     codeEditorId,
     executorId: userId,
-    language: codeEditor.language,
-    code: codeEditor.content,
+    language: languageToUse,
+    code: codeToExecute,
     input,
     workspaceId: codeEditor.workspaceId,
-    status: "pending",
+    status: "pending", // ✅ Use "pending" to match your original
+  });
+
+  console.log("✅ Execution record created:", {
+    id: execution._id,
+    language: execution.language,
+    codeLength: execution.code.length
   });
 
   await execution.save();
 
   try {
-    // Execute code based on language
+    const startTime = Date.now();
+
+    // ✅ Execute code using your original executeByLanguage function
     const result = await executeByLanguage(
-      codeEditor.language,
-      codeEditor.content,
+      languageToUse,
+      codeToExecute,
       input,
-      execution._id
+      execution._id // Pass execution ID as in your original
     );
 
-    // Update execution with results
+    console.log("✅ Execution result:", result);
+
+    // ✅ Update execution with results (matching your original structure)
     execution.output = result.output || "";
     execution.error = result.error || "";
-    execution.status = result.status;
-    execution.executionTime = result.executionTime;
+    execution.status = result.status || (result.error ? "failed" : "completed");
+    execution.executionTime = result.executionTime || (Date.now() - startTime);
     execution.memoryUsage = result.memoryUsage || 0;
     execution.exitCode = result.exitCode;
+    execution.completedAt = new Date(); // Add completion timestamp
 
     await execution.save();
+
+    console.log('✅ Code execution completed:', {
+      status: execution.status,
+      executionTime: execution.executionTime,
+      hasError: !!execution.error,
+      outputLength: execution.output.length
+    });
 
     return { execution };
+
   } catch (error) {
+    console.error('❌ Code execution error:', error);
+    
+    // ✅ Update execution record with error (matching your original)
     execution.status = "failed";
     execution.error = error.message;
+    execution.executionTime = Date.now() - startTime;
+    execution.completedAt = new Date();
     await execution.save();
+    
     throw error;
   }
 };
 
+// ✅ Keep execution history service as is (it was working)
 export const getExecutionHistoryService = async (codeEditorId, userId) => {
   const codeEditor = await CodeEditorModel.findById(codeEditorId);
   if (!codeEditor || !codeEditor.isActive) {
     throw new NotFoundException("Code editor not found");
+  }
+
+  // ✅ Check workspace permissions
+  const { role } = await getMemberRoleInWorkspace(userId, codeEditor.workspaceId);
+  
+  if (!role) {
+    throw new BadRequestException("You are not a member of this workspace");
   }
 
   const executions = await CodeExecutionModel.find({
@@ -88,5 +152,6 @@ export const getExecutionHistoryService = async (codeEditorId, userId) => {
     .sort({ createdAt: -1 })
     .limit(20); // Last 20 executions
 
+  console.log("✅ Found executions:", executions.length);
   return { executions };
 };

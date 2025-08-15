@@ -2,6 +2,7 @@ import { authenticateSocket } from '../middleware/isAuthenticated.middleware.js'
 import { setupWhiteboardHandlers } from '../handlers/whiteboard.handlers.js';
 import { setupDocsHandlers } from '../handlers/docs.handlers.js';
 import { setupCodeEditorHandlers } from '../handlers/codeeditor.handlers.js';
+import { setupFileSystemHandlers } from '../handlers/filesystem.handlers.js';
 import { setupWorkspaceHandlers } from '../handlers/workspace.handlers.js';
 import { Server } from 'socket.io';
 import { setupCallSocketEvents } from '../controllers/stream.controller.js';
@@ -17,7 +18,8 @@ export const setupSocketIO = (io) => {
     setupWorkspaceHandlers(socket, io);
     setupWhiteboardHandlers(socket, io);
     setupDocsHandlers(socket, io);
-    setupCodeEditorHandlers(socket, io);
+    setupCodeEditorHandlers(socket, io);    // ✅ Add this
+    setupFileSystemHandlers(socket, io);
     setupCallSocketEvents(socket);
 
     // Handle disconnection

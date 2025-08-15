@@ -33,3 +33,20 @@ export const fileSystemIdSchema = z
 export const moveFileSystemItemSchema = z.object({
   newParentId: z.string().trim().nullable().optional()
 });
+
+// ✅ Add these missing schemas
+export const updateFileSystemContentSchema = z.object({
+  content: z.string().min(0),
+  language: z.string().optional()
+});
+
+export const duplicateFileSystemItemSchema = z.object({
+  name: z.string().optional(),
+  parentId: z.string().optional()
+});
+
+export const bulkDeleteSchema = z.object({
+  itemIds: z.array(z.string().min(1)).min(1, "At least one item ID required")
+});
+
+// ... existing schemas remain the same

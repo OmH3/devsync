@@ -29,6 +29,7 @@ import { setupSocketIO } from './config/socket.config.js';
 import { setSocketIO as setWhiteboardSocketIO } from './controllers/whiteboard.controller.js';
 import { setSocketIO as setDocsSocketIO } from './controllers/docs.controllers.js';
 import { setSocketIO as setCodeEditorSocketIO } from './controllers/codeeditor.controller.js';
+import { setSocketIO as setFileSystemSocketIO } from './controllers/filesystem.controller.js';
 import streamRoutes from './routes/stream.routes.js';
 
 import { setSocketIO as setStreamSocketIO } from './controllers/stream.controller.js';
@@ -83,7 +84,8 @@ setupSocketIO(io);
 // ✅ Pass Socket.IO instance to controllers
 setWhiteboardSocketIO(io);
 setDocsSocketIO(io);
-setCodeEditorSocketIO(io);
+setCodeEditorSocketIO(io);           // ✅ Add this
+setFileSystemSocketIO(io); 
 setStreamSocketIO(io); // Add this line
 
 app.get('/', asyncHandler(async(req, res, next)=>{

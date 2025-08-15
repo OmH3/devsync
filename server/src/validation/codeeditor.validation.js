@@ -30,3 +30,19 @@ export const executeCodeSchema = z.object({
   input: z.string().optional(),
   saveBeforeExecution: z.boolean().default(true),
 });
+
+// ✅ Add these missing schemas
+export const createCodeEditorSchema = z.object({
+  title: z.string().min(1, "Title is required").max(255, "Title too long"),
+  content: z.string().optional().default(""),
+  language: z.string().optional().default("javascript"),
+  fileSystemId: z.string().optional()
+});
+
+export const saveCodeEditorContentSchema = z.object({
+  title: z.string().optional(),
+  content: z.string().optional(),
+  language: z.string().optional()
+});
+
+// ... existing schemas remain the same
