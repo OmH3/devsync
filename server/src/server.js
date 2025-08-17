@@ -24,6 +24,8 @@ import authRoutes from './routes/auth.routes.js';
 import userRoutes from './routes/user.routes.js';
 import isAuthenticated from './middleware/isAuthenticated.middleware.js';
 import whiteboardRoutes from './routes/whiteboard.routes.js';
+import audioRoomRoutes from "./routes/audioroom.routes.js";
+
 // Fix this import path
 import { setupSocketIO } from './config/socket.config.js';
 import { setSocketIO as setWhiteboardSocketIO } from './controllers/whiteboard.controller.js';
@@ -33,6 +35,7 @@ import { setSocketIO as setFileSystemSocketIO } from './controllers/filesystem.c
 import streamRoutes from './routes/stream.routes.js';
 
 import { setSocketIO as setStreamSocketIO } from './controllers/stream.controller.js';
+import { setSocketIO as setAudioRoomSocketIO } from './controllers/audioroom.controller.js';
 
 const app = express();
 const server = createServer(app); // ✅ Create HTTP server
@@ -87,6 +90,7 @@ setDocsSocketIO(io);
 setCodeEditorSocketIO(io);           // ✅ Add this
 setFileSystemSocketIO(io); 
 setStreamSocketIO(io); // Add this line
+setAudioRoomSocketIO(io); // ✅ Add this line
 
 app.get('/', asyncHandler(async(req, res, next)=>{
     if (req.query.error === 'true') {
@@ -109,6 +113,7 @@ app.use(`${BASE_PATH}/filesystem`, isAuthenticated, filesystemRoutes);
 app.use(`${BASE_PATH}/codeeditor`, isAuthenticated, codeeditorRoutes);
 app.use(`${BASE_PATH}/whiteboard`, isAuthenticated, whiteboardRoutes);
 app.use(`${BASE_PATH}/stream`, isAuthenticated, streamRoutes);
+app.use(`${BASE_PATH}/audioroom`, isAuthenticated, audioRoomRoutes);
 
 // create error handler
 app.use(errorHandler);

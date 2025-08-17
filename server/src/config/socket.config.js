@@ -4,6 +4,7 @@ import { setupDocsHandlers } from '../handlers/docs.handlers.js';
 import { setupCodeEditorHandlers } from '../handlers/codeeditor.handlers.js';
 import { setupFileSystemHandlers } from '../handlers/filesystem.handlers.js';
 import { setupWorkspaceHandlers } from '../handlers/workspace.handlers.js';
+import { setupAudioRoomHandlers } from '../handlers/audioroom.handlers.js';
 import { Server } from 'socket.io';
 import { setupCallSocketEvents } from '../controllers/stream.controller.js';
 
@@ -18,9 +19,11 @@ export const setupSocketIO = (io) => {
     setupWorkspaceHandlers(socket, io);
     setupWhiteboardHandlers(socket, io);
     setupDocsHandlers(socket, io);
-    setupCodeEditorHandlers(socket, io);    // ✅ Add this
+    setupCodeEditorHandlers(socket, io);
     setupFileSystemHandlers(socket, io);
     setupCallSocketEvents(socket);
+    // ✅ FIX: Remove the third parameter
+    setupAudioRoomHandlers(socket, io);
 
     // Handle disconnection
     socket.on('disconnect', () => {

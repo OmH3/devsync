@@ -8,6 +8,7 @@ import DocumentsList from '../components/DocumentsList.jsx';
 import CodeEditorMain from '../components/CodeEditorMain.jsx';
 import WhiteboardMain from '../components/WhiteboardMain.jsx';
 import VideoCallMain from '../components/VideoCallMain.jsx';
+import AudioRoomButton from '../components/AudioRoomButton.jsx';
 
 const Dashboard = () => {
   const { user, logout } = useAuth();
@@ -239,7 +240,9 @@ const Dashboard = () => {
                 </div>
               </div>
               
-              <div className="mt-4 flex space-x-4">
+              {/* ✅ Workspace Tools Section with Audio Room Button */}
+              <div className="mt-4 flex flex-wrap items-center gap-4">
+                {/* Main Tool Buttons */}
                 <button 
                   onClick={() => handleToolClick('whiteboard')}
                   className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
@@ -248,7 +251,7 @@ const Dashboard = () => {
                       : 'bg-indigo-600 hover:bg-indigo-700 text-white'
                   }`}
                 >
-                  Open Whiteboard
+                  📝 Open Whiteboard
                 </button>
                 <button 
                   onClick={() => handleToolClick('documents')}
@@ -258,7 +261,7 @@ const Dashboard = () => {
                       : 'bg-green-600 hover:bg-green-700 text-white'
                   }`}
                 >
-                  Open Documents
+                  📄 Open Documents
                 </button>
                 <button 
                   onClick={() => handleToolClick('code')}
@@ -268,7 +271,7 @@ const Dashboard = () => {
                       : 'bg-blue-600 hover:bg-blue-700 text-white'
                   }`}
                 >
-                  Open Code Editor
+                  💻 Open Code Editor
                 </button>
                 <button 
                   onClick={() => handleToolClick('video')}
@@ -278,8 +281,13 @@ const Dashboard = () => {
                       : 'bg-purple-600 hover:bg-purple-700 text-white'
                   }`}
                 >
-                  Start Video Call
+                  📹 Start Video Call
                 </button>
+                
+                {/* ✅ Audio Room Button - Always Visible */}
+                <div className="ml-4 pl-4 border-l border-gray-300">
+                  <AudioRoomButton workspaceId={currentWorkspace._id} />
+                </div>
               </div>
             </div>
           )}
@@ -298,30 +306,55 @@ const Dashboard = () => {
                       onClick={handleJoinWorkspace}
                       className="w-full text-left p-3 rounded-md border border-gray-200 hover:bg-gray-50"
                     >
-                      <div className="font-medium">Join Workspace</div>
+                      <div className="font-medium">👥 Join Workspace</div>
                       <div className="text-sm text-gray-500">Enter an invite code</div>
                     </button>
                     <button 
                       onClick={() => handleToolClick('documents')}
                       className="w-full text-left p-3 rounded-md border border-gray-200 hover:bg-gray-50"
                     >
-                      <div className="font-medium">Open Documents</div>
+                      <div className="font-medium">📄 Open Documents</div>
                       <div className="text-sm text-gray-500">Collaborative document editing</div>
                     </button>
                     <button 
                       onClick={() => handleToolClick('whiteboard')}
                       className="w-full text-left p-3 rounded-md border border-gray-200 hover:bg-gray-50"
                     >
-                      <div className="font-medium">Open Whiteboard</div>
+                      <div className="font-medium">📝 Open Whiteboard</div>
                       <div className="text-sm text-gray-500">Visual collaboration</div>
                     </button>
+                    <button 
+                      onClick={() => handleToolClick('code')}
+                      className="w-full text-left p-3 rounded-md border border-gray-200 hover:bg-gray-50"
+                    >
+                      <div className="font-medium">💻 Open Code Editor</div>
+                      <div className="text-sm text-gray-500">Collaborative coding</div>
+                    </button>
+                    <button 
+                      onClick={() => handleToolClick('video')}
+                      className="w-full text-left p-3 rounded-md border border-gray-200 hover:bg-gray-50"
+                    >
+                      <div className="font-medium">📹 Start Video Call</div>
+                      <div className="text-sm text-gray-500">Face-to-face collaboration</div>
+                    </button>
+                  </div>
+
+                  {/* ✅ Audio Room Section in Sidebar */}
+                  <div className="mt-6 pt-6 border-t border-gray-200">
+                    <h4 className="text-md font-medium text-gray-900 mb-3">🎵 Team Audio</h4>
+                    <div className="bg-purple-50 p-3 rounded-md border border-purple-200">
+                      <p className="text-sm text-gray-600 mb-3">
+                        Start an audio room to talk with your team while working.
+                      </p>
+                      <AudioRoomButton workspaceId={currentWorkspace._id} />
+                    </div>
                   </div>
                 </div>
 
                 {/* Current Workspace Invite Code (Alternative Location) */}
                 {currentWorkspace && (
                   <div className="bg-white rounded-lg shadow p-6 mt-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Share Workspace</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">🔗 Share Workspace</h3>
                     <div className="text-center">
                       <p className="text-sm text-gray-600 mb-3">
                         Current workspace invite code:
@@ -335,7 +368,7 @@ const Dashboard = () => {
                         onClick={() => copyInviteCode(currentWorkspace.inviteCode)}
                         className="mt-3 w-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium"
                       >
-                        Copy Invite Code
+                        📋 Copy Invite Code
                       </button>
                     </div>
                   </div>
@@ -346,13 +379,18 @@ const Dashboard = () => {
             {/* Back to Overview Button for Full-Width Views */}
             {currentWorkspace && ['documents', 'whiteboard', 'code', 'video'].includes(activeView) && (
               <div className="lg:col-span-3">
-                <div className="mb-4">
+                <div className="mb-4 flex items-center justify-between">
                   <button
                     onClick={() => setActiveView('overview')}
                     className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md text-sm font-medium"
                   >
                     ← Back to Overview
                   </button>
+                  
+                  {/* ✅ Audio Room Button - Also visible in full-width views */}
+                  <div className="bg-white rounded-lg shadow px-4 py-2 border">
+                    <AudioRoomButton workspaceId={currentWorkspace._id} />
+                  </div>
                 </div>
               </div>
             )}
