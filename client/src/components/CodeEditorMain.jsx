@@ -780,7 +780,7 @@ const CodeEditorMain = ({ workspaceId, workspace }) => {
                   <RecentFiles />
                 </div>
                 
-                <div className="xl:col-span-1 lg:col-span-2 xl:col-span-1">
+                <div className="xl:col-span-1 lg:col-span-2">
                   <div className="grid grid-cols-1 gap-6">
                     <WorkspaceStats />
                     <ConnectionStatus />
