@@ -11,6 +11,7 @@ import codeeditorRoutes from "./routes/codeeditor.routes.js";
 import "dotenv/config";
 import { config } from "./config/app.config.js";
 import session from "express-session";
+import MongoStore from 'connect-mongo';
 import passport from "passport";
 import cors from "cors";
 import "./config/passport.config.js";
@@ -61,11 +62,17 @@ const sessionMiddleware = session({
   resave: false,
   saveUninitialized: false,
   name: "session",
+  store: MongoStore.create({
+    mongoUrl: process.env.MONGO_URI,
+    collectionName: 'sessions',
+    ttl: 7 * 24 * 60 * 60, // 7 days
+    autoRemove: 'native'
+  }),
   cookie: {
     maxAge: 24 * 60 * 60 * 1000,
     secure: process.env.NODE_ENV === "production",
     httpOnly: true,
-    sameSite: "lax",
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
     path: "/",
   },
 });
