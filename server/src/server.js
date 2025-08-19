@@ -66,28 +66,59 @@ const sessionMiddleware = session({
     mongoUrl: process.env.MONGO_URI,
     collectionName: 'sessions',
     ttl: 7 * 24 * 60 * 60, // 7 days
-    autoRemove: 'native'
+    autoRemove: 'native',
+    touchAfter: 24 * 3600 // Lazy session update
   }),
   cookie: {
     maxAge: 24 * 60 * 60 * 1000,
     secure: process.env.NODE_ENV === "production",
     httpOnly: true,
     sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-    path: "/",
+    domain: process.env.NODE_ENV === 'production' ? undefined : undefined // Let browser decide
   },
+  proxy: process.env.NODE_ENV === 'production' // Trust proxy in production
 });
 app.use(sessionMiddleware);
 app.use(passport.initialize());
 app.use(passport.session());
 
-app.use(
-  cors({
-    origin: config.FRONTEND_ORIGIN,
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  })
-);
+// ✅ CRITICAL: Configure CORS AFTER session but BEFORE routes
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests with no origin (mobile apps, postman, etc.)
+    if (!origin) return callback(null, true);
+    
+    const allowedOrigins = [
+      'http://localhost:5173',
+      'http://localhost:3000',
+      'https://devsync-mu.vercel.app',
+      process.env.FRONTEND_ORIGIN
+    ].filter(Boolean);
+    
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true, // CRITICAL: Allow cookies
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization',
+    'X-Requested-With',
+    'Accept',
+    'Origin',
+    'Cookie'
+  ],
+  exposedHeaders: ['Set-Cookie'],
+  optionsSuccessStatus: 200
+};
+
+app.use(cors(corsOptions));
+
+// Handle preflight requests
+app.options('*', cors(corsOptions));
 
 // ✅ Setup Socket.IO with session sharing
 io.use((socket, next) => {
