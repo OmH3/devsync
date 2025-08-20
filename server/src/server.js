@@ -1,43 +1,46 @@
 import express from "express";
-// socket
 import { createServer } from "http";
 import { Server } from "socket.io";
+import "dotenv/config";
+import session from "express-session";
+import MongoStore from 'connect-mongo';
+import passport from "passport";
+import cors from "cors";
 
+// --- Configuration and Database Connection ---
+import { config } from "./config/app.config.js";
+import "./config/passport.config.js";
+import connectDatabase from "./config/database.config.js";
+import { setupSocketIO } from "./config/socket.config.js";
+
+// --- Middleware ---
+import { errorHandler } from "./middleware/error-handler.middleware.js";
+import isAuthenticated from "./middleware/isAuthenticated.middleware.js";
+
+// --- Route Imports ---
+import authRoutes from "./routes/auth.routes.js";
+import userRoutes from "./routes/user.routes.js";
 import workspaceRoutes from "./routes/workspace.routes.js";
 import memberRoutes from "./routes/member.routes.js";
 import docsRoutes from "./routes/docs.routes.js";
 import filesystemRoutes from "./routes/filesystem.routes.js";
 import codeeditorRoutes from "./routes/codeeditor.routes.js";
-import "dotenv/config";
-import { config } from "./config/app.config.js";
-import session from "express-session";
-import MongoStore from 'connect-mongo';
-import passport from "passport";
-import cors from "cors";
-import "./config/passport.config.js";
-import connectDatabase from "./config/database.config.js";
-import { errorHandler } from "./middleware/error-handler.middleware.js";
-import authRoutes from "./routes/auth.routes.js";
-import userRoutes from "./routes/user.routes.js";
-import isAuthenticated from "./middleware/isAuthenticated.middleware.js";
 import whiteboardRoutes from "./routes/whiteboard.routes.js";
 import audioRoomRoutes from "./routes/audioroom.routes.js";
+import streamRoutes from "./routes/stream.routes.js";
+import healthRoutes from './routes/health.routes.js';
 
-// Fix this import path
-import { setupSocketIO } from "./config/socket.config.js";
+// --- Controller Imports for Socket.IO ---
 import { setSocketIO as setWhiteboardSocketIO } from "./controllers/whiteboard.controller.js";
 import { setSocketIO as setDocsSocketIO } from "./controllers/docs.controllers.js";
 import { setSocketIO as setCodeEditorSocketIO } from "./controllers/codeeditor.controller.js";
 import { setSocketIO as setFileSystemSocketIO } from "./controllers/filesystem.controller.js";
-import streamRoutes from "./routes/stream.routes.js";
-
 import { setSocketIO as setStreamSocketIO } from "./controllers/stream.controller.js";
 import { setSocketIO as setAudioRoomSocketIO } from "./controllers/audioroom.controller.js";
 
-import healthRoutes from './routes/health.routes.js';
-
+// --- App and Server Initialization ---
 const app = express();
-const server = createServer(app); // ✅ Create HTTP server
+const server = createServer(app);
 const io = new Server(server, {
   cors: {
     origin: config.FRONTEND_ORIGIN,
@@ -46,13 +49,21 @@ const io = new Server(server, {
     allowedHeaders: ["Content-Type", "Authorization"],
   },
 });
-
 const BASE_PATH = config.BASE_PATH;
 
+// --- Global Middleware Setup ---
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(
+  cors({
+    origin: config.FRONTEND_ORIGIN,
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 
-// Session configuration
+// --- Session and Passport Configuration ---
 const sessionMiddleware = session({
   secret: config.SESSION_SECRET,
   resave: false,
@@ -63,98 +74,42 @@ const sessionMiddleware = session({
     collectionName: 'sessions',
     ttl: 7 * 24 * 60 * 60, // 7 days
     autoRemove: 'native',
-    touchAfter: 24 * 3600 // Lazy session update
   }),
   cookie: {
     maxAge: 24 * 60 * 60 * 1000,
     secure: true,
     httpOnly: true,
-<<<<<<< HEAD
-    sameSite: "none",
+    sameSite: 'none',
     path: "/",
-=======
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-    domain: process.env.NODE_ENV === 'production' ? undefined : undefined // Let browser decide
->>>>>>> 15d8cd5fece320cf8623e351745930d1a1f3b3ab
   },
-  proxy: process.env.NODE_ENV === 'production' // Trust proxy in production
 });
 app.use(sessionMiddleware);
 app.use(passport.initialize());
 app.use(passport.session());
 
-// ✅ CRITICAL: Configure CORS AFTER session but BEFORE routes
-const corsOptions = {
-  origin: function (origin, callback) {
-    // Allow requests with no origin (mobile apps, postman, etc.)
-    if (!origin) return callback(null, true);
-    
-    const allowedOrigins = [
-      'http://localhost:5173',
-      'http://localhost:3000',
-      'https://devsync-mu.vercel.app',
-      process.env.FRONTEND_ORIGIN
-    ].filter(Boolean);
-    
-    if (allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true, // CRITICAL: Allow cookies
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: [
-    'Content-Type',
-    'Authorization',
-    'X-Requested-With',
-    'Accept',
-    'Origin',
-    'Cookie'
-  ],
-  exposedHeaders: ['Set-Cookie'],
-  optionsSuccessStatus: 200
-};
-
-app.use(cors(corsOptions));
-
-// Handle preflight requests
-app.options('*', cors(corsOptions));
-
-// ✅ Setup Socket.IO with session sharing
+// --- Socket.IO Integration ---
+// This middleware allows Socket.IO to share the same session as Express.
 io.use((socket, next) => {
   sessionMiddleware(socket.request, {}, next);
 });
 
-// ✅ Initialize Socket.IO handlers
+// Initialize Socket.IO handlers and pass the instance to controllers.
 setupSocketIO(io);
-
-// ✅ Pass Socket.IO instance to controllers
 setWhiteboardSocketIO(io);
 setDocsSocketIO(io);
-setCodeEditorSocketIO(io); // ✅ Add this
+setCodeEditorSocketIO(io);
 setFileSystemSocketIO(io);
-setStreamSocketIO(io); // Add this line
-setAudioRoomSocketIO(io); // ✅ Add this line
+setStreamSocketIO(io);
+setAudioRoomSocketIO(io);
 
-// app.get(
-//   "/",
-//   asyncHandler(async (req, res, next) => {
-//     if (req.query.error === "true") {
-//       throw new BadRequestException(
-//         "This is a bad request",
-//         ErrorCodeEnum.AUTH_INVALID_TOKEN
-//       );
-//     }
-//     return res.status(HTTPSTATUS.OK).json({
-//       message: "Hello Subscribe to the channel & share",
-//     });
-//   })
-// );
-
+// --- Routes ---
+// Health check route
 app.use(`${BASE_PATH}/`, healthRoutes);
 
+// Auth routes don't require authentication middleware
 app.use(`${BASE_PATH}/auth`, authRoutes);
+
+// All other routes require authentication
 app.use(`${BASE_PATH}/user`, isAuthenticated, userRoutes);
 app.use(`${BASE_PATH}/workspace`, isAuthenticated, workspaceRoutes);
 app.use(`${BASE_PATH}/member`, isAuthenticated, memberRoutes);
@@ -165,10 +120,11 @@ app.use(`${BASE_PATH}/whiteboard`, isAuthenticated, whiteboardRoutes);
 app.use(`${BASE_PATH}/stream`, isAuthenticated, streamRoutes);
 app.use(`${BASE_PATH}/audioroom`, isAuthenticated, audioRoomRoutes);
 
-// create error handler
+// --- Error Handling Middleware ---
+// The error handler must be the last middleware in the stack.
 app.use(errorHandler);
 
-// ✅ Use server instead of app for listening
+// --- Server Start and Database Connection ---
 server.listen(config.PORT, async () => {
   console.log(`Server listening on port ${config.PORT} in ${config.NODE_ENV}`);
   await connectDatabase();
