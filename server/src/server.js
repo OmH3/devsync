@@ -50,7 +50,7 @@ const io = new Server(server, {
   },
 });
 const BASE_PATH = config.BASE_PATH;
-
+console.log(`Base API Path: ${BASE_PATH}`);
 // --- Global Middleware Setup ---
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -63,7 +63,6 @@ app.use(
   })
 );
 
-// --- Session and Passport Configuration ---
 const sessionMiddleware = session({
   secret: config.SESSION_SECRET,
   resave: false,
@@ -72,17 +71,21 @@ const sessionMiddleware = session({
   store: MongoStore.create({
     mongoUrl: process.env.MONGO_URI,
     collectionName: 'sessions',
-    ttl: 7 * 24 * 60 * 60, // 7 days
+    ttl: 7 * 24 * 60 * 60,
     autoRemove: 'native',
+    touchAfter: 24 * 3600, // lazy session update
+  }).on('error', (error) => {
+    console.error('MongoStore session error:', error);
   }),
   cookie: {
     maxAge: 24 * 60 * 60 * 1000,
-    secure: true,
+    secure: process.env.NODE_ENV === 'production',
     httpOnly: true,
-    sameSite: 'none',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
     path: "/",
   },
 });
+
 app.use(sessionMiddleware);
 app.use(passport.initialize());
 app.use(passport.session());
