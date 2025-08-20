@@ -15,10 +15,6 @@ import MongoStore from 'connect-mongo';
 import passport from "passport";
 import cors from "cors";
 import "./config/passport.config.js";
-import { asyncHandler } from "./middleware/async-handler.middleware.js";
-import { BadRequestException } from "./utils/app-error.js";
-import { ErrorCodeEnum } from "./enums/error-code.enum.js";
-import { HTTPSTATUS } from "./config/http.config.js";
 import connectDatabase from "./config/database.config.js";
 import { errorHandler } from "./middleware/error-handler.middleware.js";
 import authRoutes from "./routes/auth.routes.js";
@@ -70,9 +66,9 @@ const sessionMiddleware = session({
   }),
   cookie: {
     maxAge: 24 * 60 * 60 * 1000,
-    secure: process.env.NODE_ENV === "production",
+    secure: true,
     httpOnly: true,
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    sameSite: "none",
     path: "/",
   },
 });
