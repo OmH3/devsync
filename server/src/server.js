@@ -40,6 +40,10 @@ import { setSocketIO as setAudioRoomSocketIO } from "./controllers/audioroom.con
 
 // --- App and Server Initialization ---
 const app = express();
+
+// ✅ CRITICAL: Trust proxy for Render.com
+app.set("trust proxy", 1);
+
 const server = createServer(app);
 const io = new Server(server, {
   cors: {
