@@ -9,25 +9,19 @@ export const googleLoginCallback = asyncHandler(async (req, res) => {
   const user = req.user;
   
   if (!user) {
-    // ✅ Only redirect to failure if authentication actually failed
+    // ✅ Authentication failed
     return res.redirect(
       `${config.FRONTEND_GOOGLE_CALLBACK_URL}?status=failure&message=Authentication failed`
     );
   }
 
-  const currentWorkspace = user.currentWorkspace;
-
-  if (currentWorkspace) {
-    // ✅ User has a workspace, redirect to it
-    return res.redirect(
-      `${config.FRONTEND_ORIGIN}/workspace/${currentWorkspace}?status=success`
-    );
-  } else {
-    // ✅ User doesn't have a workspace, redirect to dashboard to show workspace list
-    return res.redirect(
-      `${config.FRONTEND_GOOGLE_CALLBACK_URL}?status=success&redirect=dashboard`
-    );
-  }
+  // ✅ ALWAYS redirect to dashboard for Google OAuth, ignore currentWorkspace
+  console.log('🔍 Google OAuth successful for user:', user._id);
+  console.log('🔍 Redirecting to dashboard instead of workspace');
+  
+  return res.redirect(
+    `${config.FRONTEND_GOOGLE_CALLBACK_URL}?status=success&redirect=dashboard`
+  );
 });
 
 export const registerUserController = asyncHandler(async (req, res) => {
