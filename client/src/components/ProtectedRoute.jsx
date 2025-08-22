@@ -5,7 +5,7 @@ import { useAuth } from '../hooks/useAuth.js';
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuth();
   const location = useLocation();
-
+  console.log("Protected route authentication: ", isAuthenticated);
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
