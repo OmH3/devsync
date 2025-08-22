@@ -21,7 +21,7 @@ router.get(
 );
 
 router.get('/google/callback',passport.authenticate('google',{
-    failureRedirect: failedUrl,
+    failureRedirect: "/login",
 }),
 googleLoginCallback
 )

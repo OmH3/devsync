@@ -8,6 +8,7 @@ import ProtectedRoute from './components/ProtectedRoute.jsx'
 import { useAuth } from './hooks/useAuth.js'
 import BackgroundAudioRoom from './components/BackgroundAudioRoom.jsx'
 import { useWorkspaceStore } from './store/workspaceStore.js'
+import GoogleCallback from './pages/GoogleCallback';
 
 function App() {
   const { isAuthenticated, isLoading } = useAuth()
@@ -44,6 +45,12 @@ function App() {
               <Dashboard />
             </ProtectedRoute>
           } 
+        />
+
+        {/* ✅ Add Google OAuth callback route */}
+        <Route 
+          path="/google/callback" 
+          element={<GoogleCallback />} 
         />
         
         {/* Add the new CallPage route */}

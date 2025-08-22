@@ -6,16 +6,28 @@ import { registerUserService } from "../services/auth.service.js";
 import { registerSchema } from "../validation/auth.validation.js";
 
 export const googleLoginCallback = asyncHandler(async (req, res) => {
-  const currentWorkspace = req.user?.currentWorkspace;
-
-  if (!currentWorkspace) {
+  const user = req.user;
+  
+  if (!user) {
+    // ✅ Only redirect to failure if authentication actually failed
     return res.redirect(
-      `${config.FRONTEND_GOOGLE_CALLBACK_URL}?status=failure`
+      `${config.FRONTEND_GOOGLE_CALLBACK_URL}?status=failure&message=Authentication failed`
     );
   }
-  return res.redirect(
-    `${config.FRONTEND_ORIGIN}/workspace/${currentWorkspace}`
-  );
+
+  const currentWorkspace = user.currentWorkspace;
+
+  if (currentWorkspace) {
+    // ✅ User has a workspace, redirect to it
+    return res.redirect(
+      `${config.FRONTEND_ORIGIN}/workspace/${currentWorkspace}?status=success`
+    );
+  } else {
+    // ✅ User doesn't have a workspace, redirect to dashboard to show workspace list
+    return res.redirect(
+      `${config.FRONTEND_GOOGLE_CALLBACK_URL}?status=success&redirect=dashboard`
+    );
+  }
 });
 
 export const registerUserController = asyncHandler(async (req, res) => {
