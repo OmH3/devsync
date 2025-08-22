@@ -17,12 +17,15 @@ const GoogleCallback = () => {
         console.log('🔍 Google callback received');
         console.log('🔍 Status:', status);
         console.log('🔍 Current URL:', window.location.href);
+        console.log('🔍 Current cookies:', document.cookie); // ✅ Check cookies
 
         if (status === 'success') {
           console.log('✅ OAuth successful, waiting for session...');
           
-          // ✅ Wait a moment for session to be established
-          await new Promise(resolve => setTimeout(resolve, 1500));
+          // ✅ Wait longer for session to be established
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          
+          console.log('🔍 Cookies after wait:', document.cookie); // ✅ Check again
           
           console.log('✅ Checking authentication...');
           const result = await checkAuth();
@@ -32,6 +35,7 @@ const GoogleCallback = () => {
             navigate('/dashboard', { replace: true });
           } else {
             console.log('❌ Authentication verification failed');
+            console.log('🔍 Final cookies:', document.cookie);
             navigate('/login?error=Session not established', { replace: true });
           }
         } else {

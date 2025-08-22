@@ -63,7 +63,8 @@ app.use(
     origin: config.FRONTEND_ORIGIN,
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    allowedHeaders: ["Content-Type", "Authorization","Cookie"],
+    exposedHeaders: ["Set-Cookie"], // ✅ Add this
   })
 );
 
@@ -93,6 +94,20 @@ const sessionMiddleware = session({
 app.use(sessionMiddleware);
 app.use(passport.initialize());
 app.use(passport.session());
+// Add this after sessionMiddleware in server.js
+app.use((req, res, next) => {
+  if (req.path.includes('/user/current') || req.path.includes('/auth/')) {
+    console.log('🔍 === REQUEST DEBUG ===');
+    console.log('🔍 Path:', req.path);
+    console.log('🔍 Origin:', req.headers.origin);
+    console.log('🔍 Cookie Header:', req.headers.cookie);
+    console.log('🔍 Session ID:', req.sessionID);
+    console.log('🔍 Is Authenticated:', req.isAuthenticated?.());
+    console.log('🔍 User:', req.user?._id);
+    console.log('========================');
+  }
+  next();
+});
 
 // --- Socket.IO Integration ---
 // This middleware allows Socket.IO to share the same session as Express.

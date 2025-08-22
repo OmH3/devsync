@@ -10,6 +10,21 @@ export const api = axios.create({
   },
 });
 
+// ✅ Add request interceptor to ensure credentials
+api.interceptors.request.use((config) => {
+  config.withCredentials = true;
+  
+  // ✅ Debug logging
+  console.log('🔍 API Request:', {
+    url: `${config.baseURL}${config.url}`,
+    method: config.method,
+    withCredentials: config.withCredentials,
+    cookies: document.cookie
+  });
+  
+  return config;
+});
+
 // Response interceptor for handling errors
 api.interceptors.response.use(
   (response) => response,

@@ -86,7 +86,6 @@ export const logOutController = asyncHandler(async(req, res) => {
                 .json({ error: "Failed to log out" });
         }
         
-        // Destroy the session completely
         req.session.destroy((err) => {
             if (err) {
                 console.error("Session destroy error:", err);
@@ -95,13 +94,12 @@ export const logOutController = asyncHandler(async(req, res) => {
                     .json({ error: "Failed to destroy session" });
             }
             
-            // Also clear any other auth-related cookies if they exist
-            res.clearCookie('session', {
-                maxAge: 0,
+            // ✅ Clear the correct cookie name
+            res.clearCookie('session', { // Changed from 'session'
                 path: '/',
                 httpOnly: true,
                 secure: process.env.NODE_ENV === "production",
-                sameSite: "lax"
+                sameSite: process.env.NODE_ENV === "production" ? "none" : "lax"
             });
             
             return res
