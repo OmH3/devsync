@@ -6,7 +6,6 @@ import { setupFileSystemHandlers } from '../handlers/filesystem.handlers.js';
 import { setupWorkspaceHandlers } from '../handlers/workspace.handlers.js';
 import { setupAudioRoomHandlers } from '../handlers/audioroom.handlers.js';
 import { Server } from 'socket.io';
-import { setupCallSocketEvents } from '../controllers/stream.controller.js';
 
 export const setupSocketIO = (io) => {
   // Authentication middleware
