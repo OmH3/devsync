@@ -12,8 +12,8 @@ router.get("/workspace/:workspaceId", getWorkspaceDocsController);
 // Get a specific document
 router.get("/:id", getDocByIdController);
 
-// ✅ FIX: Change route to match the service call
-router.get("/:docId/user-role", getUserRoleInDocumentController);
+// ✅ FIX: Route to get user role in workspace (matching whiteboard pattern)
+router.get("/user-role/:workspaceId", getUserRoleInWorkspaceController);
 
 // Update a document
 router.put("/:id", updateDocController);

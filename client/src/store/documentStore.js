@@ -7,23 +7,23 @@ export const useDocumentStore = create(
     (set, get) => ({
       documents: [],
       currentDocument: null,
-      documentContent: '', // ✅ Add content state
-      documentTitle: '', // ✅ Add title state
+      documentContent: '', 
+      documentTitle: '', 
       isLoading: false,
       error: null,
-      userCount: 1, // ✅ Add user count for collaboration
-      isConnected: false, // ✅ Add connection status
-      userRole: null, // ✅ Add user role state
-      canEdit: false, // ✅ Add edit permission state
-      canView: false, // ✅ Add view permission state
-      canCreate: false, // ✅ Add create permission state
-      canDelete: false, // ✅ Add delete permission state
-      isDocumentOwner: false, // ✅ Add ownership state
-      isWorkspaceOwner: false, // ✅ Add workspace ownership state
-      isAdmin: false, // ✅ Add admin state
-      activeUsers: [], // ✅ Add active users list
-      hasUnsavedChanges: false, // ✅ Add unsaved changes state
-      lastSaved: null, // ✅ Add last saved timestamp
+      userCount: 1, 
+      isConnected: false, 
+      userRole: null, 
+      canEdit: false, 
+      canView: false, 
+      canCreate: false, 
+      canDelete: false, 
+      isDocumentOwner: false, 
+      isWorkspaceOwner: false, 
+      isAdmin: false, 
+      activeUsers: [], 
+      hasUnsavedChanges: false, 
+      lastSaved: null, 
 
       // ✅ Connection and user management actions
       setUserCount: (count) => set({ userCount: count }),
@@ -67,11 +67,15 @@ export const useDocumentStore = create(
       setError: (error) => set({ error }),
       clearError: () => set({ error: null }),
 
-      // ✅ Fetch user role in document (matching whiteboard pattern)
-      fetchUserRoleInDocument: async (documentId) => {
+      // ✅ FIX: Fetch user role in workspace (matching whiteboard pattern exactly)
+      fetchUserRoleInDocument: async (workspaceId) => { // ✅ Changed parameter name but kept function name for consistency
         try {
-          const response = await documentService.getUserRoleInDocument(documentId);
+          console.log('🔍 Fetching user role for workspace:', workspaceId);
+          const response = await documentService.getUserRoleInWorkspace(workspaceId); // ✅ Fixed service call
+          
           const { role, permissions, isDocumentOwner, isWorkspaceOwner, isAdmin } = response;
+          
+          console.log('✅ User role response:', response);
           
           set({ 
             userRole: role,
@@ -130,15 +134,22 @@ export const useDocumentStore = create(
       // ✅ Create document with role check (matching whiteboard pattern)
       createDocument: async (documentData) => {
         const { userRole } = get();
-        if (userRole === 'MEMBER') {
-          set({ error: 'Members cannot create documents' });
-          return { success: false, error: 'Permission denied' };
+        console.log('🔍 Creating document with role:', userRole);
+        
+        // ✅ Allow all roles except explicitly restricted ones (more permissive than whiteboard)
+        if (!userRole || !['OWNER', 'ADMIN', 'MEMBER'].includes(userRole)) {
+          const errorMsg = 'You do not have permission to create documents';
+          set({ error: errorMsg });
+          return { success: false, error: errorMsg };
         }
 
         set({ isLoading: true, error: null });
         try {
+          console.log('📄 Sending create request:', documentData);
           const response = await documentService.createDocument(documentData);
           const newDocument = response.doc;
+          
+          console.log('✅ Document created:', newDocument);
           
           set(state => ({ 
             documents: [newDocument, ...state.documents],
@@ -151,6 +162,7 @@ export const useDocumentStore = create(
           
           return { success: true, document: newDocument };
         } catch (error) {
+          console.error('❌ Create document failed:', error);
           const errorMessage = error.response?.data?.message || 'Failed to create document';
           set({ error: errorMessage, isLoading: false });
           return { success: false, error: errorMessage };
@@ -161,13 +173,16 @@ export const useDocumentStore = create(
       fetchWorkspaceDocuments: async (workspaceId) => {
         set({ isLoading: true, error: null });
         try {
+          console.log('📄 Fetching documents for workspace:', workspaceId);
           const response = await documentService.getWorkspaceDocuments(workspaceId);
+          console.log('✅ Documents fetched:', response.docs?.length || 0);
           set({ 
             documents: response.docs || [], 
             isLoading: false 
           });
           return { success: true, documents: response.docs || [] };
         } catch (error) {
+          console.error('❌ Fetch documents failed:', error);
           const errorMessage = error.response?.data?.message || 'Failed to fetch documents';
           set({ error: errorMessage, isLoading: false });
           return { success: false, error: errorMessage };

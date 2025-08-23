@@ -24,7 +24,7 @@ const WhiteboardList = ({ workspaceId, onWhiteboardSelect }) => {
     if (workspaceId && !isLoading) {
       fetchWorkspaceWhiteboards(workspaceId);
     }
-  }, [workspaceId]); // Remove fetchWorkspaceWhiteboards from dependencies to prevent infinite calls
+  }, [workspaceId]); // Remove fetchWorkspaceWhite  boards from dependencies to prevent infinite calls
 
   const handleCreateSuccess = useCallback((newWhiteboard) => {
     console.log('New whiteboard created:', newWhiteboard);

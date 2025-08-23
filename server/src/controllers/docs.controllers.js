@@ -12,6 +12,7 @@ import {
 } from "../services/docs.service.js";
 import { getMemberRoleInWorkspace } from "../services/member.service.js";
 import { roleGuard } from "../utils/roleGuard.js";
+import { RolePermissions } from "../utils/role-permissions.js";
 import { 
   createDocSchema, 
   docIdSchema, 
@@ -33,20 +34,42 @@ export const createDocController = asyncHandler(async (req, res) => {
   const currentUser = await UserModel.findById(userId).select('currentWorkspace');
   const workspaceId = currentUser.currentWorkspace;
 
+  console.log('🔍 Create document request:', {
+    userId,
+    workspaceId,
+    body
+  });
+
   // ✅ Check if user has a current workspace
   if (!workspaceId) {
     throw new BadRequestException("No current workspace found");
   }
 
-  // ✅ Only OWNER and ADMIN can create documents (matching whiteboard pattern)
+  // ✅ Get user role and check permissions
   const { role } = await getMemberRoleInWorkspace(userId, workspaceId);
-  roleGuard(role, [Permissions.EDIT_DOCS]); // Changed from USE_DOCS
+  console.log('🔍 User role for creating document:', role);
+
+  // ✅ Allow OWNER, ADMIN, and MEMBER to create documents (same as whiteboard for creation)
+  try {
+    roleGuard(role, [Permissions.EDIT_DOCS]);
+    console.log('✅ Permission check passed for role:', role);
+  } catch (error) {
+    console.error('❌ Permission check failed:', error.message);
+    return res.status(HTTPSTATUS.FORBIDDEN).json({
+      message: "You do not have permission to create documents",
+      error: "Permission denied",
+      userRole: role,
+      requiredPermission: "EDIT_DOCS"
+    });
+  }
 
   // ✅ Pass workspaceId to the service
   const { doc } = await createDocService(userId, { 
     ...body, 
     workspaceId 
   });
+
+  console.log('✅ Document created successfully:', doc._id);
 
   // ✅ Emit socket event (matching whiteboard pattern)
   if (io) {
@@ -137,12 +160,28 @@ export const updateDocController = asyncHandler(async (req, res) => {
   // ✅ Get document first to check workspace (matching whiteboard pattern)
   const { doc: existingDoc } = await getDocByIdService(docId);
 
-  // ✅ Only OWNER and ADMIN can edit documents
+  // ✅ Check permissions for editing
   const { role } = await getMemberRoleInWorkspace(
     userId,
     existingDoc.workspaceId
   );
-  roleGuard(role, [Permissions.EDIT_DOCS]);
+
+  // ✅ Check if user is document owner
+  const isDocumentOwner = existingDoc.creatorId._id ? 
+    existingDoc.creatorId._id.toString() === userId.toString() : 
+    existingDoc.creatorId.toString() === userId.toString();
+
+  // ✅ Allow OWNER, ADMIN, or document owner to edit
+  const canEdit = role === 'OWNER' || role === 'ADMIN' || isDocumentOwner;
+
+  if (!canEdit) {
+    return res.status(HTTPSTATUS.FORBIDDEN).json({
+      message: "You do not have permission to edit this document",
+      error: "Permission denied",
+      userRole: role,
+      isDocumentOwner
+    });
+  }
 
   const { doc } = await updateDocService(docId, userId, body);
 
@@ -172,9 +211,25 @@ export const deleteDocController = asyncHandler(async (req, res) => {
   // ✅ Get document first to check workspace (matching whiteboard pattern)
   const { doc } = await getDocByIdService(docId);
 
-  // ✅ Only OWNER and ADMIN can delete documents
+  // ✅ Check permissions for deletion
   const { role } = await getMemberRoleInWorkspace(userId, doc.workspaceId);
-  roleGuard(role, [Permissions.EDIT_DOCS]);
+
+  // ✅ Check if user is document owner
+  const isDocumentOwner = doc.creatorId._id ? 
+    doc.creatorId._id.toString() === userId.toString() : 
+    doc.creatorId.toString() === userId.toString();
+
+  // ✅ Allow OWNER, ADMIN, or document owner to delete
+  const canDelete = role === 'OWNER' || role === 'ADMIN' || isDocumentOwner;
+
+  if (!canDelete) {
+    return res.status(HTTPSTATUS.FORBIDDEN).json({
+      message: "You do not have permission to delete this document",
+      error: "Permission denied",
+      userRole: role,
+      isDocumentOwner
+    });
+  }
 
   const result = await deleteDocService(docId, userId);
 
@@ -196,24 +251,19 @@ export const deleteDocController = asyncHandler(async (req, res) => {
   });
 });
 
-// ✅ Fixed function name and implementation (matching whiteboard pattern)
-export const getUserRoleInDocumentController = asyncHandler(async (req, res) => {
-  console.log('getUserRoleInDocumentController called with:', req.params);
+// ✅ FIX: New function name and implementation (matching whiteboard pattern exactly)
+export const getUserRoleInWorkspaceController = asyncHandler(async (req, res) => {
+  console.log('getUserRoleInWorkspaceController called with:', req.params);
   
-  const docId = docIdSchema.parse(req.params.docId);
+  const workspaceId = workspaceIdSchema.parse(req.params.workspaceId);
   const userId = req.user?._id;
 
-  console.log('Fetching role for userId:', userId, 'in document:', docId);
+  console.log('Fetching role for userId:', userId, 'in workspace:', workspaceId);
 
   try {
-    // ✅ Get document first
-    const { doc } = await getDocByIdService(docId);
-    
-    console.log('Found document:', doc.title, 'in workspace:', doc.workspaceId);
-    
-    // ✅ Get user's role in the workspace
-    const { role } = await getMemberRoleInWorkspace(userId, doc.workspaceId);
-    console.log('Found role:', role, 'for user in workspace:', doc.workspaceId);
+    // ✅ Get user's role in the workspace (exactly like whiteboard)
+    const { role } = await getMemberRoleInWorkspace(userId, workspaceId);
+    console.log('Found role:', role, 'for user in workspace:', workspaceId);
 
     // ✅ Check if role was found
     if (!role) {
@@ -224,56 +274,40 @@ export const getUserRoleInDocumentController = asyncHandler(async (req, res) => 
       });
     }
 
-    // ✅ Check if user is document owner
-    const isDocumentOwner = doc.creatorId._id ? 
-      doc.creatorId._id.toString() === userId.toString() : 
-      doc.creatorId.toString() === userId.toString();
+    // ✅ Permission logic (matching whiteboard but allowing document owners to edit their own)
+    const userPermissions = RolePermissions[role] || [];
     
-    console.log('Is document owner:', isDocumentOwner, 'creatorId:', doc.creatorId, 'userId:', userId);
+    const permissions = {
+      canEdit: userPermissions.includes(Permissions.EDIT_DOCS),
+      canView: userPermissions.includes(Permissions.USE_DOCS),
+      canCreate: userPermissions.includes(Permissions.EDIT_DOCS), // Same as edit for documents
+      canDelete: userPermissions.includes(Permissions.EDIT_DOCS) // Same as edit for documents
+    };
 
     const isWorkspaceOwner = role === 'OWNER';
     const isAdmin = role === 'ADMIN';
-    const isMember = role === 'MEMBER';
-    
-    // ✅ Permission logic (matching whiteboard but allowing document owners to edit)
-    const canEdit = isWorkspaceOwner || isAdmin || isDocumentOwner;
-    const canView = true; // All workspace members can view
-    const canCreate = isWorkspaceOwner || isAdmin || isMember;
-    const canDelete = isWorkspaceOwner || isAdmin || isDocumentOwner;
 
     console.log('Calculated permissions:', { 
-      canEdit, 
-      canView, 
-      canCreate, 
-      canDelete,
+      role,
+      permissions,
       isWorkspaceOwner,
-      isAdmin,
-      isDocumentOwner,
-      role 
+      isAdmin
     });
 
-    // ✅ Return comprehensive response (matching whiteboard pattern)
+    // ✅ Return comprehensive response (exactly matching whiteboard pattern)
     return res.status(HTTPSTATUS.OK).json({
-      message: "User role in document fetched successfully",
+      message: "User role fetched successfully",
       role: role,
-      isDocumentOwner,
+      isDocumentOwner: false, // Will be determined per document
       isWorkspaceOwner,
       isAdmin,
-      document: {
-        id: doc._id,
-        title: doc.title,
-        creatorId: doc.creatorId,
-        workspaceId: doc.workspaceId
+      workspace: {
+        id: workspaceId
       },
-      permissions: {
-        canEdit,
-        canView,
-        canCreate,
-        canDelete
-      }
+      permissions
     });
   } catch (error) {
-    console.error('Error fetching user role in document:', error);
+    console.error('Error fetching user role in workspace:', error);
     return res.status(HTTPSTATUS.INTERNAL_SERVER_ERROR).json({
       message: "Error fetching user permissions",
       error: error.message

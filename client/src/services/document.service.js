@@ -31,9 +31,9 @@ export const documentService = {
     return response.data;
   },
 
-  // ✅ Get user role and permissions (matches backend route: GET /docs/:docId/user-role)
-  async getUserRoleInDocument(documentId) {
-    const response = await api.get(`/docs/${documentId}/user-role`);
+  // ✅ FIX: Get user role for workspace (to match whiteboard pattern)
+  async getUserRoleInWorkspace(workspaceId) {
+    const response = await api.get(`/docs/user-role/${workspaceId}`);
     return response.data;
   },
 
