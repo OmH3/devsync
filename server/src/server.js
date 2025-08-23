@@ -84,9 +84,9 @@ const sessionMiddleware = session({
   }),
   cookie: {
     maxAge: 24 * 60 * 60 * 1000,
-    secure: process.env.NODE_ENV === 'production',
+    secure: true,
     httpOnly: true,
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    sameSite: "none",
     path: "/",
   },
 });
