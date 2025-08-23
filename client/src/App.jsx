@@ -3,7 +3,6 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import Login from './pages/Login.jsx'
 import Register from './pages/Register.jsx'
 import Dashboard from './pages/Dashboard.jsx'
-import CallPage from './components/CallPage.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
 import { useAuth } from './hooks/useAuth.js'
 import BackgroundAudioRoom from './components/BackgroundAudioRoom.jsx'
@@ -51,16 +50,6 @@ function App() {
         <Route 
           path="/google/callback" 
           element={<GoogleCallback />} 
-        />
-        
-        {/* Add the new CallPage route */}
-        <Route 
-          path="/call/:callId" 
-          element={
-            <ProtectedRoute>
-              <CallPage />
-            </ProtectedRoute>
-          } 
         />
         {/* Add more protected routes here */}
       </Routes>

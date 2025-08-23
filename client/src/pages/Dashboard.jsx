@@ -7,7 +7,6 @@ import JoinWorkspace from '../components/JoinWorkspace.jsx';
 import DocumentsList from '../components/DocumentsList.jsx';
 import CodeEditorMain from '../components/CodeEditorMain.jsx';
 import WhiteboardMain from '../components/WhiteboardMain.jsx';
-import VideoCallMain from '../components/VideoCallMain.jsx';
 import AudioRoomButton from '../components/AudioRoomButton.jsx';
 
 const Dashboard = () => {
@@ -131,14 +130,6 @@ const Dashboard = () => {
           <div className="lg:col-span-3">
             <div className="bg-white rounded-lg shadow overflow-hidden" style={{ height: '600px' }}>
               <CodeEditorMain workspaceId={currentWorkspace._id} workspace={currentWorkspace} />
-            </div>
-          </div>
-        );
-      case 'video':
-        return (
-          <div className="lg:col-span-3">
-            <div className="bg-white rounded-lg shadow overflow-hidden" style={{ height: '600px' }}>
-              <VideoCallMain workspaceId={currentWorkspace._id} workspace={currentWorkspace} />
             </div>
           </div>
         );
@@ -273,16 +264,6 @@ const Dashboard = () => {
                 >
                   💻 Open Code Editor
                 </button>
-                <button 
-                  onClick={() => handleToolClick('video')}
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                    activeView === 'video' 
-                      ? 'bg-purple-700 text-white' 
-                      : 'bg-purple-600 hover:bg-purple-700 text-white'
-                  }`}
-                >
-                  📹 Start Video Call
-                </button>
                 
                 {/* ✅ Audio Room Button - Always Visible */}
                 <div className="ml-4 pl-4 border-l border-gray-300">
@@ -329,13 +310,6 @@ const Dashboard = () => {
                     >
                       <div className="font-medium">💻 Open Code Editor</div>
                       <div className="text-sm text-gray-500">Collaborative coding</div>
-                    </button>
-                    <button 
-                      onClick={() => handleToolClick('video')}
-                      className="w-full text-left p-3 rounded-md border border-gray-200 hover:bg-gray-50"
-                    >
-                      <div className="font-medium">📹 Start Video Call</div>
-                      <div className="text-sm text-gray-500">Face-to-face collaboration</div>
                     </button>
                   </div>
 

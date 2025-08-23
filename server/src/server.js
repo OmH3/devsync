@@ -27,7 +27,6 @@ import filesystemRoutes from "./routes/filesystem.routes.js";
 import codeeditorRoutes from "./routes/codeeditor.routes.js";
 import whiteboardRoutes from "./routes/whiteboard.routes.js";
 import audioRoomRoutes from "./routes/audioroom.routes.js";
-import streamRoutes from "./routes/stream.routes.js";
 import healthRoutes from './routes/health.routes.js';
 
 // --- Controller Imports for Socket.IO ---
@@ -35,7 +34,6 @@ import { setSocketIO as setWhiteboardSocketIO } from "./controllers/whiteboard.c
 import { setSocketIO as setDocsSocketIO } from "./controllers/docs.controllers.js";
 import { setSocketIO as setCodeEditorSocketIO } from "./controllers/codeeditor.controller.js";
 import { setSocketIO as setFileSystemSocketIO } from "./controllers/filesystem.controller.js";
-import { setSocketIO as setStreamSocketIO } from "./controllers/stream.controller.js";
 import { setSocketIO as setAudioRoomSocketIO } from "./controllers/audioroom.controller.js";
 
 // --- App and Server Initialization ---
@@ -121,7 +119,6 @@ setWhiteboardSocketIO(io);
 setDocsSocketIO(io);
 setCodeEditorSocketIO(io);
 setFileSystemSocketIO(io);
-setStreamSocketIO(io);
 setAudioRoomSocketIO(io);
 
 // --- Routes ---
@@ -139,7 +136,6 @@ app.use(`${BASE_PATH}/docs`, isAuthenticated, docsRoutes);
 app.use(`${BASE_PATH}/filesystem`, isAuthenticated, filesystemRoutes);
 app.use(`${BASE_PATH}/codeeditor`, isAuthenticated, codeeditorRoutes);
 app.use(`${BASE_PATH}/whiteboard`, isAuthenticated, whiteboardRoutes);
-app.use(`${BASE_PATH}/stream`, isAuthenticated, streamRoutes);
 app.use(`${BASE_PATH}/audioroom`, isAuthenticated, audioRoomRoutes);
 
 // --- Error Handling Middleware ---
