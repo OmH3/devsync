@@ -157,35 +157,77 @@ export const updateDocController = asyncHandler(async (req, res) => {
   const body = updateDocSchema.parse(req.body);
   const userId = req.user?._id;
 
-  // ✅ Get document first to check workspace (matching whiteboard pattern)
+  console.log('🔍 Update document request:', {
+    docId,
+    userId,
+    body: { title: body.title?.substring(0, 30), contentLength: body.content?.length }
+  });
+
+  // ✅ Get document first to check workspace
   const { doc: existingDoc } = await getDocByIdService(docId);
+  console.log('🔍 Existing document:', {
+    creatorId: existingDoc.creatorId._id || existingDoc.creatorId,
+    workspaceId: existingDoc.workspaceId
+  });
 
   // ✅ Check permissions for editing
-  const { role } = await getMemberRoleInWorkspace(
-    userId,
-    existingDoc.workspaceId
-  );
+  const { role } = await getMemberRoleInWorkspace(userId, existingDoc.workspaceId);
+  console.log('🔍 User role in workspace:', role);
 
   // ✅ Check if user is document owner
   const isDocumentOwner = existingDoc.creatorId._id ? 
     existingDoc.creatorId._id.toString() === userId.toString() : 
     existingDoc.creatorId.toString() === userId.toString();
+  
+  console.log('🔍 Permission check:', {
+    role,
+    isDocumentOwner,
+    userId,
+    creatorId: existingDoc.creatorId._id || existingDoc.creatorId
+  });
 
-  // ✅ Allow OWNER, ADMIN, or document owner to edit
-  const canEdit = role === 'OWNER' || role === 'ADMIN' || isDocumentOwner;
+  // ✅ Enhanced permission logic
+  let canEdit = false;
+  let permissionReason = '';
+
+  if (role === 'OWNER') {
+    canEdit = true;
+    permissionReason = 'workspace owner';
+  } else if (role === 'ADMIN') {
+    canEdit = true;
+    permissionReason = 'workspace admin';
+  } else if (isDocumentOwner) {
+    canEdit = true;
+    permissionReason = 'document owner';
+  } else if (role === 'MEMBER') {
+    canEdit = false;
+    permissionReason = 'member without document ownership';
+  } else {
+    canEdit = false;
+    permissionReason = 'not a workspace member';
+  }
+
+  console.log('🔍 Final permission decision:', {
+    canEdit,
+    permissionReason,
+    role,
+    isDocumentOwner
+  });
 
   if (!canEdit) {
     return res.status(HTTPSTATUS.FORBIDDEN).json({
-      message: "You do not have permission to edit this document",
+      message: `You do not have permission to edit this document (${permissionReason})`,
       error: "Permission denied",
       userRole: role,
-      isDocumentOwner
+      isDocumentOwner,
+      permissionReason
     });
   }
 
+  console.log('✅ Permission check passed, updating document');
   const { doc } = await updateDocService(docId, userId, body);
 
-  // ✅ Emit socket event for real-time updates (matching whiteboard pattern)
+  // ✅ Emit socket event for real-time updates
   if (io) {
     io.to(`doc:${docId}`).emit('doc-updated', {
       documentId: docId,

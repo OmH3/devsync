@@ -16,7 +16,6 @@ const DocumentEditor = ({ document, workspaceId, onClose }) => {
   const [activeUsers, setActiveUsers] = useState([]);
   const [hasJoinedDocument, setHasJoinedDocument] = useState(false);
   const [error, setError] = useState('');
-  const [documentPermissions, setDocumentPermissions] = useState(null);
 
   // ✅ Refs for managing state without triggering effects
   const saveTimeoutRef = useRef(null);
@@ -26,7 +25,7 @@ const DocumentEditor = ({ document, workspaceId, onClose }) => {
   const contentTextareaRef = useRef(null);
   const lastBroadcastRef = useRef({ title: '', content: '' });
   const pendingSaveRef = useRef(false);
-  const isJoiningRef = useRef(false); // ✅ Prevent multiple join attempts
+  const isJoiningRef = useRef(false);
 
   // Hooks
   const { user } = useAuth();
@@ -36,7 +35,15 @@ const DocumentEditor = ({ document, workspaceId, onClose }) => {
     fetchUserRoleInDocument,
     updateDocumentContentFromSocket,
     handleUserJoined,
-    handleUserLeft
+    handleUserLeft,
+    // ✅ Get permissions from store
+    userRole,
+    canEdit,
+    canView,
+    canCreate,
+    canDelete,
+    isWorkspaceOwner,
+    isAdmin
   } = useDocumentStore();
 
   // ✅ Reset document state when document changes or component mounts
@@ -67,32 +74,39 @@ const DocumentEditor = ({ document, workspaceId, onClose }) => {
     // Update connection status based on socket
     setIsConnected(socket?.connected || false);
     
-  }, [document._id, socket]); // ✅ Reset when document ID changes
+  }, [document._id, socket]);
 
-  // ✅ Fetch document permissions on mount
+  // ✅ FIX: Fetch WORKSPACE permissions, not document permissions
   useEffect(() => {
     const fetchPermissions = async () => {
+      if (!workspaceId || !user?._id) {
+        console.log('❌ Missing workspaceId or user._id:', { workspaceId, userId: user?._id });
+        return;
+      }
+
       try {
-        console.log('📄 Fetching document permissions for:', document._id);
-        const result = await fetchUserRoleInDocument(document._id);
+        console.log('📄 Fetching workspace permissions for:', workspaceId, 'not document:', document._id);
+        // ✅ FIX: Pass workspaceId instead of document._id
+        const result = await fetchUserRoleInDocument(workspaceId);
         
         if (result.success) {
-          setDocumentPermissions(result.permissions);
-          console.log('✅ Document permissions loaded:', result.permissions);
+          console.log('✅ Workspace permissions loaded:', {
+            role: result.role,
+            canEdit: result.canEdit,
+            permissions: result.permissions
+          });
         } else {
-          setError('Failed to load document permissions');
-          console.error('❌ Error fetching document permissions:', result.error);
+          setError('Failed to load workspace permissions');
+          console.error('❌ Error fetching workspace permissions:', result.error);
         }
       } catch (error) {
-        console.error('❌ Error fetching document permissions:', error);
-        setError('Failed to load document permissions');
+        console.error('❌ Error fetching workspace permissions:', error);
+        setError('Failed to load workspace permissions');
       }
     };
 
-    if (document._id && user._id) {
-      fetchPermissions();
-    }
-  }, [document._id, user._id, fetchUserRoleInDocument]);
+    fetchPermissions();
+  }, [workspaceId, user?._id, fetchUserRoleInDocument]); // ✅ Changed dependency from document._id to workspaceId
 
   // ✅ Update counts when content changes
   useEffect(() => {
@@ -104,9 +118,39 @@ const DocumentEditor = ({ document, workspaceId, onClose }) => {
     setWordCount(text.split(/\s+/).filter(word => word.length > 0).length);
   }, []);
 
+  // ✅ Enhanced permission check for document ownership
+  const getDocumentPermissions = useCallback(() => {
+    // ✅ Check if user is document owner
+    const isDocumentOwner = document?.creatorId?._id === user?._id || 
+                           document?.creatorId === user?._id;
+    
+    // ✅ Enhanced permission logic
+    const hasWorkspaceEditPermission = canEdit; // From workspace role
+    const canEditThisDocument = hasWorkspaceEditPermission || 
+                               (userRole === 'MEMBER' && isDocumentOwner);
+    
+    console.log('🔍 Document permissions calculated:', {
+      userRole,
+      isDocumentOwner,
+      hasWorkspaceEditPermission,
+      canEditThisDocument,
+      documentCreatorId: document?.creatorId,
+      currentUserId: user?._id
+    });
+    
+    return {
+      canEdit: canEditThisDocument,
+      canView: canView,
+      isDocumentOwner,
+      canDelete: canDelete || (userRole === 'MEMBER' && isDocumentOwner)
+    };
+  }, [canEdit, canView, canDelete, userRole, document?.creatorId, user?._id]);
+
+  // ✅ Get current document permissions
+  const documentPermissions = getDocumentPermissions();
+
   // ✅ Improved joinDocument function
   const joinDocument = useCallback(() => {
-    // ✅ Check if already joining to prevent multiple attempts
     if (isJoiningRef.current) {
       console.log('⏳ Already attempting to join document');
       return;
@@ -131,7 +175,6 @@ const DocumentEditor = ({ document, workspaceId, onClose }) => {
     isJoiningRef.current = true;
     socket.emit('join-doc', document._id);
     
-    // ✅ Reset joining flag after timeout to prevent permanent lock
     setTimeout(() => {
       isJoiningRef.current = false;
     }, 5000);
@@ -150,7 +193,7 @@ const DocumentEditor = ({ document, workspaceId, onClose }) => {
     isJoiningRef.current = false;
   }, [socket, document._id, hasJoinedDocument]);
 
-  // ✅ Setup socket listeners
+  // ✅ Setup socket listeners (same as before, no changes needed here)
   const setupSocketListeners = useCallback(() => {
     if (!socket) {
       console.log('❌ No socket available for event listeners');
@@ -159,25 +202,23 @@ const DocumentEditor = ({ document, workspaceId, onClose }) => {
 
     console.log('📄 Setting up document socket listeners');
 
-    // ✅ Document-specific events
     const handleDocJoined = (data) => {
       console.log('✅ Successfully joined document:', data);
       setHasJoinedDocument(true);
       setUserCount(data.userCount || 1);
       setError('');
-      isJoiningRef.current = false; // ✅ Reset joining flag on success
+      isJoiningRef.current = false;
     };
 
     const handleDocTextChanged = (data) => {
       console.log('📝 Received document text change:', data);
       
-      // ✅ ALWAYS accept updates from other users (regardless of own permissions)
       if (data.userId === user._id) {
         console.log('🔄 Ignoring own text change');
         return;
       }
       
-      console.log('🔄 Applying text change from other user (no permission check)');
+      console.log('🔄 Applying text change from other user');
       isUpdatingFromSocketRef.current = true;
       
       if (data.title !== undefined && data.title !== title) {
@@ -188,7 +229,6 @@ const DocumentEditor = ({ document, workspaceId, onClose }) => {
         setContent(data.content);
       }
       
-      // Update store
       updateDocumentContentFromSocket(document._id, data.title, data.content, data.userId);
       
       setTimeout(() => {
@@ -236,10 +276,9 @@ const DocumentEditor = ({ document, workspaceId, onClose }) => {
     const handleSocketError = (error) => {
       console.error('❌ Socket error:', error);
       setError(error.message || 'Socket error occurred');
-      isJoiningRef.current = false; // ✅ Reset joining flag on error
+      isJoiningRef.current = false;
     };
 
-    // ✅ Attach event listeners
     socket.on('doc-joined', handleDocJoined);
     socket.on('doc-text-changed', handleDocTextChanged);
     socket.on('user-joined-doc', handleUserJoinedDoc);
@@ -249,7 +288,6 @@ const DocumentEditor = ({ document, workspaceId, onClose }) => {
     socket.on('doc-auto-saved', handleDocAutoSaved);
     socket.on('error', handleSocketError);
 
-    // ✅ Return cleanup function
     return () => {
       socket.off('doc-joined', handleDocJoined);
       socket.off('doc-text-changed', handleDocTextChanged);
@@ -263,7 +301,7 @@ const DocumentEditor = ({ document, workspaceId, onClose }) => {
 
   }, [socket, user._id, title, content, document._id, updateDocumentContentFromSocket, handleUserJoined, handleUserLeft, hasUnsavedChanges]);
 
-  // ✅ Separate effect for socket connection status and events
+  // ✅ Socket connection effects (same as before)
   useEffect(() => {
     if (!socket) {
       setIsConnected(false);
@@ -271,15 +309,13 @@ const DocumentEditor = ({ document, workspaceId, onClose }) => {
       return;
     }
 
-    // ✅ Setup connection event handlers
     const handleConnect = () => {
       console.log('✅ Socket connected, updating status');
       setIsConnected(true);
       
-      // ✅ Try to join document when socket connects
       if (!hasJoinedDocument && !isJoiningRef.current) {
         console.log('🔄 Auto-joining document after connection');
-        setTimeout(() => joinDocument(), 200); // Small delay to ensure listeners are set up
+        setTimeout(() => joinDocument(), 200);
       }
     };
 
@@ -292,12 +328,10 @@ const DocumentEditor = ({ document, workspaceId, onClose }) => {
       isJoiningRef.current = false;
     };
 
-    // ✅ Check initial connection state
     if (socket.connected) {
       handleConnect();
     }
 
-    // ✅ Attach connection event listeners
     socket.on('connect', handleConnect);
     socket.on('disconnect', handleDisconnect);
 
@@ -307,14 +341,12 @@ const DocumentEditor = ({ document, workspaceId, onClose }) => {
     };
   }, [socket, hasJoinedDocument, joinDocument]);
 
-  // ✅ Setup socket listeners when socket is available
   useEffect(() => {
     if (!socket) return;
 
     console.log('🔌 Setting up socket listeners');
     const cleanup = setupSocketListeners();
     
-    // ✅ Try to join if socket is connected and we haven't joined yet
     if (socket.connected && !hasJoinedDocument && !isJoiningRef.current) {
       console.log('🔄 Socket ready, attempting to join document');
       setTimeout(() => joinDocument(), 100);
@@ -327,13 +359,18 @@ const DocumentEditor = ({ document, workspaceId, onClose }) => {
     };
   }, [socket, setupSocketListeners, joinDocument, leaveDocument, hasJoinedDocument]);
 
-  // ✅ Smart broadcast (only send if content actually changed)
+  // ✅ Smart broadcast with enhanced permission check
   const broadcastChange = useCallback((newTitle, newContent) => {
     if (!socket || !socket.connected || !hasJoinedDocument || isUpdatingFromSocketRef.current) {
       return;
     }
 
-    // ✅ Only broadcast if content actually changed
+    // ✅ Only broadcast if user can edit AND content actually changed
+    if (!documentPermissions.canEdit) {
+      console.log('❌ Cannot broadcast: No edit permission');
+      return;
+    }
+
     if (
       newTitle === lastBroadcastRef.current.title && 
       newContent === lastBroadcastRef.current.content
@@ -341,7 +378,7 @@ const DocumentEditor = ({ document, workspaceId, onClose }) => {
       return;
     }
 
-    console.log('📡 Broadcasting text change');
+    console.log('📡 Broadcasting text change with permission check passed');
     socket.emit('doc-text-change', {
       docId: document._id,
       title: newTitle,
@@ -350,22 +387,25 @@ const DocumentEditor = ({ document, workspaceId, onClose }) => {
       timestamp: Date.now()
     });
 
-    // ✅ Update last broadcast to prevent spam
     lastBroadcastRef.current = {
       title: newTitle,
       content: newContent
     };
-  }, [socket, document._id, hasJoinedDocument]);
+  }, [socket, document._id, hasJoinedDocument, documentPermissions.canEdit]);
 
-  // ✅ Optimized auto-save (like whiteboard pattern)
+  // ✅ Enhanced auto-save with document-specific permission check
   const autoSave = useCallback(async () => {
-    // ✅ Permission check ONLY for saving, not for receiving updates
-    if (!documentPermissions?.canEdit) {
-      console.log('❌ Auto-save skipped: No edit permission');
+    console.log('💾 Auto-save triggered with permissions:', {
+      canEdit: documentPermissions.canEdit,
+      userRole,
+      isDocumentOwner: documentPermissions.isDocumentOwner
+    });
+    
+    if (!documentPermissions.canEdit) {
+      console.log('❌ Auto-save skipped: No edit permission for this document');
       return;
     }
 
-    // ✅ Prevent multiple simultaneous saves
     if (pendingSaveRef.current) {
       console.log('⏳ Save already in progress, skipping');
       return;
@@ -374,7 +414,6 @@ const DocumentEditor = ({ document, workspaceId, onClose }) => {
     const currentTitle = title.trim();
     const currentContent = content;
     
-    // ✅ Check if there are actual changes to save
     if (
       currentTitle === lastSavedContentRef.current.title && 
       currentContent === lastSavedContentRef.current.content
@@ -392,7 +431,7 @@ const DocumentEditor = ({ document, workspaceId, onClose }) => {
     setIsSaving(true);
 
     try {
-      console.log('💾 Auto-saving document...');
+      console.log('💾 Auto-saving document with enhanced permissions...');
       const result = await saveDocumentContent(document._id, currentTitle, currentContent);
       
       if (result.success) {
@@ -400,13 +439,11 @@ const DocumentEditor = ({ document, workspaceId, onClose }) => {
         setHasUnsavedChanges(false);
         setError('');
         
-        // ✅ Update saved content reference
         lastSavedContentRef.current = {
           title: currentTitle,
           content: currentContent
         };
 
-        // ✅ Notify other users about auto-save
         if (socket && socket.connected && hasJoinedDocument) {
           socket.emit('doc-auto-save', {
             docId: document._id,
@@ -427,30 +464,35 @@ const DocumentEditor = ({ document, workspaceId, onClose }) => {
       setIsSaving(false);
       pendingSaveRef.current = false;
     }
-  }, [title, content, documentPermissions?.canEdit, saveDocumentContent, document._id, socket, hasJoinedDocument]);
+  }, [title, content, documentPermissions.canEdit, saveDocumentContent, document._id, socket, hasJoinedDocument, userRole]);
 
-  // ✅ Optimized debounced save (like whiteboard)
+  // ✅ Debounced save with document permission check
   const debouncedSave = useCallback(() => {
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
     }
     
-    // ✅ Only auto-save for users who can edit
-    if (documentPermissions?.canEdit) {
-      saveTimeoutRef.current = setTimeout(autoSave, 1500); // Faster auto-save like whiteboard
+    if (documentPermissions.canEdit) {
+      saveTimeoutRef.current = setTimeout(autoSave, 1500);
+    } else {
+      console.log('❌ Debounced save skipped: No edit permission');
     }
-  }, [autoSave, documentPermissions?.canEdit]);
+  }, [autoSave, documentPermissions.canEdit]);
 
-  // ✅ Handle title change (broadcast for all, save only for editors)
+  // ✅ Enhanced title change handler
   const handleTitleChange = useCallback((e) => {
     const newTitle = e.target.value;
     
     // ✅ Always allow local state update for real-time display
     setTitle(newTitle);
     
-    // ✅ Check edit permission for modifications and saving
-    if (!documentPermissions?.canEdit) {
-      // ✅ For read-only users, don't show error immediately, just prevent saving
+    console.log('📝 Title change - permissions check:', {
+      canEdit: documentPermissions.canEdit,
+      userRole,
+      isDocumentOwner: documentPermissions.isDocumentOwner
+    });
+    
+    if (!documentPermissions.canEdit) {
       console.log('👁️ Read-only user viewing title change');
       return;
     }
@@ -458,21 +500,24 @@ const DocumentEditor = ({ document, workspaceId, onClose }) => {
     setHasUnsavedChanges(true);
     setError('');
     
-    // ✅ Broadcast change to other users (only if user can edit)
     broadcastChange(newTitle, content);
     debouncedSave();
-  }, [documentPermissions?.canEdit, content, broadcastChange, debouncedSave]);
+  }, [documentPermissions.canEdit, content, broadcastChange, debouncedSave, userRole]);
 
-  // ✅ Handle content change (broadcast for all, save only for editors)
+  // ✅ Enhanced content change handler
   const handleContentChange = useCallback((e) => {
     const newContent = e.target.value;
     
     // ✅ Always allow local state update for real-time display
     setContent(newContent);
     
-    // ✅ Check edit permission for modifications and saving
-    if (!documentPermissions?.canEdit) {
-      // ✅ For read-only users, don't show error immediately, just prevent saving
+    console.log('📝 Content change - permissions check:', {
+      canEdit: documentPermissions.canEdit,
+      userRole,
+      isDocumentOwner: documentPermissions.isDocumentOwner
+    });
+    
+    if (!documentPermissions.canEdit) {
       console.log('👁️ Read-only user viewing content change');
       return;
     }
@@ -480,14 +525,19 @@ const DocumentEditor = ({ document, workspaceId, onClose }) => {
     setHasUnsavedChanges(true);
     setError('');
     
-    // ✅ Broadcast change to other users (only if user can edit)
     broadcastChange(title, newContent);
     debouncedSave();
-  }, [documentPermissions?.canEdit, title, broadcastChange, debouncedSave]);
+  }, [documentPermissions.canEdit, title, broadcastChange, debouncedSave, userRole]);
 
-  // ✅ Manual save (like whiteboard pattern)
+  // ✅ Enhanced manual save
   const handleManualSave = useCallback(async () => {
-    if (!documentPermissions?.canEdit) {
+    console.log('💾 Manual save triggered with permissions:', {
+      canEdit: documentPermissions.canEdit,
+      userRole,
+      isDocumentOwner: documentPermissions.isDocumentOwner
+    });
+    
+    if (!documentPermissions.canEdit) {
       setError('You do not have permission to edit this document');
       return;
     }
@@ -502,7 +552,6 @@ const DocumentEditor = ({ document, workspaceId, onClose }) => {
       return;
     }
 
-    // ✅ Prevent multiple simultaneous saves
     if (pendingSaveRef.current) {
       console.log('⏳ Save already in progress');
       return;
@@ -513,20 +562,18 @@ const DocumentEditor = ({ document, workspaceId, onClose }) => {
     setError('');
 
     try {
-      console.log('💾 Manual save initiated');
+      console.log('💾 Manual save initiated with enhanced permissions');
       const result = await saveDocumentContent(document._id, title.trim(), content);
       
       if (result.success) {
         setLastSaved(new Date());
         setHasUnsavedChanges(false);
         
-        // ✅ Update saved content reference
         lastSavedContentRef.current = {
           title: title.trim(),
           content: content
         };
 
-        // ✅ Notify other users about manual save
         if (socket && socket.connected && hasJoinedDocument) {
           socket.emit('doc-save', {
             docId: document._id,
@@ -547,7 +594,7 @@ const DocumentEditor = ({ document, workspaceId, onClose }) => {
       setIsSaving(false);
       pendingSaveRef.current = false;
     }
-  }, [documentPermissions?.canEdit, title, content, hasUnsavedChanges, saveDocumentContent, document._id, socket, hasJoinedDocument]);
+  }, [documentPermissions.canEdit, title, content, hasUnsavedChanges, saveDocumentContent, document._id, socket, hasJoinedDocument, userRole]);
 
   // ✅ Cleanup on unmount
   useEffect(() => {
@@ -601,9 +648,9 @@ const DocumentEditor = ({ document, workspaceId, onClose }) => {
               value={title}
               onChange={handleTitleChange}
               placeholder="Document title..."
-              readOnly={!documentPermissions?.canEdit}
+              readOnly={!documentPermissions.canEdit}
               className={`text-xl font-semibold text-gray-900 bg-transparent border-none focus:outline-none focus:ring-0 p-0 ${
-                !documentPermissions?.canEdit ? 'cursor-default opacity-80' : ''
+                !documentPermissions.canEdit ? 'cursor-default opacity-80' : ''
               }`}
               style={{ width: `${Math.max(title.length, 20)}ch` }}
             />
@@ -619,26 +666,40 @@ const DocumentEditor = ({ document, workspaceId, onClose }) => {
                 )}
               </span>
               
-              {/* ✅ Connection status indicator */}
               <div className="flex items-center space-x-2">
                 <div className={`w-2 h-2 rounded-full ${connectionStatus.color}`}></div>
                 <span className="text-xs">{connectionStatus.status}</span>
               </div>
 
-              {/* ✅ User count */}
               <div className="flex items-center space-x-1">
                 <span>👥</span>
                 <span className="font-medium">{userCount}</span>
                 <span>user{userCount !== 1 ? 's' : ''}</span>
               </div>
 
-              {/* ✅ Permission indicator */}
-              {documentPermissions?.canEdit === false && (
-                <span className="text-yellow-600 text-xs font-medium flex items-center">
-                  <span className="mr-1">👁️</span>
-                  Read Only
+              {/* ✅ Enhanced permission indicator */}
+              <div className="flex items-center space-x-2 text-xs">
+                <span className={`px-2 py-1 rounded-full ${
+                  userRole === 'OWNER' ? 'bg-purple-100 text-purple-800' :
+                  userRole === 'ADMIN' ? 'bg-blue-100 text-blue-800' :
+                  'bg-green-100 text-green-800'
+                }`}>
+                  {userRole}
                 </span>
-              )}
+                
+                {documentPermissions.isDocumentOwner && (
+                  <span className="px-2 py-1 bg-orange-100 text-orange-800 rounded-full">
+                    Doc Owner
+                  </span>
+                )}
+                
+                {!documentPermissions.canEdit && (
+                  <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full flex items-center">
+                    <span className="mr-1">👁️</span>
+                    Read Only
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -649,16 +710,14 @@ const DocumentEditor = ({ document, workspaceId, onClose }) => {
             <span>{charCount} characters</span>
           </div>
           
-          {/* ✅ Unsaved changes indicator */}
-          {hasUnsavedChanges && documentPermissions?.canEdit && (
+          {hasUnsavedChanges && documentPermissions.canEdit && (
             <div className="flex items-center text-xs text-orange-600 font-medium">
               <div className="w-2 h-2 bg-orange-500 rounded-full mr-1"></div>
               Unsaved changes
             </div>
           )}
           
-          {/* ✅ Save button (only for editors) */}
-          {documentPermissions?.canEdit && (
+          {documentPermissions.canEdit && (
             <button
               onClick={handleManualSave}
               disabled={isSaving || !hasUnsavedChanges || pendingSaveRef.current}
@@ -699,7 +758,6 @@ const DocumentEditor = ({ document, workspaceId, onClose }) => {
         </div>
       )}
 
-      {/* ✅ Active users display (show for all users) */}
       {activeUsers.length > 0 && (
         <div className="bg-blue-50 border-b border-blue-200 p-2">
           <div className="flex items-center space-x-2 text-sm">
@@ -714,8 +772,8 @@ const DocumentEditor = ({ document, workspaceId, onClose }) => {
         </div>
       )}
 
-      {/* ✅ Read-only banner (like whiteboard) */}
-      {documentPermissions?.canEdit === false && (
+      {/* ✅ Enhanced read-only banner */}
+      {!documentPermissions.canEdit && (
         <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
           <div className="flex items-center">
             <div className="flex-shrink-0">
@@ -723,8 +781,12 @@ const DocumentEditor = ({ document, workspaceId, onClose }) => {
             </div>
             <div className="ml-3">
               <p className="text-sm text-yellow-800">
-                <strong>View-Only Mode:</strong> You can see real-time changes but cannot edit this document. 
-                Contact the document owner or workspace admin for edit access.
+                <strong>View-Only Mode:</strong> 
+                {userRole === 'MEMBER' && !documentPermissions.isDocumentOwner ? (
+                  " You can only edit documents you created. This document belongs to another user."
+                ) : (
+                  " You can see real-time changes but cannot edit this document. Contact the document owner or workspace admin for edit access."
+                )}
               </p>
             </div>
           </div>
@@ -738,13 +800,13 @@ const DocumentEditor = ({ document, workspaceId, onClose }) => {
           value={content}
           onChange={handleContentChange}
           placeholder={
-            documentPermissions?.canEdit 
+            documentPermissions.canEdit 
               ? "Start writing your document..." 
               : "This document is read-only - you can see real-time changes from other users"
           }
-          readOnly={!documentPermissions?.canEdit}
+          readOnly={!documentPermissions.canEdit}
           className={`w-full h-full resize-none border-none focus:outline-none focus:ring-0 text-gray-900 text-base leading-relaxed transition-colors ${
-            !documentPermissions?.canEdit 
+            !documentPermissions.canEdit 
               ? 'cursor-default bg-gray-50 opacity-90' 
               : 'bg-white'
           }`}
@@ -757,16 +819,19 @@ const DocumentEditor = ({ document, workspaceId, onClose }) => {
         <div className="text-sm text-gray-600">
           <span>Document ID: {document._id?.slice(-8)}</span>
           <span className="ml-4">Active users: {userCount}</span>
-          {documentPermissions?.canEdit === false && (
+          <span className="ml-4">Role: {userRole}</span>
+          {documentPermissions.isDocumentOwner && (
+            <span className="ml-4 text-orange-600">👑 Owner</span>
+          )}
+          {!documentPermissions.canEdit && (
             <span className="ml-4 text-yellow-600">👁️ View-only</span>
           )}
         </div>
         
         <div className="flex items-center space-x-2 text-sm text-gray-600">
-          {/* ✅ Save status */}
           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
             isSaving ? 'bg-blue-100 text-blue-800' : 
-            hasUnsavedChanges && documentPermissions?.canEdit ? 'bg-orange-100 text-orange-800' : 
+            hasUnsavedChanges && documentPermissions.canEdit ? 'bg-orange-100 text-orange-800' : 
             'bg-green-100 text-green-800'
           }`}>
             {isSaving ? (
@@ -774,14 +839,13 @@ const DocumentEditor = ({ document, workspaceId, onClose }) => {
                 <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-600 mr-1"></div>
                 Saving...
               </>
-            ) : hasUnsavedChanges && documentPermissions?.canEdit ? (
+            ) : hasUnsavedChanges && documentPermissions.canEdit ? (
               'Unsaved'
             ) : (
               'Saved'
             )}
           </span>
 
-          {/* ✅ Connection status */}
           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
             connectionStatus.status === 'Connected' ? 'bg-green-100 text-green-800' :
             connectionStatus.status.includes('Connecting') || connectionStatus.status.includes('Joining') ? 'bg-yellow-100 text-yellow-800' :
@@ -792,13 +856,14 @@ const DocumentEditor = ({ document, workspaceId, onClose }) => {
         </div>
       </div>
 
-      {/* ✅ Debug Info (enhanced with joining status) */}
+      {/* ✅ Enhanced debug info */}
       <div className="absolute bottom-4 left-4 bg-black bg-opacity-75 text-white px-3 py-2 rounded-lg text-xs pointer-events-none z-30">
         Socket: {socket ? '✅' : '❌'} | 
         Connected: {isConnected ? '✅' : '❌'} | 
-        Joining: {isJoiningRef.current ? '⏳' : '✅'} |
         Joined: {hasJoinedDocument ? '✅' : '❌'} |
-        Edit: {documentPermissions?.canEdit ? '✅' : '❌'} |
+        Role: {userRole || 'None'} |
+        Edit: {documentPermissions.canEdit ? '✅' : '❌'} |
+        DocOwner: {documentPermissions.isDocumentOwner ? '✅' : '❌'} |
         Saving: {isSaving ? '⏳' : '✅'}
       </div>
     </div>
