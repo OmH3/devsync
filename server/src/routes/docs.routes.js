@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createDocController, deleteDocController, getDocByIdController, getWorkspaceDocsController, updateDocController, getUserRoleInDocumentController } from "../controllers/docs.controllers.js";
+import { createDocController, deleteDocController, getDocByIdController, getWorkspaceDocsController, updateDocController, getUserRoleInWorkspaceController } from "../controllers/docs.controllers.js";
 
 const router = Router()
 
