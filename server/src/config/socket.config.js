@@ -20,7 +20,6 @@ export const setupSocketIO = (io) => {
     setupDocsHandlers(socket, io);
     setupCodeEditorHandlers(socket, io);
     setupFileSystemHandlers(socket, io);
-    setupCallSocketEvents(socket);
     // ✅ FIX: Remove the third parameter
     setupAudioRoomHandlers(socket, io);
 
