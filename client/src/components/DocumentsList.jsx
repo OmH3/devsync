@@ -18,7 +18,9 @@ const DocumentsList = ({ workspaceId, workspace }) => {
   });
   
   const { user } = useAuth();
+  console.log("user: ", user);
   const { currentWorkspace } = useWorkspaceStore();
+  console.log("currentWorkspace: ", currentWorkspace);
   const { 
     documents, 
     fetchWorkspaceDocuments, 
@@ -39,16 +41,16 @@ const DocumentsList = ({ workspaceId, workspace }) => {
         const workspaceRole = currentWorkspace?.members?.find(
           member => member.userId === user._id
         )?.role;
-
+        console.log("workspaceRole: ", workspaceRole);
         setUserRole(workspaceRole);
 
         // ✅ Set permissions based on role (matching whiteboard pattern)
         const rolePermissions = {
           'OWNER': { canCreate: true, canEdit: true, canDelete: true, canView: true },
           'ADMIN': { canCreate: true, canEdit: true, canDelete: true, canView: true },
-          'MEMBER': { canCreate: true, canEdit: false, canDelete: false, canView: true }
+          'MEMBER': { canCreate: false, canEdit: false, canDelete: false, canView: true }
         };
-
+        console.log("rolePermissions[workspaceRole]: ", rolePermissions[workspaceRole]);
         setPermissions(rolePermissions[workspaceRole] || {
           canCreate: false,
           canEdit: false,
