@@ -24,7 +24,7 @@ const CreateDocumentModal = ({ isOpen, onClose, workspaceId, userRole, onSuccess
   }, [isOpen]);
 
   // ✅ Permission check
-  const canCreateDocument = userRole && ['OWNER', 'ADMIN', 'MEMBER'].includes(userRole);
+  const canCreateDocument = userRole && ['OWNER', 'ADMIN'].includes(userRole);
 
   const handleChange = (e) => {
     const { name, value } = e.target;

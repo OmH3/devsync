@@ -1,9 +1,9 @@
-import { api } from '../utils/api.js';
+import { api } from "../utils/api.js";
 
 export const documentService = {
   // ✅ Create document (matches backend route: POST /docs/create)
   async createDocument(documentData) {
-    const response = await api.post('/docs/create', documentData);
+    const response = await api.post("/docs/create", documentData);
     return response.data;
   },
 
@@ -32,8 +32,9 @@ export const documentService = {
   },
 
   // ✅ Get user role and permissions (matches backend route: GET /docs/:docId/user-role)
-  async getUserRoleInDocument(documentId) {
-    const response = await api.get(`/docs/${documentId}/user-role`);
+  // ✅ Update this method to call the workspace role endpoint
+  async getUserRoleInDocument(workspaceId) {
+    const response = await api.get(`/docs/user-role/${workspaceId}`);
     return response.data;
   },
 
@@ -41,8 +42,8 @@ export const documentService = {
   async saveDocumentContent(documentId, title, content) {
     const response = await api.put(`/docs/${documentId}`, {
       title: title.trim(),
-      content: content
+      content: content,
     });
     return response.data;
-  }
+  },
 };
