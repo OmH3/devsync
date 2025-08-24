@@ -101,45 +101,55 @@ npm run dev
 #### Server (.env)
 ```env
 # Database
-MONGODB_URI=mongodb://localhost:27017/devsync
-# or for MongoDB Atlas:
-# MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/devsync
+MONGO_URI=mongodb+srv://username:password@cluster.mongodb.net/devsync?retryWrites=true&w=majority&appName=Cluster0
+# For local development:
+# MONGO_URI=mongodb://localhost:27017/devsync
 
-# JWT
-JWT_SECRET=your-super-secret-jwt-key-here
-JWT_EXPIRES_IN=7d
+# Server Configuration
+NODE_ENV=production
+# For development: NODE_ENV=development
+PORT=8000
+# For development: PORT=5000
+
+# Session Configuration
+SESSION_SECRET=your-super-secret-session-key-here
+SESSION_EXPIRES_IN=1d
 
 # Google OAuth
 GOOGLE_CLIENT_ID=your-google-client-id
 GOOGLE_CLIENT_SECRET=your-google-client-secret
+GOOGLE_CALLBACK_URL=https://your-backend-url.onrender.com/api/auth/google/callback
+# For development: GOOGLE_CALLBACK_URL=http://localhost:5000/api/auth/google/callback
+
+# Frontend Configuration
+FRONTEND_ORIGIN=https://your-frontend-url.vercel.app
+FRONTEND_GOOGLE_CALLBACK_URL=https://your-frontend-url.vercel.app/google/callback
+# For development: 
+# FRONTEND_ORIGIN=http://localhost:5173
+# FRONTEND_GOOGLE_CALLBACK_URL=http://localhost:5173/google/callback
 
 # Stream.io (for audio rooms)
 STREAM_API_KEY=your-stream-api-key
 STREAM_API_SECRET=your-stream-api-secret
-
-# Session
-SESSION_SECRET=your-session-secret-key
-
-# Server Configuration
-PORT=5000
-NODE_ENV=development
-FRONTEND_URL=http://localhost:5173
-
-# CORS
-CORS_ORIGIN=http://localhost:5173
 ```
 
 #### Client (.env)
 ```env
 # API Configuration
-VITE_API_BASE_URL=http://localhost:5000
-VITE_SOCKET_URL=http://localhost:5000
+VITE_API_BASE_URL=https://your-backend-url.onrender.com
+# For development: VITE_API_BASE_URL=http://localhost:5000
 
-# Stream.io
+# Stream.io Configuration
 VITE_STREAM_API_KEY=your-stream-api-key
 
+# Optional: Pre-configured Stream.io settings (for development/testing)
+# VITE_STREAM_TOKEN=your-stream-token
+# VITE_STREAM_USER_ID=your-stream-user-id
+# VITE_STREAM_CALL_ID=your-stream-call-id
+
 # Environment
-VITE_NODE_ENV=development
+VITE_NODE_ENV=production
+# For development: VITE_NODE_ENV=development
 ```
 
 ### 5. Database Setup
