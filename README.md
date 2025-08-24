@@ -230,12 +230,6 @@ npm start
 
 ### Production Deployment
 
-#### Using Docker (Recommended)
-```bash
-# Build and run with Docker Compose
-docker-compose up --build
-```
-
 #### Manual Deployment
 1. **Build client:**
    ```bash
@@ -297,43 +291,14 @@ server/
 │   └── validation/    # Input validation schemas
 ```
 
-## 🧪 Testing
-
-### Running Tests
-```bash
-# Client tests
-cd client
-npm test
-
-# Server tests
-cd server
-npm test
-```
-
-### Test Coverage
-- Unit tests for utility functions
-- Integration tests for API endpoints
-- Component tests for React components
-- Socket.io event testing
-
-### Testing Framework
-- **Jest** - Testing framework
-- **React Testing Library** - Component testing
-- **Supertest** - API endpoint testing
-
 ## 🐛 Known Issues & Roadmap
 
 ### Known Issues
 - Audio rooms may have connectivity issues on some networks
 - Large whiteboard drawings may cause performance lag
-- Mobile responsiveness needs improvement for code editor
 
 ### Upcoming Features
-- 🔄 **File Upload** - Document and image attachments
-- 📊 **Analytics Dashboard** - Usage statistics and insights
 - 🎨 **Themes** - Dark mode and custom themes
-- 🔔 **Notifications** - Real-time notifications system
-- 📱 **Mobile App** - Native mobile applications
 - 🤖 **AI Integration** - AI-powered code suggestions
 - 📈 **Version Control** - Document and code versioning
 
@@ -345,30 +310,6 @@ npm test
 ## 📜 License
 
 This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
-
-```
-MIT License
-
-Copyright (c) 2024 DevSync Team
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-```
 
 ## 👥 Credits
 
@@ -386,14 +327,6 @@ SOFTWARE.
 ### Special Thanks
 - Open source community for invaluable libraries and tools
 - Beta testers for feedback and bug reports
-
-## 📞 Support
-
-For questions, bug reports, or feature requests:
-
-- **GitHub Issues** - [Create an issue](https://github.com/yourusername/devsync/issues)
-- **Email** - support@devsync.dev
-- **Documentation** - [docs.devsync.dev](https://docs.devsync.dev)
 
 ---
 
