@@ -27,9 +27,7 @@ export const authService = {
 
   async checkAuthStatus() {
     try {
-      console.log('🔍 Checking auth status...');
       const response = await api.get('/user/current');
-      console.log('✅ Auth check successful:', response.data);
       
       // Your backend returns { message, user }
       return { 
@@ -37,8 +35,6 @@ export const authService = {
         user: response.data.user 
       };
     } catch (error) {
-      console.log('❌ Auth check failed:', error.response?.status, error.message);
-      
       if (error.response?.status === 401) {
         return { isAuthenticated: false, user: null };
       }

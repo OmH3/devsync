@@ -11,15 +11,6 @@ export const executeCodeService = async (codeEditorId, userId, body) => {
   // ✅ Extract parameters correctly (matching your original structure)
   const { code, input = "", language, saveBeforeExecution = true } = body;
 
-  console.log('🔍 Execute service received:', { 
-    codeEditorId, 
-    userId, 
-    codeLength: code?.length || 'undefined',
-    inputLength: input?.length || 'undefined',
-    language,
-    fromBody: !!code // Check if code came from request body
-  });
-
   // Get code editor
   const codeEditor = await CodeEditorModel.findById(codeEditorId);
   if (!codeEditor || !codeEditor.isActive) {
@@ -32,8 +23,6 @@ export const executeCodeService = async (codeEditorId, userId, body) => {
   if (!role) {
     throw new BadRequestException("You are not a member of this workspace");
   }
-
-  console.log('✅ User role for execution:', role, '- execution allowed');
 
   // ✅ Get member for additional checks if needed
   const member = await MemberModel.findOne({
@@ -76,12 +65,6 @@ export const executeCodeService = async (codeEditorId, userId, body) => {
     status: "pending", // ✅ Use "pending" to match your original
   });
 
-  console.log("✅ Execution record created:", {
-    id: execution._id,
-    language: execution.language,
-    codeLength: execution.code.length
-  });
-
   await execution.save();
 
   try {
@@ -107,13 +90,6 @@ export const executeCodeService = async (codeEditorId, userId, body) => {
     execution.completedAt = new Date(); // Add completion timestamp
 
     await execution.save();
-
-    console.log('✅ Code execution completed:', {
-      status: execution.status,
-      executionTime: execution.executionTime,
-      hasError: !!execution.error,
-      outputLength: execution.output.length
-    });
 
     return { execution };
 
@@ -152,6 +128,5 @@ export const getExecutionHistoryService = async (codeEditorId, userId) => {
     .sort({ createdAt: -1 })
     .limit(20); // Last 20 executions
 
-  console.log("✅ Found executions:", executions.length);
   return { executions };
 };

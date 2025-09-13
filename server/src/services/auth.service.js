@@ -17,7 +17,6 @@ export const loginOrCreateAccountService = async (data) => {
   const session = await mongoose.startSession();
   try {
     session.startTransaction();
-    console.log("Started Session...");
 
     let user = await UserModel.findOne({ email }).session(session);
     if (!user) {
@@ -63,7 +62,6 @@ export const loginOrCreateAccountService = async (data) => {
     }
 
     await session.commitTransaction();
-    console.log("Transaction committed successfully");
 
     return { user };
   } catch (error) {
@@ -71,7 +69,6 @@ export const loginOrCreateAccountService = async (data) => {
     throw error;
   } finally {
     session.endSession();
-    console.log("Session ended");
   }
 };
 
@@ -129,7 +126,6 @@ export const registerUserService = async (body) => {
     await user.save({ session });
 
     await session.commitTransaction();
-    console.log("Transaction committed successfully");
 
     return {
       userId: user._id,
@@ -138,12 +134,10 @@ export const registerUserService = async (body) => {
   } catch (error) {
     if (session.inTransaction()) {
       await session.abortTransaction();
-      console.log("Transaction aborted due to error");
     }
     throw error;
   } finally {
     session.endSession();
-    console.log("Session ended");
   }
 };
 

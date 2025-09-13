@@ -28,7 +28,6 @@ export const useAuth = () => {
         // Only check if the stored data indicates user was authenticated
         // and we don't already have user data
         if (parsed.state?.isAuthenticated && parsed.state?.user && !user) {
-          console.log('Found stored auth, verifying with server...');
           checkAuth();
         }
       } catch (error) {

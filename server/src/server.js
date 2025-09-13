@@ -92,20 +92,7 @@ const sessionMiddleware = session({
 app.use(sessionMiddleware);
 app.use(passport.initialize());
 app.use(passport.session());
-// Add this after sessionMiddleware in server.js
-app.use((req, res, next) => {
-  if (req.path.includes('/user/current') || req.path.includes('/auth/')) {
-    console.log('🔍 === REQUEST DEBUG ===');
-    console.log('🔍 Path:', req.path);
-    console.log('🔍 Origin:', req.headers.origin);
-    console.log('🔍 Cookie Header:', req.headers.cookie);
-    console.log('🔍 Session ID:', req.sessionID);
-    console.log('🔍 Is Authenticated:', req.isAuthenticated?.());
-    console.log('🔍 User:', req.user?._id);
-    console.log('========================');
-  }
-  next();
-});
+// Removed sensitive debug logging for production
 
 // --- Socket.IO Integration ---
 // This middleware allows Socket.IO to share the same session as Express.

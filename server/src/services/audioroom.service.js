@@ -10,15 +10,6 @@ export const generateStreamToken = async (userId, userInfo) => {
     const iat = now - 60; // Issue token 60 seconds in the past to handle clock drift
     const exp = now + (24 * 60 * 60); // Expire in 24 hours
 
-    console.log('🔑 Token timing info:', {
-      server_time: new Date().toISOString(),
-      iat_timestamp: iat,
-      iat_readable: new Date(iat * 1000).toISOString(),
-      exp_timestamp: exp,
-      exp_readable: new Date(exp * 1000).toISOString(),
-      time_diff_seconds: now - iat
-    });
-
     // ✅ FIX: Updated token payload with proper structure for Stream Video
     const tokenPayload = {
       iss: 'stream-video-js', // Required issuer for Stream Video
@@ -47,14 +38,6 @@ export const generateStreamToken = async (userId, userInfo) => {
       name: userInfo?.name || `User ${userId}`,
       image: userInfo?.profilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent(userInfo?.name || userId)}&background=random&color=fff`
     };
-
-    console.log('✅ Stream token generated successfully for user:', {
-      userId: user.id,
-      userName: user.name,
-      tokenLength: token.length,
-      hasApiKey: !!STREAM_API_KEY,
-      hasSecret: !!STREAM_API_SECRET
-    });
 
     return { 
       token, 

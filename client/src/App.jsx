@@ -12,7 +12,7 @@ import GoogleCallback from './pages/GoogleCallback';
 function App() {
   const { isAuthenticated, isLoading } = useAuth()
   const { currentWorkspace } = useWorkspaceStore()
-  console.log("App authentication: ", isAuthenticated);
+  
   // Show loading only if we're actually checking authentication
   // This prevents the loading spinner when user is just not logged in
   if (isLoading) {
@@ -25,7 +25,7 @@ function App() {
       </div>
     )
   }
-  console.log(isAuthenticated);
+  
   return (
     <div className="App">
       <Routes>

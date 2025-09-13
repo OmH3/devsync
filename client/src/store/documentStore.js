@@ -70,12 +70,9 @@ export const useDocumentStore = create(
       // ✅ FIX: Fetch user role in workspace (matching whiteboard pattern exactly)
       fetchUserRoleInDocument: async (workspaceId) => { // ✅ Changed parameter name but kept function name for consistency
         try {
-          console.log('🔍 Fetching user role for workspace:', workspaceId);
           const response = await documentService.getUserRoleInWorkspace(workspaceId); // ✅ Fixed service call
           
           const { role, permissions, isDocumentOwner, isWorkspaceOwner, isAdmin } = response;
-          
-          console.log('✅ User role response:', response);
           
           set({ 
             userRole: role,
@@ -134,7 +131,6 @@ export const useDocumentStore = create(
       // ✅ Create document with role check (matching whiteboard pattern)
       createDocument: async (documentData) => {
         const { userRole } = get();
-        console.log('🔍 Creating document with role:', userRole);
         
         // ✅ Allow all roles except explicitly restricted ones (more permissive than whiteboard)
         if (!userRole || !['OWNER', 'ADMIN', 'MEMBER'].includes(userRole)) {
@@ -145,11 +141,8 @@ export const useDocumentStore = create(
 
         set({ isLoading: true, error: null });
         try {
-          console.log('📄 Sending create request:', documentData);
           const response = await documentService.createDocument(documentData);
           const newDocument = response.doc;
-          
-          console.log('✅ Document created:', newDocument);
           
           set(state => ({ 
             documents: [newDocument, ...state.documents],
@@ -173,9 +166,7 @@ export const useDocumentStore = create(
       fetchWorkspaceDocuments: async (workspaceId) => {
         set({ isLoading: true, error: null });
         try {
-          console.log('📄 Fetching documents for workspace:', workspaceId);
           const response = await documentService.getWorkspaceDocuments(workspaceId);
-          console.log('✅ Documents fetched:', response.docs?.length || 0);
           set({ 
             documents: response.docs || [], 
             isLoading: false 

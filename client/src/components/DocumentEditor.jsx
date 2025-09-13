@@ -48,8 +48,6 @@ const DocumentEditor = ({ document, workspaceId, onClose }) => {
 
   // ✅ Reset document state when document changes or component mounts
   useEffect(() => {
-    console.log('📄 DocumentEditor mounted/document changed, resetting state');
-    
     // Reset all document-specific state
     setHasJoinedDocument(false);
     setActiveUsers([]);
@@ -80,21 +78,15 @@ const DocumentEditor = ({ document, workspaceId, onClose }) => {
   useEffect(() => {
     const fetchPermissions = async () => {
       if (!workspaceId || !user?._id) {
-        console.log('❌ Missing workspaceId or user._id:', { workspaceId, userId: user?._id });
         return;
       }
 
       try {
-        console.log('📄 Fetching workspace permissions for:', workspaceId, 'not document:', document._id);
         // ✅ FIX: Pass workspaceId instead of document._id
         const result = await fetchUserRoleInDocument(workspaceId);
         
         if (result.success) {
-          console.log('✅ Workspace permissions loaded:', {
-            role: result.role,
-            canEdit: result.canEdit,
-            permissions: result.permissions
-          });
+          // Permissions loaded successfully
         } else {
           setError('Failed to load workspace permissions');
           console.error('❌ Error fetching workspace permissions:', result.error);
@@ -129,15 +121,6 @@ const DocumentEditor = ({ document, workspaceId, onClose }) => {
     const canEditThisDocument = hasWorkspaceEditPermission || 
                                (userRole === 'MEMBER' && isDocumentOwner);
     
-    console.log('🔍 Document permissions calculated:', {
-      userRole,
-      isDocumentOwner,
-      hasWorkspaceEditPermission,
-      canEditThisDocument,
-      documentCreatorId: document?.creatorId,
-      currentUserId: user?._id
-    });
-    
     return {
       canEdit: canEditThisDocument,
       canView: canView,
@@ -152,26 +135,21 @@ const DocumentEditor = ({ document, workspaceId, onClose }) => {
   // ✅ Improved joinDocument function
   const joinDocument = useCallback(() => {
     if (isJoiningRef.current) {
-      console.log('⏳ Already attempting to join document');
       return;
     }
 
     if (!socket || !socket.connected) {
-      console.log('❌ Cannot join document: No socket or not connected');
       return;
     }
 
     if (hasJoinedDocument) {
-      console.log('✅ Already joined document:', document._id);
       return;
     }
 
     if (!document._id || !user._id) {
-      console.log('❌ Cannot join document: Missing document ID or user ID');
       return;
     }
 
-    console.log('📄 Emitting join-doc event for:', document._id);
     isJoiningRef.current = true;
     socket.emit('join-doc', document._id);
     
@@ -185,7 +163,6 @@ const DocumentEditor = ({ document, workspaceId, onClose }) => {
   const leaveDocument = useCallback(() => {
     if (!socket || !hasJoinedDocument || !document._id) return;
     
-    console.log('🚪 Leaving document:', document._id);
     socket.emit('leave-doc', document._id);
     setHasJoinedDocument(false);
     setActiveUsers([]);
@@ -196,14 +173,10 @@ const DocumentEditor = ({ document, workspaceId, onClose }) => {
   // ✅ Setup socket listeners (same as before, no changes needed here)
   const setupSocketListeners = useCallback(() => {
     if (!socket) {
-      console.log('❌ No socket available for event listeners');
       return;
     }
 
-    console.log('📄 Setting up document socket listeners');
-
     const handleDocJoined = (data) => {
-      console.log('✅ Successfully joined document:', data);
       setHasJoinedDocument(true);
       setUserCount(data.userCount || 1);
       setError('');
@@ -211,14 +184,10 @@ const DocumentEditor = ({ document, workspaceId, onClose }) => {
     };
 
     const handleDocTextChanged = (data) => {
-      console.log('📝 Received document text change:', data);
-      
       if (data.userId === user._id) {
-        console.log('🔄 Ignoring own text change');
         return;
       }
       
-      console.log('🔄 Applying text change from other user');
       isUpdatingFromSocketRef.current = true;
       
       if (data.title !== undefined && data.title !== title) {
@@ -243,18 +212,15 @@ const DocumentEditor = ({ document, workspaceId, onClose }) => {
     };
 
     const handleUserLeftDoc = (data) => {
-      console.log('👋 User left document:', data);
       setActiveUsers(prev => prev.filter(u => u.userId !== data.userId));
       handleUserLeft(data);
     };
 
     const handleUserCount = (count) => {
-      console.log('👥 User count update:', count);
       setUserCount(count);
     };
 
     const handleDocSaved = (data) => {
-      console.log('💾 Document saved by another user:', data);
       if (data.userId !== user._id) {
         setLastSaved(new Date(data.timestamp));
         if (!hasUnsavedChanges) {

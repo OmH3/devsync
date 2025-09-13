@@ -8,13 +8,7 @@ import { registerSchema } from "../validation/auth.validation.js";
 export const googleLoginCallback = asyncHandler(async (req, res) => {
   const user = req.user;
   
-  console.log('🔍 === GOOGLE OAUTH CALLBACK ===');
-  console.log('🔍 User found:', !!user);
-  console.log('🔍 User ID:', user?._id);
-  console.log('🔍 Session ID:', req.sessionID);
-  
   if (!user) {
-    console.log('❌ No user found, redirecting to failure');
     return res.redirect(
       `${config.FRONTEND_GOOGLE_CALLBACK_URL}?status=failure&message=Authentication failed`
     );
@@ -28,10 +22,6 @@ export const googleLoginCallback = asyncHandler(async (req, res) => {
         `${config.FRONTEND_GOOGLE_CALLBACK_URL}?status=failure&message=Login failed`
       );
     }
-
-    console.log('✅ User logged in successfully');
-    console.log('✅ Session after login:', req.sessionID);
-    console.log('✅ Redirecting to:', `${config.FRONTEND_GOOGLE_CALLBACK_URL}?status=success`);
     
     // ✅ Redirect to frontend callback
     return res.redirect(
