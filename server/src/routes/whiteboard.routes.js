@@ -16,7 +16,7 @@ router.post("/create", createWhiteboardController);
 // Get all whiteboards in workspace
 router.get("/workspace/:workspaceId", getWorkspaceWhiteboardsController);
 
-// ✅ FIX: Change route to match the service call
+//FIX: Change route to match the service call
 router.get("/:whiteboardId/user-role", getUserRoleInWhiteboardController);
 
 // Get whiteboard by ID

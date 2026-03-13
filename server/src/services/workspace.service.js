@@ -88,10 +88,10 @@ export const getWorkspaceMembersService = async (workspaceId) => {
   const roles = await RoleModel.find({}, { name: 1, _id: 1 })
     .select("-permission")
     .lean();
-  //   name: 1 - Include the name field
+  // name: 1 - Include the name field
   // _id: 1 - Include the _id field
   // Any field not specified (or set to 0) is excluded
-  //   name: 1 - Include the name field
+  // name: 1 - Include the name field
   // _id: 1 - Include the _id field
   // Any field not specified (or set to 0) is excluded
 

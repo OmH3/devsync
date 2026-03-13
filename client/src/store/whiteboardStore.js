@@ -16,14 +16,14 @@ export const useWhiteboardStore = create(
       error: null,
       userCount: 1,
       isConnected: false,
-      userRole: null, // ✅ Add user role state
-      canEdit: false, // ✅ Add edit permission state
+      userRole: null, //Add user role state
+      canEdit: false, //Add edit permission state
 
       // Actions
       setUserCount: (count) => set({ userCount: count }),
       setIsConnected: (connected) => set({ isConnected: connected }),
-      setUserRole: (role) => set({ userRole: role }), // ✅ Add role setter
-      setCanEdit: (canEdit) => set({ canEdit }), // ✅ Add edit permission setter
+      setUserRole: (role) => set({ userRole: role }), //Add role setter
+      setCanEdit: (canEdit) => set({ canEdit }), //Add edit permission setter
       setCurrentWhiteboard: (whiteboard) => set({ currentWhiteboard: whiteboard }),
       setCanvasElements: (elements) => set({ canvasElements: elements || [] }),
       setDrawingData: (data) => set({ drawingData: Array.isArray(data) ? data : [] }),
@@ -34,7 +34,7 @@ export const useWhiteboardStore = create(
       setError: (error) => set({ error }),
       clearError: () => set({ error: null }),
 
-      // ✅ Add method to fetch user role
+      //Add method to fetch user role
       fetchUserRoleInWhiteboard: async (whiteboardId) => {
         try {
           const response = await whiteboardService.getUserRoleInWhiteboard(whiteboardId);
@@ -107,7 +107,7 @@ export const useWhiteboardStore = create(
         }
       },
 
-      // ✅ Update create/delete with role checks
+      //Update create/delete with role checks
       createWhiteboard: async (whiteboardData) => {
         const { userRole } = get();
         if (userRole === 'MEMBER') {

@@ -16,17 +16,17 @@ const CodeEditorMain = ({ workspaceId, workspace }) => {
   const [sidebarWidth, setSidebarWidth] = useState(300);
   const [isResizing, setIsResizing] = useState(false);
 
-  // ✅ Real-time collaboration states
+  //Real-time collaboration states
   const [isConnected, setIsConnected] = useState(false);
   const [globalActiveUsers, setGlobalActiveUsers] = useState([]);
   const [workspaceUserCount, setWorkspaceUserCount] = useState(1);
   const [hasJoinedWorkspace, setHasJoinedWorkspace] = useState(false);
 
-  // ✅ Refs for managing state
+  //Refs for managing state
   const resizeRef = useRef(null);
   const isJoiningRef = useRef(false);
 
-  // ✅ Hooks
+  //Hooks
   const { user } = useAuth();
   const socket = useSocket();
   
@@ -47,9 +47,9 @@ const CodeEditorMain = ({ workspaceId, workspace }) => {
     clearError: clearEditorError
   } = useCodeEditorStore();
 
-  // ✅ Initialize component
+  //Initialize component
   useEffect(() => {
-    console.log('🚀 CodeEditorMain mounted for workspace:', workspaceId);
+    console.log(' CodeEditorMain mounted for workspace:', workspaceId);
     
     // Reset states
     setSelectedFile(null);
@@ -70,14 +70,14 @@ const CodeEditorMain = ({ workspaceId, workspace }) => {
     }
   }, [workspaceId, fetchWorkspaceFileSystem, clearEditor, resetEditorState]);
 
-  // ✅ Socket connection for workspace-level events
+  //Socket connection for workspace-level events
   useEffect(() => {
     if (!socket || !workspaceId) return;
 
     const joinWorkspace = () => {
       if (isJoiningRef.current || hasJoinedWorkspace) return;
       
-      console.log('🌐 Joining workspace for code editor main:', workspaceId);
+      console.log(' Joining workspace for code editor main:', workspaceId);
       isJoiningRef.current = true;
       socket.emit('join-workspace', workspaceId);
       
@@ -88,44 +88,44 @@ const CodeEditorMain = ({ workspaceId, workspace }) => {
 
     const leaveWorkspace = () => {
       if (!hasJoinedWorkspace) return;
-      console.log('🚪 Leaving workspace from code editor main:', workspaceId);
+      console.log(' Leaving workspace from code editor main:', workspaceId);
       socket.emit('leave-workspace', workspaceId);
       setHasJoinedWorkspace(false);
       setGlobalActiveUsers([]);
       setWorkspaceUserCount(1);
     };
 
-    // ✅ Socket event handlers
+    //Socket event handlers
     const handleWorkspaceJoined = (data) => {
-      console.log('✅ Joined workspace for code editor main:', data);
+      console.log(' Joined workspace for code editor main:', data);
       setHasJoinedWorkspace(true);
       setWorkspaceUserCount(data.userCount || 1);
       isJoiningRef.current = false;
     };
 
     const handleUserJoinedWorkspace = (userData) => {
-      console.log('👤 User joined workspace:', userData);
+      console.log(' User joined workspace:', userData);
       setGlobalActiveUsers(prev => [...prev.filter(u => u.userId !== userData.userId), userData]);
     };
 
     const handleUserLeftWorkspace = (userData) => {
-      console.log('👋 User left workspace:', userData);
+      console.log(' User left workspace:', userData);
       setGlobalActiveUsers(prev => prev.filter(u => u.userId !== userData.userId));
     };
 
     const handleWorkspaceUserCount = (count) => {
-      console.log('👥 Workspace user count:', count);
+      console.log(' Workspace user count:', count);
       setWorkspaceUserCount(count);
     };
 
     const handleConnect = () => {
-      console.log('✅ Socket connected for code editor main');
+      console.log(' Socket connected for code editor main');
       setIsConnected(true);
       joinWorkspace();
     };
 
     const handleDisconnect = () => {
-      console.log('❌ Socket disconnected from code editor main');
+      console.log(' Socket disconnected from code editor main');
       setIsConnected(false);
       setHasJoinedWorkspace(false);
       setGlobalActiveUsers([]);
@@ -133,7 +133,7 @@ const CodeEditorMain = ({ workspaceId, workspace }) => {
       isJoiningRef.current = false;
     };
 
-    // ✅ Check initial connection and attach listeners
+    //Check initial connection and attach listeners
     if (socket.connected) {
       handleConnect();
     }
@@ -156,7 +156,7 @@ const CodeEditorMain = ({ workspaceId, workspace }) => {
     };
   }, [socket, workspaceId, hasJoinedWorkspace]);
 
-  // ✅ Load recent files from localStorage
+  //Load recent files from localStorage
   useEffect(() => {
     const savedRecent = localStorage.getItem(`recent-files-${workspaceId}`);
     if (savedRecent) {
@@ -168,11 +168,11 @@ const CodeEditorMain = ({ workspaceId, workspace }) => {
     }
   }, [workspaceId]);
 
-  // ✅ Handle file selection with recent files tracking
+  //Handle file selection with recent files tracking
   const handleFileSelect = useCallback((file) => {
     if (file.type !== 'file') return;
     
-    console.log('📄 File selected:', file.name);
+    console.log(' File selected:', file.name);
     setSelectedFile(file);
     setShowEditor(true);
     setShowWelcome(false);
@@ -186,7 +186,7 @@ const CodeEditorMain = ({ workspaceId, workspace }) => {
     });
   }, [workspaceId]);
 
-  // ✅ Handle editor close with confirmation if unsaved changes
+  //Handle editor close with confirmation if unsaved changes
   const handleCloseEditor = useCallback((hasUnsavedChanges = false) => {
     if (hasUnsavedChanges) {
       const shouldClose = window.confirm(
@@ -195,7 +195,7 @@ const CodeEditorMain = ({ workspaceId, workspace }) => {
       if (!shouldClose) return false;
     }
     
-    console.log('🔚 Closing code editor');
+    console.log(' Closing code editor');
     setShowEditor(false);
     setSelectedFile(null);
     setShowWelcome(true);
@@ -203,7 +203,7 @@ const CodeEditorMain = ({ workspaceId, workspace }) => {
     return true;
   }, [clearEditor]);
 
-  // ✅ Handle file creation with automatic opening
+  //Handle file creation with automatic opening
   const handleCreateFile = useCallback(async (fileName, fileType = 'file', parentId = null) => {
     if (!fileName.trim()) return null;
 
@@ -224,7 +224,7 @@ const CodeEditorMain = ({ workspaceId, workspace }) => {
     return result;
   }, [createFileSystemItem, workspaceId, handleFileSelect]);
 
-  // ✅ Handle sidebar resize
+  //Handle sidebar resize
   const handleMouseDown = useCallback((e) => {
     setIsResizing(true);
     e.preventDefault();
@@ -252,13 +252,13 @@ const CodeEditorMain = ({ workspaceId, workspace }) => {
     }
   }, [isResizing, handleMouseMove, handleMouseUp]);
 
-  // ✅ Filter files based on search
+  //Filter files based on search
   const filteredFiles = fileSystemItems.filter(file => 
     file.type === 'file' && 
     file.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // ✅ Get file language for syntax highlighting preview
+  //Get file language for syntax highlighting preview
   const getFileLanguage = (file) => {
     const ext = file.metadata?.extension?.toLowerCase();
     const langMap = {
@@ -270,19 +270,19 @@ const CodeEditorMain = ({ workspaceId, workspace }) => {
     return langMap[ext] || 'Text';
   };
 
-  // ✅ Get file icon
+  //Get file icon
   const getFileIcon = (file) => {
     const ext = file.metadata?.extension?.toLowerCase();
     const icons = {
-      'js': '🟨', 'jsx': '⚛️', 'ts': '🔷', 'tsx': '⚛️',
-      'py': '🐍', 'java': '☕', 'cpp': '⚙️', 'c': '⚙️',
-      'html': '🌐', 'css': '🎨', 'scss': '🎨', 'json': '📋',
-      'md': '📝', 'php': '🐘', 'rb': '💎', 'go': '🐹'
+      'js': '', 'jsx': '', 'ts': '', 'tsx': '',
+      'py': '', 'java': '', 'cpp': '', 'c': '',
+      'html': '', 'css': '', 'scss': '', 'json': '',
+      'md': '', 'php': '', 'rb': '', 'go': ''
     };
-    return icons[ext] || '📄';
+    return icons[ext] || '';
   };
 
-  // ✅ Quick Actions Component
+  //Quick Actions Component
   const QuickActions = () => (
     <div className="bg-white rounded-lg border border-gray-200 p-6">
       <h4 className="font-medium text-gray-900 mb-4">Quick Actions</h4>
@@ -291,7 +291,7 @@ const CodeEditorMain = ({ workspaceId, workspace }) => {
           onClick={() => handleCreateFile('script.js')}
           className="flex items-center space-x-2 p-3 text-left rounded-lg border border-gray-200 hover:border-yellow-400 hover:bg-yellow-50 transition-colors"
         >
-          <span className="text-xl">🟨</span>
+          <span className="text-xl"></span>
           <div>
             <div className="font-medium text-sm">New JavaScript</div>
             <div className="text-xs text-gray-500">Create JS file</div>
@@ -302,7 +302,7 @@ const CodeEditorMain = ({ workspaceId, workspace }) => {
           onClick={() => handleCreateFile('script.py')}
           className="flex items-center space-x-2 p-3 text-left rounded-lg border border-gray-200 hover:border-green-400 hover:bg-green-50 transition-colors"
         >
-          <span className="text-xl">🐍</span>
+          <span className="text-xl"></span>
           <div>
             <div className="font-medium text-sm">New Python</div>
             <div className="text-xs text-gray-500">Create PY file</div>
@@ -313,7 +313,7 @@ const CodeEditorMain = ({ workspaceId, workspace }) => {
           onClick={() => handleCreateFile('index.html')}
           className="flex items-center space-x-2 p-3 text-left rounded-lg border border-gray-200 hover:border-blue-400 hover:bg-blue-50 transition-colors"
         >
-          <span className="text-xl">🌐</span>
+          <span className="text-xl"></span>
           <div>
             <div className="font-medium text-sm">New HTML</div>
             <div className="text-xs text-gray-500">Create HTML file</div>
@@ -324,7 +324,7 @@ const CodeEditorMain = ({ workspaceId, workspace }) => {
           onClick={() => handleCreateFile('style.css')}
           className="flex items-center space-x-2 p-3 text-left rounded-lg border border-gray-200 hover:border-pink-400 hover:bg-pink-50 transition-colors"
         >
-          <span className="text-xl">🎨</span>
+          <span className="text-xl"></span>
           <div>
             <div className="font-medium text-sm">New CSS</div>
             <div className="text-xs text-gray-500">Create CSS file</div>
@@ -334,13 +334,13 @@ const CodeEditorMain = ({ workspaceId, workspace }) => {
     </div>
   );
 
-  // ✅ Recent Files Component
+  //Recent Files Component
   const RecentFiles = () => (
     <div className="bg-white rounded-lg border border-gray-200 p-6">
       <h4 className="font-medium text-gray-900 mb-4">Recent Files</h4>
       {recentFiles.length === 0 ? (
         <div className="text-center text-gray-500 py-4">
-          <div className="text-gray-400 mb-2">📁</div>
+          <div className="text-gray-400 mb-2"></div>
           <p className="text-sm">No recent files</p>
         </div>
       ) : (
@@ -372,7 +372,7 @@ const CodeEditorMain = ({ workspaceId, workspace }) => {
     </div>
   );
 
-  // ✅ Workspace Stats Component
+  //Workspace Stats Component
   const WorkspaceStats = () => {
     const totalFiles = fileSystemItems.filter(item => item.type === 'file').length;
     const totalFolders = fileSystemItems.filter(item => item.type === 'folder').length;
@@ -420,7 +420,7 @@ const CodeEditorMain = ({ workspaceId, workspace }) => {
     );
   };
 
-  // ✅ Connection Status Component
+  //Connection Status Component
   const ConnectionStatus = () => (
     <div className="bg-white rounded-lg border border-gray-200 p-6">
       <h4 className="font-medium text-gray-900 mb-4">Collaboration Status</h4>
@@ -438,7 +438,7 @@ const CodeEditorMain = ({ workspaceId, workspace }) => {
         </div>
         
         <div className="flex items-center space-x-2">
-          <span className="text-gray-500">👥</span>
+          <span className="text-gray-500"></span>
           <span className="text-sm text-gray-700">
             {workspaceUserCount} user{workspaceUserCount !== 1 ? 's' : ''} online
           </span>
@@ -465,7 +465,7 @@ const CodeEditorMain = ({ workspaceId, workspace }) => {
     </div>
   );
 
-  // ✅ Handle view mode changes
+  //Handle view mode changes
   const handleViewModeChange = (mode) => {
     setViewMode(mode);
     if (mode === 'editor-only' && !showEditor) {
@@ -473,7 +473,7 @@ const CodeEditorMain = ({ workspaceId, workspace }) => {
     }
   };
 
-  // ✅ If showing editor, render full editor view
+  //If showing editor, render full editor view
   if (showEditor && selectedFile && viewMode !== 'explorer-only') {
     if (viewMode === 'editor-only') {
       return (
@@ -503,14 +503,14 @@ const CodeEditorMain = ({ workspaceId, workspace }) => {
                   className={`p-1 rounded text-xs ${viewMode === 'split' ? 'bg-blue-100 text-blue-700' : 'text-gray-500 hover:text-gray-700'}`}
                   title="Split View"
                 >
-                  ⚏
+                  
                 </button>
                 <button
                   onClick={() => handleViewModeChange('editor-only')}
                   className={`p-1 rounded text-xs ${viewMode === 'editor-only' ? 'bg-blue-100 text-blue-700' : 'text-gray-500 hover:text-gray-700'}`}
                   title="Editor Only"
                 >
-                  ⛶
+                  
                 </button>
               </div>
             </div>
@@ -543,7 +543,7 @@ const CodeEditorMain = ({ workspaceId, workspace }) => {
     );
   }
 
-  // ✅ Main view (welcome screen or explorer-only)
+  //Main view (welcome screen or explorer-only)
   return (
     <div className="h-full flex bg-gray-50">
       {/* File Explorer Sidebar (always visible unless editor-only) */}
@@ -563,14 +563,14 @@ const CodeEditorMain = ({ workspaceId, workspace }) => {
                     className={`p-1 rounded text-xs ${viewMode === 'split' ? 'bg-blue-100 text-blue-700' : 'text-gray-500 hover:text-gray-700'}`}
                     title="Split View"
                   >
-                    ⚏
+                    
                   </button>
                   <button
                     onClick={() => handleViewModeChange('explorer-only')}
                     className={`p-1 rounded text-xs ${viewMode === 'explorer-only' ? 'bg-blue-100 text-blue-700' : 'text-gray-500 hover:text-gray-700'}`}
                     title="Explorer Only"
                   >
-                    📁
+                    
                   </button>
                 </div>
               </div>
@@ -598,7 +598,7 @@ const CodeEditorMain = ({ workspaceId, workspace }) => {
                 
                 {filteredFiles.length === 0 ? (
                   <div className="text-center text-gray-500 py-8">
-                    <div className="text-gray-400 mb-2">🔍</div>
+                    <div className="text-gray-400 mb-2"></div>
                     <p className="text-sm">No files found</p>
                     <p className="text-xs mt-1">Try a different search term</p>
                   </div>
@@ -792,7 +792,7 @@ const CodeEditorMain = ({ workspaceId, workspace }) => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                 <div className="bg-white rounded-lg border border-gray-200 p-6">
                   <div className="text-center">
-                    <div className="text-3xl mb-3">🚀</div>
+                    <div className="text-3xl mb-3"></div>
                     <h4 className="font-medium text-gray-900 mb-2">Real-time Execution</h4>
                     <p className="text-sm text-gray-600">
                       Run JavaScript, Python, Java, C++ and more. See results instantly with our integrated execution engine.
@@ -802,7 +802,7 @@ const CodeEditorMain = ({ workspaceId, workspace }) => {
 
                 <div className="bg-white rounded-lg border border-gray-200 p-6">
                   <div className="text-center">
-                    <div className="text-3xl mb-3">👥</div>
+                    <div className="text-3xl mb-3"></div>
                     <h4 className="font-medium text-gray-900 mb-2">Live Collaboration</h4>
                     <p className="text-sm text-gray-600">
                       Code together in real-time. See cursor positions, edits, and execution results from your teammates.
@@ -812,7 +812,7 @@ const CodeEditorMain = ({ workspaceId, workspace }) => {
 
                 <div className="bg-white rounded-lg border border-gray-200 p-6">
                   <div className="text-center">
-                    <div className="text-3xl mb-3">💾</div>
+                    <div className="text-3xl mb-3"></div>
                     <h4 className="font-medium text-gray-900 mb-2">Auto-save</h4>
                     <p className="text-sm text-gray-600">
                       Never lose your work. Changes are automatically saved as you type with conflict resolution.
@@ -822,7 +822,7 @@ const CodeEditorMain = ({ workspaceId, workspace }) => {
 
                 <div className="bg-white rounded-lg border border-gray-200 p-6">
                   <div className="text-center">
-                    <div className="text-3xl mb-3">🎨</div>
+                    <div className="text-3xl mb-3"></div>
                     <h4 className="font-medium text-gray-900 mb-2">Syntax Highlighting</h4>
                     <p className="text-sm text-gray-600">
                       Beautiful syntax highlighting for 20+ programming languages with customizable themes.
@@ -832,7 +832,7 @@ const CodeEditorMain = ({ workspaceId, workspace }) => {
 
                 <div className="bg-white rounded-lg border border-gray-200 p-6">
                   <div className="text-center">
-                    <div className="text-3xl mb-3">🔒</div>
+                    <div className="text-3xl mb-3"></div>
                     <h4 className="font-medium text-gray-900 mb-2">Role-based Access</h4>
                     <p className="text-sm text-gray-600">
                       Control who can view, edit, and execute code with granular permission management.
@@ -842,7 +842,7 @@ const CodeEditorMain = ({ workspaceId, workspace }) => {
 
                 <div className="bg-white rounded-lg border border-gray-200 p-6">
                   <div className="text-center">
-                    <div className="text-3xl mb-3">📁</div>
+                    <div className="text-3xl mb-3"></div>
                     <h4 className="font-medium text-gray-900 mb-2">File Management</h4>
                     <p className="text-sm text-gray-600">
                       Organize code with folders, drag-and-drop files, and powerful search capabilities.

@@ -17,43 +17,43 @@ import {
 
 const router = Router();
 
-// ✅ Create a new file or folder (existing)
+//Create a new file or folder (existing)
 router.post("/create", createFileSystemItemController);
 
-// ✅ Get all file system items in a workspace (existing)
+//Get all file system items in a workspace (existing)
 router.get("/workspace/:workspaceId", getWorkspaceFileSystemController);
 
-// ✅ Get file system tree structure for workspace
+//Get file system tree structure for workspace
 router.get("/workspace/:workspaceId/tree", getFileSystemTreeController);
 
-// ✅ Get a specific file system item (existing)
+//Get a specific file system item (existing)
 router.get("/:id", getFileSystemItemByIdController);
 
-// ✅ Get user role and permissions for a file system item
+//Get user role and permissions for a file system item
 router.get("/:id/user-role", getUserRoleInFileSystemController);
 
-// ✅ Get file content (for files)
+//Get file content (for files)
 router.get("/:id/content", getFileSystemItemContentController);
 
-// ✅ Update file content (for real-time collaboration)
+//Update file content (for real-time collaboration)
 router.put("/:id/content", updateFileSystemItemContentController);
 
-// ✅ Update a file system item - rename, metadata (existing)
+//Update a file system item - rename, metadata (existing)
 router.put("/:id", updateFileSystemItemController);
 
-// ✅ Move a file system item (existing)
+//Move a file system item (existing)
 router.put("/:id/move", moveFileSystemItemController);
 
-// ✅ Duplicate a file system item
+//Duplicate a file system item
 router.post("/:id/duplicate", duplicateFileSystemItemController);
 
-// ✅ Get file system item history/versions
+//Get file system item history/versions
 router.get("/:id/history", getFileSystemItemHistoryController);
 
-// ✅ Bulk delete file system items
+//Bulk delete file system items
 router.delete("/bulk", bulkDeleteFileSystemItemsController);
 
-// ✅ Delete a file system item (existing)
+//Delete a file system item (existing)
 router.delete("/:id", deleteFileSystemItemController);
 
 export default router;

@@ -6,7 +6,7 @@ import WorkspaceModel from "../models/Workspace.model.js";
 import { NotFoundException, BadRequestException } from "../utils/app-error.js";
 import { getMemberRoleInWorkspace } from "./member.service.js";
 
-// ✅ Create new code editor service (matching docs pattern)
+//Create new code editor service (matching docs pattern)
 export const createCodeEditorService = async (userId, { title, content = "", language = "javascript", workspaceId, fileSystemId }) => {
   const workspace = await WorkspaceModel.findById(workspaceId);
   if (!workspace) {
@@ -47,31 +47,31 @@ export const createCodeEditorService = async (userId, { title, content = "", lan
   return { codeEditor };
 };
 
-// ✅ FIXED: Save code editor content service (proper permission logic)
+//FIXED: Save code editor content service (proper permission logic)
 export const saveCodeEditorContentService = async (codeEditorId, userId, { title, content, language }) => {
   const codeEditor = await CodeEditorModel.findById(codeEditorId);
   if (!codeEditor || !codeEditor.isActive) {
     throw new NotFoundException("Code editor not found");
   }
 
-  // ✅ FIXED: Use workspace role-based permissions (matching docs pattern)
+  //FIXED: Use workspace role-based permissions (matching docs pattern)
   const { role } = await getMemberRoleInWorkspace(userId, codeEditor.workspaceId);
   
   if (!role) {
     throw new BadRequestException("You are not a member of this workspace");
   }
 
-  // ✅ Check if user is code editor owner
+  //Check if user is code editor owner
   const isCodeEditorOwner = codeEditor.creatorId.toString() === userId.toString();
 
-  // ✅ FIXED: Allow OWNER, ADMIN, or creator to save (matching controller logic)
+  //FIXED: Allow OWNER, ADMIN, or creator to save (matching controller logic)
   const canEdit = role === 'OWNER' || role === 'ADMIN' || isCodeEditorOwner;
   
   if (!canEdit) {
     throw new BadRequestException("You do not have permission to save this code editor");
   }
 
-  // ✅ Update content
+  //Update content
   if (title !== undefined) codeEditor.title = title;
   if (language !== undefined) codeEditor.language = language;
   
@@ -89,14 +89,14 @@ export const saveCodeEditorContentService = async (codeEditorId, userId, { title
   return { codeEditor };
 };
 
-// ✅ Delete code editor service (matching docs pattern)
+//Delete code editor service (matching docs pattern)
 export const deleteCodeEditorService = async (codeEditorId, userId) => {
   const codeEditor = await CodeEditorModel.findById(codeEditorId);
   if (!codeEditor || !codeEditor.isActive) {
     throw new NotFoundException("Code editor not found");
   }
 
-  // ✅ FIXED: Use workspace role-based permissions
+  //FIXED: Use workspace role-based permissions
   const { role } = await getMemberRoleInWorkspace(userId, codeEditor.workspaceId);
   
   if (!role) {
@@ -105,7 +105,7 @@ export const deleteCodeEditorService = async (codeEditorId, userId) => {
 
   const isCreator = codeEditor.creatorId.toString() === userId.toString();
   
-  // ✅ FIXED: Allow OWNER, ADMIN, or creator to delete
+  //FIXED: Allow OWNER, ADMIN, or creator to delete
   const canDelete = role === 'OWNER' || role === 'ADMIN' || isCreator;
   
   if (!canDelete) {
@@ -127,7 +127,7 @@ export const deleteCodeEditorService = async (codeEditorId, userId) => {
   return { message: "Code editor deleted successfully" };
 };
 
-// ✅ Existing services remain the same
+//Existing services remain the same
 export const getWorkspaceCodeEditorsService = async (workspaceId) => {
   const workspace = await WorkspaceModel.findById(workspaceId);
   if (!workspace) {
@@ -195,7 +195,7 @@ export const getCodeEditorByFileSystemIdService = async (fileSystemId) => {
   return { codeEditor };
 };
 
-// ✅ FIXED: Update code editor service (proper permission logic)
+//FIXED: Update code editor service (proper permission logic)
 export const updateCodeEditorService = async (codeEditorId, userId, body) => {
   const { title, content, language } = body;
 
@@ -204,24 +204,24 @@ export const updateCodeEditorService = async (codeEditorId, userId, body) => {
     throw new NotFoundException("Code editor not found");
   }
 
-  // ✅ FIXED: Use workspace role-based permissions (matching docs pattern)
+  //FIXED: Use workspace role-based permissions (matching docs pattern)
   const { role } = await getMemberRoleInWorkspace(userId, codeEditor.workspaceId);
   
   if (!role) {
     throw new BadRequestException("You are not a member of this workspace");
   }
 
-  // ✅ Check if user is code editor owner
+  //Check if user is code editor owner
   const isCodeEditorOwner = codeEditor.creatorId.toString() === userId.toString();
 
-  // ✅ FIXED: Allow OWNER, ADMIN, or creator to edit (matching controller logic)
+  //FIXED: Allow OWNER, ADMIN, or creator to edit (matching controller logic)
   const canEdit = role === 'OWNER' || role === 'ADMIN' || isCodeEditorOwner;
   
   if (!canEdit) {
     throw new BadRequestException("You do not have permission to edit this code editor");
   }
 
-  // ✅ Update content
+  //Update content
   if (title !== undefined) codeEditor.title = title;
   if (language !== undefined) codeEditor.language = language;
   

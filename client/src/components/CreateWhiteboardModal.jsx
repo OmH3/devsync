@@ -44,7 +44,7 @@ const CreateWhiteboardModal = ({ isOpen, onClose, workspaceId, onSuccess }) => {
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600"
           >
-            ✕
+            
           </button>
         </div>
 

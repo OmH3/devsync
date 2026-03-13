@@ -23,7 +23,7 @@ export const createWhiteboardService = async (userId, body) => {
     creatorId: userId,
     workspaceId,
     roomId: `whiteboard_${uuidv4()}_${Date.now()}`,
-    collaborators: [member._id], // ✅ Only creator initially
+    collaborators: [member._id], //Only creator initially
     boardElements: [],
     lastEditedBy: userId,
   });
@@ -112,23 +112,23 @@ export const updateWhiteboardService = async (whiteboardId, userId, body) => {
     throw new NotFoundException("Whiteboard not found");
   }
 
-  // ✅ FIX: Check user's workspace role first
+  //FIX: Check user's workspace role first
   const member = await MemberModel.findOne({
     userId,
     workspaceId: whiteboard.workspaceId,
-  }).populate('role'); // ✅ Populate role to check permissions
+  }).populate('role'); //Populate role to check permissions
 
   if (!member) {
     throw new BadRequestException("You don't have access to this whiteboard");
   }
 
-  // ✅ Check permissions based on workspace role
+  //Check permissions based on workspace role
   const isCreator = whiteboard.creatorId.toString() === userId.toString();
   const isCollaborator = whiteboard.collaborators.some(
     collaboratorId => collaboratorId.toString() === member._id.toString()
   );
   
-  // ✅ ADMIN and OWNER roles can edit any whiteboard in their workspace
+  //ADMIN and OWNER roles can edit any whiteboard in their workspace
   const userRole = member.role?.name;
   const canEditByRole = userRole === 'OWNER' || userRole === 'ADMIN';
 
@@ -141,7 +141,7 @@ export const updateWhiteboardService = async (whiteboardId, userId, body) => {
     canEditByRole
   });
 
-  // ✅ Allow editing if user is creator, collaborator, or has ADMIN/OWNER role
+  //Allow editing if user is creator, collaborator, or has ADMIN/OWNER role
   if (!isCreator && !isCollaborator && !canEditByRole) {
     throw new BadRequestException("You are not authorized to edit this whiteboard");
   }
@@ -182,11 +182,11 @@ export const deleteWhiteboardService = async (whiteboardId, userId) => {
     throw new NotFoundException("Whiteboard not found");
   }
 
-  // ✅ FIX: Check workspace role for deletion permissions
+  //FIX: Check workspace role for deletion permissions
   const member = await MemberModel.findOne({
     userId,
     workspaceId: whiteboard.workspaceId,
-  }).populate('role'); // ✅ Populate role
+  }).populate('role'); //Populate role
 
   if (!member) {
     throw new BadRequestException("You don't have access to this whiteboard");
@@ -204,7 +204,7 @@ export const deleteWhiteboardService = async (whiteboardId, userId) => {
     canDeleteByRole
   });
 
-  // ✅ Allow deletion if user is creator or has ADMIN/OWNER role
+  //Allow deletion if user is creator or has ADMIN/OWNER role
   if (!isCreator && !canDeleteByRole) {
     throw new BadRequestException("You are not authorized to delete this whiteboard");
   }

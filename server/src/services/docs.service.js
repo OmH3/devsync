@@ -132,7 +132,7 @@ export const deleteDocService = async (docId, userId) => {
 
   doc.isActive = false;
   // But for collaborative documents, soft delete with 
-  // isActive: false is definitely the right approach! 👍
+  // isActive: false is definitely the right approach! 
   await doc.save();
 
   return { message: "Document deleted successfully" };

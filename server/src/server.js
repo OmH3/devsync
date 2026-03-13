@@ -39,7 +39,7 @@ import { setSocketIO as setAudioRoomSocketIO } from "./controllers/audioroom.con
 // --- App and Server Initialization ---
 const app = express();
 
-// ✅ CRITICAL: Trust proxy for Render.com
+//CRITICAL: Trust proxy for Render.com
 app.set("trust proxy", 1);
 
 const server = createServer(app);
@@ -62,7 +62,7 @@ app.use(
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     allowedHeaders: ["Content-Type", "Authorization","Cookie"],
-    exposedHeaders: ["Set-Cookie"], // ✅ Add this
+    exposedHeaders: ["Set-Cookie"], //Add this
   })
 );
 

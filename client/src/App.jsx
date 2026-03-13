@@ -46,7 +46,7 @@ function App() {
           } 
         />
 
-        {/* ✅ Add Google OAuth callback route */}
+        {/*  Add Google OAuth callback route */}
         <Route 
           path="/google/callback" 
           element={<GoogleCallback />} 

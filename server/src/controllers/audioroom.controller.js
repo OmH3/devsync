@@ -3,15 +3,15 @@ import { HTTPSTATUS } from "../config/http.config.js";
 import { BadRequestException } from "../utils/app-error.js";
 import { workspaceIdSchema } from "../validation/audioroom.validation.js";
 import { getMemberRoleInWorkspace } from "../services/member.service.js";
-// ✅ FIX: Import from audioroom.service.js, not stream.service.js
+//FIX: Import from audioroom.service.js, not stream.service.js
 import { generateStreamToken } from "../services/audioroom.service.js";
-// ✅ Get socket instance
+//Get socket instance
 let io;
 export const setSocketIO = (socketIO) => {
   io = socketIO;
 };
 
-// ✅ Get Stream token for audio room
+//Get Stream token for audio room
 export const getStreamTokenController = asyncHandler(async (req, res) => {
   const workspaceId = req.user?.currentWorkspace;
   const userId = req.user?._id;
@@ -20,13 +20,13 @@ export const getStreamTokenController = asyncHandler(async (req, res) => {
     throw new BadRequestException("No current workspace found");
   }
 
-  // ✅ Check if user is a member of the workspace
+  //Check if user is a member of the workspace
   const { role } = await getMemberRoleInWorkspace(userId, workspaceId);
   if (!role) {
     throw new BadRequestException("You are not a member of this workspace");
   }
 
-  // ✅ Generate Stream token
+  //Generate Stream token
   const { token, user } = await generateStreamToken(userId, req.user);
 
   return res.status(HTTPSTATUS.OK).json({
@@ -37,7 +37,7 @@ export const getStreamTokenController = asyncHandler(async (req, res) => {
   });
 });
 
-// ✅ Start audio room
+//Start audio room
 export const startAudioRoomController = asyncHandler(async (req, res) => {
   const { roomName } = req.body;
   const workspaceId = req.user?.currentWorkspace;
@@ -47,17 +47,17 @@ export const startAudioRoomController = asyncHandler(async (req, res) => {
     throw new BadRequestException("No current workspace found");
   }
 
-  // ✅ Check if user is a member
+  //Check if user is a member
   const { role } = await getMemberRoleInWorkspace(userId, workspaceId);
   if (!role) {
     throw new BadRequestException("You are not a member of this workspace");
   }
 
-  // ✅ Simple audio room ID (no model needed!)
+  //Simple audio room ID (no model needed!)
   const audioRoomId = `audio-room-${workspaceId}`;
   const displayName = roomName || `${workspaceId} Audio Room`;
 
-  // ✅ Emit socket event to workspace members
+  //Emit socket event to workspace members
   if (io) {
     io.to(`workspace:${workspaceId}`).emit('audio-room-started', {
       audioRoomId,
@@ -71,7 +71,7 @@ export const startAudioRoomController = asyncHandler(async (req, res) => {
     });
   }
 
-  console.log('🎵 Audio room started:', {
+  console.log(' Audio room started:', {
     audioRoomId,
     workspaceId,
     startedBy: userId
@@ -85,7 +85,7 @@ export const startAudioRoomController = asyncHandler(async (req, res) => {
   });
 });
 
-// ✅ Join audio room (just for tracking)
+//Join audio room (just for tracking)
 export const joinAudioRoomController = asyncHandler(async (req, res) => {
   const { audioRoomId } = req.body;
   const workspaceId = req.user?.currentWorkspace;
@@ -95,13 +95,13 @@ export const joinAudioRoomController = asyncHandler(async (req, res) => {
     throw new BadRequestException("No current workspace found");
   }
 
-  // ✅ Check if user is a member
+  //Check if user is a member
   const { role } = await getMemberRoleInWorkspace(userId, workspaceId);
   if (!role) {
     throw new BadRequestException("You are not a member of this workspace");
   }
 
-  // ✅ Emit socket event
+  //Emit socket event
   if (io) {
     io.to(`workspace:${workspaceId}`).emit('participant-joined-audio-room', {
       audioRoomId,
@@ -115,7 +115,7 @@ export const joinAudioRoomController = asyncHandler(async (req, res) => {
     });
   }
 
-  console.log('👥 User joined audio room:', {
+  console.log(' User joined audio room:', {
     audioRoomId,
     userId,
     workspaceId
@@ -128,13 +128,13 @@ export const joinAudioRoomController = asyncHandler(async (req, res) => {
   });
 });
 
-// ✅ Leave audio room
+//Leave audio room
 export const leaveAudioRoomController = asyncHandler(async (req, res) => {
   const { audioRoomId } = req.body;
   const workspaceId = req.user?.currentWorkspace;
   const userId = req.user?._id;
 
-  // ✅ Emit socket event
+  //Emit socket event
   if (io) {
     io.to(`workspace:${workspaceId}`).emit('participant-left-audio-room', {
       audioRoomId,
@@ -144,7 +144,7 @@ export const leaveAudioRoomController = asyncHandler(async (req, res) => {
     });
   }
 
-  console.log('👋 User left audio room:', {
+  console.log(' User left audio room:', {
     audioRoomId,
     userId,
     workspaceId
@@ -156,7 +156,7 @@ export const leaveAudioRoomController = asyncHandler(async (req, res) => {
   });
 });
 
-// ✅ End audio room
+//End audio room
 export const endAudioRoomController = asyncHandler(async (req, res) => {
   const { audioRoomId } = req.body;
   const workspaceId = req.user?.currentWorkspace;
@@ -166,13 +166,13 @@ export const endAudioRoomController = asyncHandler(async (req, res) => {
     throw new BadRequestException("No current workspace found");
   }
 
-  // ✅ Check if user is a member (any member can end for now)
+  //Check if user is a member (any member can end for now)
   const { role } = await getMemberRoleInWorkspace(userId, workspaceId);
   if (!role) {
     throw new BadRequestException("You are not a member of this workspace");
   }
 
-  // ✅ Emit socket event to end audio room for everyone
+  //Emit socket event to end audio room for everyone
   if (io) {
     io.to(`workspace:${workspaceId}`).emit('audio-room-ended', {
       audioRoomId,
@@ -185,7 +185,7 @@ export const endAudioRoomController = asyncHandler(async (req, res) => {
     });
   }
 
-  console.log('🛑 Audio room ended:', {
+  console.log(' Audio room ended:', {
     audioRoomId,
     workspaceId,
     endedBy: userId
@@ -197,18 +197,18 @@ export const endAudioRoomController = asyncHandler(async (req, res) => {
   });
 });
 
-// ✅ Get audio room status for workspace
+//Get audio room status for workspace
 export const getAudioRoomStatusController = asyncHandler(async (req, res) => {
   const workspaceId = workspaceIdSchema.parse(req.params.workspaceId);
   const userId = req.user?._id;
 
-  // ✅ Check if user is a member
+  //Check if user is a member
   const { role } = await getMemberRoleInWorkspace(userId, workspaceId);
   if (!role) {
     throw new BadRequestException("You are not a member of this workspace");
   }
 
-  // ✅ Since we don't have a model, just return basic status
+  //Since we don't have a model, just return basic status
   // In a real app, you might track this in Redis or memory
   const audioRoomId = `audio-room-${workspaceId}`;
 

@@ -6,9 +6,9 @@ import MemberModel from "../models/Member.model.js";
 import { executeByLanguage } from "../coderunners/scripts.runner.js";
 import { getMemberRoleInWorkspace } from "./member.service.js";
 
-// ✅ FIXED: Execute code service with proper workspace permissions
+//FIXED: Execute code service with proper workspace permissions
 export const executeCodeService = async (codeEditorId, userId, body) => {
-  // ✅ Extract parameters correctly (matching your original structure)
+  //Extract parameters correctly (matching your original structure)
   const { code, input = "", language, saveBeforeExecution = true } = body;
 
   // Get code editor
@@ -17,14 +17,14 @@ export const executeCodeService = async (codeEditorId, userId, body) => {
     throw new NotFoundException("Code editor not found");
   }
 
-  // ✅ FIXED: Use workspace role-based permissions (allows ADMIN)
+  //FIXED: Use workspace role-based permissions (allows ADMIN)
   const { role } = await getMemberRoleInWorkspace(userId, codeEditor.workspaceId);
   
   if (!role) {
     throw new BadRequestException("You are not a member of this workspace");
   }
 
-  // ✅ Get member for additional checks if needed
+  //Get member for additional checks if needed
   const member = await MemberModel.findOne({
     userId,
     workspaceId: codeEditor.workspaceId,
@@ -39,14 +39,14 @@ export const executeCodeService = async (codeEditorId, userId, body) => {
     collaboratorId => collaboratorId.toString() === member._id.toString()
   );
 
-  // ✅ FIXED: Allow OWNER, ADMIN, creator, or collaborator to execute
+  //FIXED: Allow OWNER, ADMIN, creator, or collaborator to execute
   const canExecute = role === 'OWNER' || role === 'ADMIN' || isCreator || isCollaborator;
   
   if (!canExecute) {
     throw new BadRequestException("You are not authorized to execute this code");
   }
 
-  // ✅ Use code from request body OR fallback to editor content
+  //Use code from request body OR fallback to editor content
   const codeToExecute = code || codeEditor.content;
   const languageToUse = language || codeEditor.language;
 
@@ -54,7 +54,7 @@ export const executeCodeService = async (codeEditorId, userId, body) => {
     throw new BadRequestException("No code to execute");
   }
 
-  // ✅ Create execution record (matching your original structure)
+  //Create execution record (matching your original structure)
   const execution = new CodeExecutionModel({
     codeEditorId,
     executorId: userId,
@@ -62,7 +62,7 @@ export const executeCodeService = async (codeEditorId, userId, body) => {
     code: codeToExecute,
     input,
     workspaceId: codeEditor.workspaceId,
-    status: "pending", // ✅ Use "pending" to match your original
+    status: "pending", //Use "pending" to match your original
   });
 
   await execution.save();
@@ -70,7 +70,7 @@ export const executeCodeService = async (codeEditorId, userId, body) => {
   try {
     const startTime = Date.now();
 
-    // ✅ Execute code using your original executeByLanguage function
+    //Execute code using your original executeByLanguage function
     const result = await executeByLanguage(
       languageToUse,
       codeToExecute,
@@ -78,9 +78,9 @@ export const executeCodeService = async (codeEditorId, userId, body) => {
       execution._id // Pass execution ID as in your original
     );
 
-    console.log("✅ Execution result:", result);
+    console.log(" Execution result:", result);
 
-    // ✅ Update execution with results (matching your original structure)
+    //Update execution with results (matching your original structure)
     execution.output = result.output || "";
     execution.error = result.error || "";
     execution.status = result.status || (result.error ? "failed" : "completed");
@@ -94,9 +94,9 @@ export const executeCodeService = async (codeEditorId, userId, body) => {
     return { execution };
 
   } catch (error) {
-    console.error('❌ Code execution error:', error);
+    console.error(' Code execution error:', error);
     
-    // ✅ Update execution record with error (matching your original)
+    //Update execution record with error (matching your original)
     execution.status = "failed";
     execution.error = error.message;
     execution.executionTime = Date.now() - startTime;
@@ -107,14 +107,14 @@ export const executeCodeService = async (codeEditorId, userId, body) => {
   }
 };
 
-// ✅ Keep execution history service as is (it was working)
+//Keep execution history service as is (it was working)
 export const getExecutionHistoryService = async (codeEditorId, userId) => {
   const codeEditor = await CodeEditorModel.findById(codeEditorId);
   if (!codeEditor || !codeEditor.isActive) {
     throw new NotFoundException("Code editor not found");
   }
 
-  // ✅ Check workspace permissions
+  //Check workspace permissions
   const { role } = await getMemberRoleInWorkspace(userId, codeEditor.workspaceId);
   
   if (!role) {

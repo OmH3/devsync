@@ -26,13 +26,13 @@ export const whiteboardService = {
     return response.data;
   },
 
-  // ✅ Add method to get user role and permissions for a whiteboard
+  //Add method to get user role and permissions for a whiteboard
   async getUserRoleInWhiteboard(whiteboardId) {
     const response = await api.get(`/whiteboard/${whiteboardId}/user-role`);
     return response.data;
   },
 
-  // ✅ Additional methods for whiteboard collaboration
+  //Additional methods for whiteboard collaboration
   async saveWhiteboardElements(whiteboardId, elements) {
     const response = await api.put(`/whiteboard/${whiteboardId}/elements`, {
       boardElements: elements

@@ -17,7 +17,7 @@ const CodeEditor = ({ fileItem, workspaceId, onClose }) => {
   const [lineNumbers, setLineNumbers] = useState(true);
   const [wordWrap, setWordWrap] = useState(true);
   
-  // ✅ Real-time collaboration states
+  //Real-time collaboration states
   const [isConnected, setIsConnected] = useState(false);
   const [activeUsers, setActiveUsers] = useState([]);
   const [userCount, setUserCount] = useState(1);
@@ -27,7 +27,7 @@ const CodeEditor = ({ fileItem, workspaceId, onClose }) => {
   const [cursors, setCursors] = useState({}); // Other users' cursors
   const [selections, setSelections] = useState({}); // Other users' selections
 
-  // ✅ Refs for managing state
+  //Refs for managing state
   const saveTimeoutRef = useRef(null);
   const isUpdatingFromSocketRef = useRef(false);
   const lastSavedContentRef = useRef({ title: '', code: '', language: '' });
@@ -38,7 +38,7 @@ const CodeEditor = ({ fileItem, workspaceId, onClose }) => {
   const isJoiningRef = useRef(false);
   const cursorPositionRef = useRef({ line: 0, column: 0 });
 
-  // ✅ Hooks
+  //Hooks
   const { user } = useAuth();
   const socket = useSocket();
   
@@ -65,9 +65,9 @@ const CodeEditor = ({ fileItem, workspaceId, onClose }) => {
     permissions
   } = useCodeEditorStore();
 
-  // ✅ Reset editor state when fileItem changes
+  //Reset editor state when fileItem changes
   useEffect(() => {
-    console.log('💻 CodeEditor mounted/file changed, resetting state');
+    console.log(' CodeEditor mounted/file changed, resetting state');
     
     // Reset all editor-specific state
     setHasJoinedEditor(false);
@@ -96,12 +96,12 @@ const CodeEditor = ({ fileItem, workspaceId, onClose }) => {
     
   }, [fileItem._id, socket]);
 
-  // ✅ Fetch code editor and permissions on mount
+  //Fetch code editor and permissions on mount
   useEffect(() => {
     const initializeEditor = async () => {
       if (!fileItem?._id) return;
 
-      console.log('💻 Initializing code editor for file:', fileItem._id);
+      console.log(' Initializing code editor for file:', fileItem._id);
       
       try {
         // Fetch code editor
@@ -117,14 +117,14 @@ const CodeEditor = ({ fileItem, workspaceId, onClose }) => {
           const permResult = await fetchUserRoleInCodeEditor(editor._id);
           if (permResult.success) {
             setEditorPermissions(permResult.permissions);
-            console.log('✅ Code editor permissions loaded:', permResult.permissions);
+            console.log(' Code editor permissions loaded:', permResult.permissions);
           }
           
           // Fetch execution history
           fetchExecutionHistory(editor._id);
         }
       } catch (error) {
-        console.error('❌ Error initializing code editor:', error);
+        console.error(' Error initializing code editor:', error);
         setError('Failed to load code editor');
       }
     };
@@ -132,7 +132,7 @@ const CodeEditor = ({ fileItem, workspaceId, onClose }) => {
     initializeEditor();
   }, [fileItem, fetchCodeEditorByFileId, fetchUserRoleInCodeEditor, fetchExecutionHistory]);
 
-  // ✅ Update local state when store changes
+  //Update local state when store changes
   useEffect(() => {
     if (currentEditor && !isUpdatingFromSocketRef.current) {
       setCode(currentEditor.content || '');
@@ -141,12 +141,12 @@ const CodeEditor = ({ fileItem, workspaceId, onClose }) => {
     }
   }, [currentEditor]);
 
-  // ✅ Update line count and scroll sync
+  //Update line count and scroll sync
   useEffect(() => {
     updateLineNumbers();
   }, [code, lineNumbers]);
 
-  // ✅ Get language from file extension
+  //Get language from file extension
   const getLanguageFromExtension = useCallback((extension) => {
     const langMap = {
       'js': 'javascript',
@@ -174,7 +174,7 @@ const CodeEditor = ({ fileItem, workspaceId, onClose }) => {
     return langMap[extension?.toLowerCase()] || 'text';
   }, []);
 
-  // ✅ Update line numbers display
+  //Update line numbers display
   const updateLineNumbers = useCallback(() => {
     if (!lineNumbers || !lineNumbersRef.current || !textareaRef.current) return;
 
@@ -186,29 +186,29 @@ const CodeEditor = ({ fileItem, workspaceId, onClose }) => {
     lineNumbersRef.current.scrollTop = textareaRef.current.scrollTop;
   }, [code, lineNumbers]);
 
-  // ✅ Join code editor room
+  //Join code editor room
   const joinCodeEditor = useCallback(() => {
     if (isJoiningRef.current) {
-      console.log('⏳ Already attempting to join code editor');
+      console.log(' Already attempting to join code editor');
       return;
     }
 
     if (!socket || !socket.connected) {
-      console.log('❌ Cannot join code editor: No socket or not connected');
+      console.log(' Cannot join code editor: No socket or not connected');
       return;
     }
 
     if (hasJoinedEditor) {
-      console.log('✅ Already joined code editor:', currentEditor?._id);
+      console.log(' Already joined code editor:', currentEditor?._id);
       return;
     }
 
     if (!currentEditor?._id || !user._id) {
-      console.log('❌ Cannot join code editor: Missing editor ID or user ID');
+      console.log(' Cannot join code editor: Missing editor ID or user ID');
       return;
     }
 
-    console.log('💻 Emitting join-code-editor event for:', currentEditor._id);
+    console.log(' Emitting join-code-editor event for:', currentEditor._id);
     isJoiningRef.current = true;
     socket.emit('join-code-editor', currentEditor._id);
     
@@ -217,11 +217,11 @@ const CodeEditor = ({ fileItem, workspaceId, onClose }) => {
     }, 5000);
   }, [socket, currentEditor?._id, hasJoinedEditor, user._id]);
 
-  // ✅ Leave code editor room
+  //Leave code editor room
   const leaveCodeEditor = useCallback(() => {
     if (!socket || !hasJoinedEditor || !currentEditor?._id) return;
     
-    console.log('🚪 Leaving code editor:', currentEditor._id);
+    console.log(' Leaving code editor:', currentEditor._id);
     socket.emit('leave-code-editor', currentEditor._id);
     setHasJoinedEditor(false);
     setActiveUsers([]);
@@ -231,34 +231,34 @@ const CodeEditor = ({ fileItem, workspaceId, onClose }) => {
     isJoiningRef.current = false;
   }, [socket, currentEditor?._id, hasJoinedEditor]);
 
-  // ✅ FIXED: Setup socket listeners (matching DocumentEditor pattern)
+  //FIXED: Setup socket listeners (matching DocumentEditor pattern)
   const setupSocketListeners = useCallback(() => {
     if (!socket) return;
 
-    console.log('💻 Setting up code editor socket listeners');
+    console.log(' Setting up code editor socket listeners');
 
     const handleCodeEditorJoined = (data) => {
-      console.log('✅ Successfully joined code editor:', data);
+      console.log(' Successfully joined code editor:', data);
       setHasJoinedEditor(true);
       setUserCount(data.userCount || 1);
       setError('');
       isJoiningRef.current = false;
     };
 
-    // ✅ Handle real-time content changes from socket (matching docs pattern)
+    //Handle real-time content changes from socket (matching docs pattern)
     const handleCodeEditorChanged = (data) => {
-      console.log('💻 Received live code editor change:', data);
+      console.log(' Received live code editor change:', data);
       
-      // ✅ Ignore own changes
+      //Ignore own changes
       if (data.userId === user._id) {
-        console.log('🔄 Ignoring own change');
+        console.log(' Ignoring own change');
         return;
       }
       
-      console.log('🔄 Applying live change from other user');
+      console.log(' Applying live change from other user');
       isUpdatingFromSocketRef.current = true;
       
-      // ✅ Always apply changes from other users (like docs)
+      //Always apply changes from other users (like docs)
       if (data.title !== undefined) {
         setTitle(data.title);
       }
@@ -271,7 +271,7 @@ const CodeEditor = ({ fileItem, workspaceId, onClose }) => {
         setLanguage(data.language);
       }
       
-      // ✅ Update store
+      //Update store
       updateEditorFromSocket(currentEditor?._id, {
         title: data.title,
         content: data.content,
@@ -284,7 +284,7 @@ const CodeEditor = ({ fileItem, workspaceId, onClose }) => {
     };
 
     const handleCodeEditorContentSaved = (data) => {
-      console.log('💾 Code editor content saved by another user:', data);
+      console.log(' Code editor content saved by another user:', data);
       if (data.savedBy.userId !== user._id) {
         setLastSaved(new Date(data.timestamp));
         if (!hasUnsavedChanges) {
@@ -298,9 +298,9 @@ const CodeEditor = ({ fileItem, workspaceId, onClose }) => {
     };
 
     const handleCodeEditorExecutionResult = (data) => {
-      console.log('🚀 Code execution result from another user:', data);
+      console.log(' Code execution result from another user:', data);
       if (data.executedBy.userId !== user._id) {
-        // ✅ Add execution result to store
+        //Add execution result to store
         addExecutionFromSocket({
           _id: `${data.codeEditorId}-${data.timestamp}`,
           result: data.result,
@@ -318,7 +318,7 @@ const CodeEditor = ({ fileItem, workspaceId, onClose }) => {
     };
 
     const handleCodeEditorCursorMove = (data) => {
-      console.log('👆 User cursor moved:', data);
+      console.log(' User cursor moved:', data);
       if (data.user.userId !== user._id) {
         setCursors(prev => ({
           ...prev,
@@ -334,13 +334,13 @@ const CodeEditor = ({ fileItem, workspaceId, onClose }) => {
     };
 
     const handleUserJoinedCodeEditor = (data) => {
-      console.log('👤 User joined code editor:', data);
+      console.log(' User joined code editor:', data);
       setActiveUsers(prev => [...prev.filter(u => u.userId !== data.userId), data]);
       handleUserJoined(data);
     };
 
     const handleUserLeftCodeEditor = (data) => {
-      console.log('👋 User left code editor:', data);
+      console.log(' User left code editor:', data);
       setActiveUsers(prev => prev.filter(u => u.userId !== data.userId));
       setCursors(prev => {
         const newCursors = { ...prev };
@@ -352,19 +352,19 @@ const CodeEditor = ({ fileItem, workspaceId, onClose }) => {
     };
 
     const handleUserCount = (count) => {
-      console.log('👥 Code editor user count:', count);
+      console.log(' Code editor user count:', count);
       setUserCount(count);
     };
 
     const handleSocketError = (error) => {
-      console.error('❌ Socket error:', error);
+      console.error(' Socket error:', error);
       setError(error.message || 'Socket error occurred');
       isJoiningRef.current = false;
     };
 
-    // ✅ Attach listeners (FIXED event names)
+    //Attach listeners (FIXED event names)
     socket.on('code-editor-joined', handleCodeEditorJoined);
-    socket.on('code-editor-changed', handleCodeEditorChanged); // ✅ FIXED: matches backend event
+    socket.on('code-editor-changed', handleCodeEditorChanged); //FIXED: matches backend event
     socket.on('code-editor-content-saved', handleCodeEditorContentSaved);
     socket.on('code-editor-execution-result', handleCodeEditorExecutionResult);
     socket.on('code-editor-cursor-move', handleCodeEditorCursorMove);
@@ -400,7 +400,7 @@ const CodeEditor = ({ fileItem, workspaceId, onClose }) => {
     currentEditor?._id
   ]);
 
-  // ✅ Socket connection and events setup
+  //Socket connection and events setup
   useEffect(() => {
     if (!socket) {
       setIsConnected(false);
@@ -409,7 +409,7 @@ const CodeEditor = ({ fileItem, workspaceId, onClose }) => {
     }
 
     const handleConnect = () => {
-      console.log('✅ Socket connected for code editor');
+      console.log(' Socket connected for code editor');
       setIsConnected(true);
       
       if (!hasJoinedEditor && !isJoiningRef.current && currentEditor?._id) {
@@ -418,7 +418,7 @@ const CodeEditor = ({ fileItem, workspaceId, onClose }) => {
     };
 
     const handleDisconnect = () => {
-      console.log('❌ Socket disconnected from code editor');
+      console.log(' Socket disconnected from code editor');
       setIsConnected(false);
       setHasJoinedEditor(false);
       setActiveUsers([]);
@@ -440,7 +440,7 @@ const CodeEditor = ({ fileItem, workspaceId, onClose }) => {
     };
   }, [socket, hasJoinedEditor, joinCodeEditor, currentEditor?._id]);
 
-  // ✅ Setup socket listeners
+  //Setup socket listeners
   useEffect(() => {
     if (!socket) return;
 
@@ -456,13 +456,13 @@ const CodeEditor = ({ fileItem, workspaceId, onClose }) => {
     };
   }, [socket, setupSocketListeners, joinCodeEditor, leaveCodeEditor, hasJoinedEditor, currentEditor?._id]);
 
-  // ✅ Smart broadcast changes
+  //Smart broadcast changes
   const broadcastChange = useCallback((newTitle, newCode, newLanguage) => {
     if (!socket || !socket.connected || !hasJoinedEditor || isUpdatingFromSocketRef.current) {
       return;
     }
 
-    // ✅ Don't broadcast if no actual changes
+    //Don't broadcast if no actual changes
     if (
       newTitle === lastBroadcastRef.current.title && 
       newCode === lastBroadcastRef.current.code &&
@@ -471,7 +471,7 @@ const CodeEditor = ({ fileItem, workspaceId, onClose }) => {
       return;
     }
 
-    console.log('📡 Broadcasting code editor change');
+    console.log(' Broadcasting code editor change');
     socket.emit('code-editor-change', {
       codeEditorId: currentEditor._id,
       title: newTitle,
@@ -487,7 +487,7 @@ const CodeEditor = ({ fileItem, workspaceId, onClose }) => {
     };
   }, [socket, currentEditor?._id, hasJoinedEditor]);
 
-  // ✅ Broadcast cursor position
+  //Broadcast cursor position
   const broadcastCursor = useCallback((position, selection) => {
     if (!socket || !socket.connected || !hasJoinedEditor || !currentEditor?._id) {
       return;
@@ -505,16 +505,16 @@ const CodeEditor = ({ fileItem, workspaceId, onClose }) => {
     });
   }, [socket, currentEditor?._id, hasJoinedEditor, user]);
 
-  // ✅ Auto-save functionality
+  //Auto-save functionality
   const autoSave = useCallback(async () => {
-    // ✅ Permission check ONLY for saving, not for receiving updates (like docs)
+    //Permission check ONLY for saving, not for receiving updates (like docs)
     if (!editorPermissions?.canEdit) {
-      console.log('❌ Auto-save skipped: No edit permission');
+      console.log(' Auto-save skipped: No edit permission');
       return;
     }
 
     if (pendingSaveRef.current) {
-      console.log('⏳ Save already in progress, skipping');
+      console.log(' Save already in progress, skipping');
       return;
     }
 
@@ -522,18 +522,18 @@ const CodeEditor = ({ fileItem, workspaceId, onClose }) => {
     const currentCode = code;
     const currentLanguage = language;
     
-    // ✅ Check if there are actual changes to save
+    //Check if there are actual changes to save
     if (
       currentTitle === lastSavedContentRef.current.title && 
       currentCode === lastSavedContentRef.current.code &&
       currentLanguage === lastSavedContentRef.current.language
     ) {
-      console.log('💾 No changes to save');
+      console.log(' No changes to save');
       return;
     }
 
     if (!currentTitle) {
-      console.log('❌ Auto-save skipped: No title');
+      console.log(' Auto-save skipped: No title');
       return;
     }
 
@@ -541,7 +541,7 @@ const CodeEditor = ({ fileItem, workspaceId, onClose }) => {
     setIsSaving(true);
 
     try {
-      console.log('💾 Auto-saving code editor...');
+      console.log(' Auto-saving code editor...');
       const result = await saveCodeEditorContent(currentEditor._id, currentTitle, currentCode);
       
       if (result.success) {
@@ -549,14 +549,14 @@ const CodeEditor = ({ fileItem, workspaceId, onClose }) => {
         setHasUnsavedChanges(false);
         setError('');
         
-        // ✅ Update saved content reference
+        //Update saved content reference
         lastSavedContentRef.current = {
           title: currentTitle,
           code: currentCode,
           language: currentLanguage
         };
 
-        // ✅ Notify other users about auto-save (like docs)
+        //Notify other users about auto-save (like docs)
         if (socket && socket.connected && hasJoinedEditor) {
           socket.emit('code-editor-auto-save', {
             codeEditorId: currentEditor._id,
@@ -566,13 +566,13 @@ const CodeEditor = ({ fileItem, workspaceId, onClose }) => {
           });
         }
 
-        console.log('✅ Auto-save successful');
+        console.log(' Auto-save successful');
       } else {
-        console.error('❌ Auto-save failed:', result.error);
+        console.error(' Auto-save failed:', result.error);
         setError(result.error || 'Auto-save failed');
       }
     } catch (error) {
-      console.error('❌ Auto-save error:', error);
+      console.error(' Auto-save error:', error);
       setError('Auto-save failed');
     } finally {
       setIsSaving(false);
@@ -580,7 +580,7 @@ const CodeEditor = ({ fileItem, workspaceId, onClose }) => {
     }
   }, [title, code, language, editorPermissions?.canEdit, saveCodeEditorContent, currentEditor?._id, socket, hasJoinedEditor]);
 
-  // ✅ Debounced save
+  //Debounced save
   const debouncedSave = useCallback(() => {
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
@@ -591,33 +591,33 @@ const CodeEditor = ({ fileItem, workspaceId, onClose }) => {
     }
   }, [autoSave, editorPermissions?.canEdit]);
 
-  // ✅ FIXED: Handle code changes (matching docs pattern)
+  //FIXED: Handle code changes (matching docs pattern)
   const handleCodeChange = useCallback((e) => {
     const newCode = e.target.value;
     
-    // ✅ Always allow local state update for real-time display (like docs)
+    //Always allow local state update for real-time display (like docs)
     setCode(newCode);
     
-    // ✅ Don't broadcast or save if updating from socket
+    //Don't broadcast or save if updating from socket
     if (isUpdatingFromSocketRef.current) {
-      console.log('🔄 Skipping broadcast - updating from socket');
+      console.log(' Skipping broadcast - updating from socket');
       return;
     }
     
-    // ✅ Check edit permission for broadcasting and saving
+    //Check edit permission for broadcasting and saving
     if (!editorPermissions?.canEdit) {
-      console.log('👁️ Read-only user viewing code change');
+      console.log(' Read-only user viewing code change');
       return;
     }
 
     setHasUnsavedChanges(true);
     setError('');
     
-    // ✅ Broadcast change to other users (only if user can edit)
+    //Broadcast change to other users (only if user can edit)
     broadcastChange(title, newCode, language);
     debouncedSave();
 
-    // ✅ Update and broadcast cursor position
+    //Update and broadcast cursor position
     const textarea = e.target;
     const position = {
       line: newCode.substring(0, textarea.selectionStart).split('\n').length - 1,
@@ -640,22 +640,22 @@ const CodeEditor = ({ fileItem, workspaceId, onClose }) => {
     broadcastCursor
   ]);
 
-  // ✅ FIXED: Handle title changes (matching docs pattern)
+  //FIXED: Handle title changes (matching docs pattern)
   const handleTitleChange = useCallback((e) => {
     const newTitle = e.target.value;
     
-    // ✅ Always allow local state update (like docs)
+    //Always allow local state update (like docs)
     setTitle(newTitle);
     
-    // ✅ Don't broadcast if updating from socket
+    //Don't broadcast if updating from socket
     if (isUpdatingFromSocketRef.current) {
-      console.log('🔄 Skipping title broadcast - updating from socket');
+      console.log(' Skipping title broadcast - updating from socket');
       return;
     }
     
-    // ✅ Check edit permission for broadcasting and saving
+    //Check edit permission for broadcasting and saving
     if (!editorPermissions?.canEdit) {
-      console.log('👁️ Read-only user viewing title change');
+      console.log(' Read-only user viewing title change');
       return;
     }
 
@@ -672,7 +672,7 @@ const CodeEditor = ({ fileItem, workspaceId, onClose }) => {
     debouncedSave
   ]);
 
-  // ✅ Handle language changes
+  //Handle language changes
   const handleLanguageChange = useCallback((newLanguage) => {
     setLanguage(newLanguage);
     
@@ -692,7 +692,7 @@ const CodeEditor = ({ fileItem, workspaceId, onClose }) => {
     debouncedSave();
   }, [editorPermissions?.canEdit, title, code, broadcastChange, debouncedSave]);
 
-  // ✅ Manual save
+  //Manual save
   const handleManualSave = useCallback(async () => {
     if (!editorPermissions?.canEdit) {
       setError('You do not have permission to edit this code editor');
@@ -705,12 +705,12 @@ const CodeEditor = ({ fileItem, workspaceId, onClose }) => {
     }
 
     if (!hasUnsavedChanges) {
-      console.log('💾 No unsaved changes to save');
+      console.log(' No unsaved changes to save');
       return;
     }
 
     if (pendingSaveRef.current) {
-      console.log('⏳ Save already in progress');
+      console.log(' Save already in progress');
       return;
     }
 
@@ -719,7 +719,7 @@ const CodeEditor = ({ fileItem, workspaceId, onClose }) => {
     setError('');
 
     try {
-      console.log('💾 Manual save initiated');
+      console.log(' Manual save initiated');
       const result = await saveCodeEditorContent(currentEditor._id, title.trim(), code);
       
       if (result.success) {
@@ -741,13 +741,13 @@ const CodeEditor = ({ fileItem, workspaceId, onClose }) => {
           });
         }
 
-        console.log('✅ Manual save successful');
+        console.log(' Manual save successful');
       } else {
         setError(result.error || 'Save failed');
-        console.error('❌ Manual save failed:', result.error);
+        console.error(' Manual save failed:', result.error);
       }
     } catch (error) {
-      console.error('❌ Manual save error:', error);
+      console.error(' Manual save error:', error);
       setError('Failed to save code editor');
     } finally {
       setIsSaving(false);
@@ -755,7 +755,7 @@ const CodeEditor = ({ fileItem, workspaceId, onClose }) => {
     }
   }, [editorPermissions?.canEdit, title, code, language, hasUnsavedChanges, saveCodeEditorContent, currentEditor?._id, socket, hasJoinedEditor]);
 
-  // ✅ Execute code
+  //Execute code
   // In your CodeEditor.jsx - verify this logic
 const handleExecuteCode = useCallback(async () => {
   if (!currentEditor || !code.trim()) {
@@ -763,14 +763,14 @@ const handleExecuteCode = useCallback(async () => {
     return;
   }
 
-  // ✅ FIXED: Check execute permission
+  //FIXED: Check execute permission
   if (!editorPermissions?.canExecute) {
     setError('You do not have permission to execute code in this workspace');
-    console.log('❌ Execute permission denied:', editorPermissions);
+    console.log(' Execute permission denied:', editorPermissions);
     return;
   }
 
-  console.log('✅ Execute permission granted:', editorPermissions);
+  console.log(' Execute permission granted:', editorPermissions);
 
   const executionData = {
     input: input.trim(),
@@ -778,7 +778,7 @@ const handleExecuteCode = useCallback(async () => {
     language: language
   };
 
-  console.log('🚀 Executing code:', executionData);
+  console.log(' Executing code:', executionData);
 
   const result = await executeCode(currentEditor._id, executionData);
   
@@ -798,12 +798,12 @@ const handleExecuteCode = useCallback(async () => {
       });
     }
   } else {
-    console.error('❌ Execute failed:', result.error);
+    console.error(' Execute failed:', result.error);
     setError(result.error || 'Code execution failed');
   }
 }, [currentEditor, code, language, input, editorPermissions?.canExecute, executeCode, socket, hasJoinedEditor]);
 
-  // ✅ Handle keyboard shortcuts
+  //Handle keyboard shortcuts
   const handleKeyDown = useCallback((e) => {
     // Tab for indentation
     if (e.key === 'Tab') {
@@ -838,7 +838,7 @@ const handleExecuteCode = useCallback(async () => {
     }
   }, [code, title, language, editorPermissions?.canEdit, broadcastChange, debouncedSave, handleManualSave, handleExecuteCode]);
 
-  // ✅ Handle cursor position changes
+  //Handle cursor position changes
   const handleCursorMove = useCallback((e) => {
     if (!editorPermissions?.canEdit || isUpdatingFromSocketRef.current) return;
     
@@ -857,17 +857,17 @@ const handleExecuteCode = useCallback(async () => {
     broadcastCursor(position, selection);
   }, [code, broadcastCursor, editorPermissions?.canEdit]);
 
-  // ✅ Handle scroll sync for line numbers
+  //Handle scroll sync for line numbers
   const handleScroll = useCallback((e) => {
     if (lineNumbersRef.current) {
       lineNumbersRef.current.scrollTop = e.target.scrollTop;
     }
   }, []);
 
-  // ✅ Cleanup on unmount
+  //Cleanup on unmount
   useEffect(() => {
     return () => {
-      console.log('🧹 CodeEditor unmounting, cleaning up');
+      console.log(' CodeEditor unmounting, cleaning up');
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current);
       }
@@ -875,7 +875,7 @@ const handleExecuteCode = useCallback(async () => {
     };
   }, [leaveCodeEditor]);
 
-  // ✅ Helper functions
+  //Helper functions
   const formatLastSaved = () => {
     if (!lastSaved) return 'Never';
     return lastSaved.toLocaleTimeString('en-US', {
@@ -886,21 +886,21 @@ const handleExecuteCode = useCallback(async () => {
   };
 
   const getConnectionStatus = () => {
-    if (!socket) return { status: 'No Socket', color: 'bg-red-500', icon: '❌' };
-    if (!isConnected) return { status: 'Connecting...', color: 'bg-yellow-500', icon: '🔄' };
-    if (isJoiningRef.current) return { status: 'Joining...', color: 'bg-yellow-500', icon: '🔄' };
-    if (!hasJoinedEditor) return { status: 'Joining Editor...', color: 'bg-yellow-500', icon: '🔄' };
-    return { status: 'Connected', color: 'bg-green-500', icon: '✅' };
+    if (!socket) return { status: 'No Socket', color: 'bg-red-500', icon: '' };
+    if (!isConnected) return { status: 'Connecting...', color: 'bg-yellow-500', icon: '' };
+    if (isJoiningRef.current) return { status: 'Joining...', color: 'bg-yellow-500', icon: '' };
+    if (!hasJoinedEditor) return { status: 'Joining Editor...', color: 'bg-yellow-500', icon: '' };
+    return { status: 'Connected', color: 'bg-green-500', icon: '' };
   };
 
   const getLanguageIcon = (lang) => {
     const icons = {
-      'javascript': '🟨', 'typescript': '🔷', 'python': '🐍', 'java': '☕',
-      'cpp': '⚙️', 'c': '⚙️', 'html': '🌐', 'css': '🎨', 'scss': '🎨',
-      'json': '📋', 'markdown': '📝', 'php': '🐘', 'ruby': '💎',
-      'go': '🐹', 'rust': '🦀', 'kotlin': '🅺', 'swift': '🐦'
+      'javascript': '', 'typescript': '', 'python': '', 'java': '',
+      'cpp': '', 'c': '', 'html': '', 'css': '', 'scss': '',
+      'json': '', 'markdown': '', 'php': '', 'ruby': '',
+      'go': '', 'rust': '', 'kotlin': '', 'swift': ''
     };
-    return icons[lang] || '📄';
+    return icons[lang] || '';
   };
 
   const connectionStatus = getConnectionStatus();
@@ -961,14 +961,14 @@ const handleExecuteCode = useCallback(async () => {
               </div>
 
               <div className="flex items-center space-x-1">
-                <span>👥</span>
+                <span></span>
                 <span className="font-medium">{userCount}</span>
                 <span>user{userCount !== 1 ? 's' : ''}</span>
               </div>
 
               {editorPermissions?.canEdit === false && (
                 <span className="text-yellow-600 text-xs font-medium flex items-center">
-                  <span className="mr-1">👁️</span>
+                  <span className="mr-1"></span>
                   Read Only
                 </span>
               )}
@@ -1018,7 +1018,7 @@ const handleExecuteCode = useCallback(async () => {
             }`}
             title={`${activeUsers.length} active users`}
           >
-            👥 {activeUsers.length}
+             {activeUsers.length}
           </button>
           
           <button
@@ -1061,7 +1061,7 @@ const handleExecuteCode = useCallback(async () => {
                   Running...
                 </span>
               ) : (
-                'Run ▶'
+                'Run '
               )}
             </button>
           )}
@@ -1084,7 +1084,7 @@ const handleExecuteCode = useCallback(async () => {
               onClick={() => setError('')}
               className="ml-auto text-red-400 hover:text-red-600"
             >
-              ✕
+              
             </button>
           </div>
         </div>
@@ -1113,7 +1113,7 @@ const handleExecuteCode = useCallback(async () => {
         <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <span className="text-yellow-400 text-lg">👁️</span>
+              <span className="text-yellow-400 text-lg"></span>
             </div>
             <div className="ml-3">
               <p className="text-sm text-yellow-800">
@@ -1261,7 +1261,7 @@ const handleExecuteCode = useCallback(async () => {
                   onClick={() => setShowExecutionPanel(false)}
                   className="text-gray-400 hover:text-gray-600"
                 >
-                  ✕
+                  
                 </button>
               </div>
             </div>
@@ -1338,7 +1338,7 @@ const handleExecuteCode = useCallback(async () => {
           <span>Language: {language}</span>
           <span>Lines: {code.split('\n').length}</span>
           {editorPermissions?.canEdit === false && (
-            <span className="text-yellow-600">👁️ View-only</span>
+            <span className="text-yellow-600"> View-only</span>
           )}
         </div>
         
@@ -1372,13 +1372,13 @@ const handleExecuteCode = useCallback(async () => {
 
       {/* Debug Info (remove in production) */}
       <div className="absolute bottom-4 left-4 bg-black bg-opacity-75 text-white px-3 py-2 rounded-lg text-xs pointer-events-none z-30">
-        Socket: {socket ? '✅' : '❌'} | 
-        Connected: {isConnected ? '✅' : '❌'} | 
-        Joining: {isJoiningRef.current ? '⏳' : '✅'} |
-        Joined: {hasJoinedEditor ? '✅' : '❌'} |
-        Edit: {editorPermissions?.canEdit ? '✅' : '❌'} |
-        Execute: {editorPermissions?.canExecute ? '✅' : '❌'} |
-        Saving: {isSaving ? '⏳' : '✅'}
+        Socket: {socket ? '' : ''} | 
+        Connected: {isConnected ? '' : ''} | 
+        Joining: {isJoiningRef.current ? '' : ''} |
+        Joined: {hasJoinedEditor ? '' : ''} |
+        Edit: {editorPermissions?.canEdit ? '' : ''} |
+        Execute: {editorPermissions?.canExecute ? '' : ''} |
+        Saving: {isSaving ? '' : ''}
       </div>
     </div>
   );

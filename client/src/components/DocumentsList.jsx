@@ -12,16 +12,16 @@ const DocumentsList = ({ workspaceId, workspace }) => {
   const { user } = useAuth();
   
   const { 
-    // ✅ Documents data
+    //Documents data
     documents, 
     currentDocument,
     
-    // ✅ Loading and error states
+    //Loading and error states
     isLoading, 
     error,
     clearError,
     
-    // ✅ User permissions and role
+    //User permissions and role
     userRole,
     canEdit,
     canView,
@@ -31,7 +31,7 @@ const DocumentsList = ({ workspaceId, workspace }) => {
     isWorkspaceOwner,
     isAdmin,
     
-    // ✅ Actions
+    //Actions
     fetchUserRoleInDocument,
     fetchWorkspaceDocuments, 
     deleteDocument,
@@ -39,23 +39,23 @@ const DocumentsList = ({ workspaceId, workspace }) => {
     clearDocuments
   } = useDocumentStore();
 
-  // ✅ Fetch user role when component mounts or workspace changes
+  //Fetch user role when component mounts or workspace changes
   useEffect(() => {
     if (workspaceId && user?._id) {
-      console.log('🔍 Fetching user role for workspace:', workspaceId);
+      console.log(' Fetching user role for workspace:', workspaceId);
       fetchUserRoleInDocument(workspaceId);
     }
   }, [workspaceId, user?._id, fetchUserRoleInDocument]);
 
-  // ✅ Fetch documents when user role is available
+  //Fetch documents when user role is available
   useEffect(() => {
     if (workspaceId && userRole && canView) {
-      console.log('📄 Fetching documents for workspace:', workspaceId, 'with role:', userRole);
+      console.log(' Fetching documents for workspace:', workspaceId, 'with role:', userRole);
       fetchWorkspaceDocuments(workspaceId);
     }
   }, [workspaceId, userRole, canView, fetchWorkspaceDocuments]);
 
-  // ✅ Clear documents when workspace changes
+  //Clear documents when workspace changes
   useEffect(() => {
     return () => {
       if (workspaceId) {
@@ -64,7 +64,7 @@ const DocumentsList = ({ workspaceId, workspace }) => {
     };
   }, [workspaceId, clearDocuments]);
 
-  // ✅ Enhanced delete with permission check using store state
+  //Enhanced delete with permission check using store state
   const handleDeleteDocument = async (documentId, documentTitle, documentCreatorId) => {
     // Check if user can delete this specific document
     const isOwner = documentCreatorId === user?._id;
@@ -78,32 +78,32 @@ const DocumentsList = ({ workspaceId, workspace }) => {
     const confirmMessage = `Are you sure you want to delete "${documentTitle}"?\n\nThis action cannot be undone.`;
     
     if (window.confirm(confirmMessage)) {
-      console.log('🗑️ Deleting document:', documentId);
+      console.log(' Deleting document:', documentId);
       const result = await deleteDocument(documentId);
       
       if (result.success) {
-        console.log('✅ Document deleted successfully');
+        console.log(' Document deleted successfully');
         // Close editor if the deleted document was open
         if (selectedDocument?._id === documentId) {
           setSelectedDocument(null);
           setShowEditor(false);
         }
       } else {
-        console.error('❌ Failed to delete document:', result.error);
+        console.error(' Failed to delete document:', result.error);
         alert(`Failed to delete document: ${result.error}`);
       }
     }
   };
 
-  // ✅ Open document using store state
+  //Open document using store state
   const handleOpenDocument = (document) => {
-    console.log('📄 Opening document:', document._id);
+    console.log(' Opening document:', document._id);
     setCurrentDocument(document);
     setSelectedDocument(document);
     setShowEditor(true);
   };
 
-  // ✅ Helper functions
+  //Helper functions
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -127,7 +127,7 @@ const DocumentsList = ({ workspaceId, workspace }) => {
     return { canEdit: canEditThis, canDelete: canDeleteThis, isOwner };
   };
 
-  // ✅ Show loading state while fetching role
+  //Show loading state while fetching role
   if (!userRole && !error) {
     return (
       <div className="flex justify-center items-center py-12">
@@ -137,7 +137,7 @@ const DocumentsList = ({ workspaceId, workspace }) => {
     );
   }
 
-  // ✅ Show editor if document is selected
+  //Show editor if document is selected
   if (showEditor && selectedDocument) {
     return (
       <DocumentEditor
@@ -171,7 +171,7 @@ const DocumentsList = ({ workspaceId, workspace }) => {
                 Role: {userRole}
               </span>
             )}
-            {/* ✅ Show permissions info */}
+            {/*  Show permissions info */}
             <div className="flex items-center space-x-2 text-xs">
               {canView && <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded">View</span>}
               {canEdit && <span className="px-2 py-1 bg-green-100 text-green-800 rounded">Edit</span>}
@@ -181,7 +181,7 @@ const DocumentsList = ({ workspaceId, workspace }) => {
           </div>
         </div>
         
-        {/* ✅ Create button with permission check using store state */}
+        {/*  Create button with permission check using store state */}
         {canCreate && (
           <button
             onClick={() => setShowCreateModal(true)}
@@ -211,13 +211,13 @@ const DocumentsList = ({ workspaceId, workspace }) => {
               onClick={clearError}
               className="ml-auto text-red-400 hover:text-red-600"
             >
-              ✕
+              
             </button>
           </div>
         </div>
       )}
 
-      {/* ✅ Permission info for members using store state */}
+      {/*  Permission info for members using store state */}
       {userRole === 'MEMBER' && (
         <div className="rounded-md bg-yellow-50 p-4">
           <div className="flex">
@@ -237,7 +237,7 @@ const DocumentsList = ({ workspaceId, workspace }) => {
         </div>
       )}
 
-      {/* ✅ No permissions warning */}
+      {/*  No permissions warning */}
       {!canView && (
         <div className="rounded-md bg-red-50 p-4">
           <div className="flex">
@@ -325,7 +325,7 @@ const DocumentsList = ({ workspaceId, workspace }) => {
                         </div>
                       </div>
                       
-                      {/* ✅ Document permissions indicator */}
+                      {/*  Document permissions indicator */}
                       <div className="flex items-center space-x-2 mb-3">
                         {docPermissions.isOwner && (
                           <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
@@ -342,7 +342,7 @@ const DocumentsList = ({ workspaceId, workspace }) => {
                             Read Only
                           </span>
                         )}
-                        {/* ✅ Show current document indicator */}
+                        {/*  Show current document indicator */}
                         {currentDocument?._id === document._id && (
                           <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
                             Current
@@ -358,7 +358,7 @@ const DocumentsList = ({ workspaceId, workspace }) => {
                         )}
                       </div>
 
-                      {/* ✅ Enhanced document metadata */}
+                      {/*  Enhanced document metadata */}
                       <div className="space-y-2 text-xs text-gray-500">
                         <div className="flex justify-between">
                           <span>Words: {document.metadata?.wordCount || getWordCount(document.content)}</span>
@@ -390,7 +390,7 @@ const DocumentsList = ({ workspaceId, workspace }) => {
                         )}
                       </div>
 
-                      {/* ✅ Action button with permission-based styling */}
+                      {/*  Action button with permission-based styling */}
                       <button
                         onClick={() => handleOpenDocument(document)}
                         className={`mt-4 w-full px-3 py-2 rounded-md text-sm font-medium transition-colors ${
@@ -410,7 +410,7 @@ const DocumentsList = ({ workspaceId, workspace }) => {
         </>
       )}
 
-      {/* ✅ Create Document Modal - only show if user can create */}
+      {/*  Create Document Modal - only show if user can create */}
       {canCreate && showCreateModal && (
         <CreateDocumentModal
           isOpen={showCreateModal}

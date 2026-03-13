@@ -25,12 +25,12 @@ export const useDocumentStore = create(
       hasUnsavedChanges: false, 
       lastSaved: null, 
 
-      // ✅ Connection and user management actions
+      //Connection and user management actions
       setUserCount: (count) => set({ userCount: count }),
       setIsConnected: (connected) => set({ isConnected: connected }),
       setActiveUsers: (users) => set({ activeUsers: users || [] }),
       
-      // ✅ Permission management actions
+      //Permission management actions
       setUserRole: (role) => set({ userRole: role }),
       setPermissions: (permissions) => set({
         canEdit: permissions.canEdit || false,
@@ -44,7 +44,7 @@ export const useDocumentStore = create(
         isAdmin
       }),
 
-      // ✅ Document content management
+      //Document content management
       setCurrentDocument: (document) => set({ 
         currentDocument: document,
         documentTitle: document?.title || '',
@@ -62,15 +62,15 @@ export const useDocumentStore = create(
       setHasUnsavedChanges: (hasChanges) => set({ hasUnsavedChanges: hasChanges }),
       setLastSaved: (timestamp) => set({ lastSaved: timestamp }),
 
-      // ✅ Basic state management
+      //Basic state management
       setLoading: (isLoading) => set({ isLoading }),
       setError: (error) => set({ error }),
       clearError: () => set({ error: null }),
 
-      // ✅ FIX: Fetch user role in workspace (matching whiteboard pattern exactly)
-      fetchUserRoleInDocument: async (workspaceId) => { // ✅ Changed parameter name but kept function name for consistency
+      //FIX: Fetch user role in workspace (matching whiteboard pattern exactly)
+      fetchUserRoleInDocument: async (workspaceId) => { //Changed parameter name but kept function name for consistency
         try {
-          const response = await documentService.getUserRoleInWorkspace(workspaceId); // ✅ Fixed service call
+          const response = await documentService.getUserRoleInWorkspace(workspaceId); //Fixed service call
           
           const { role, permissions, isDocumentOwner, isWorkspaceOwner, isAdmin } = response;
           
@@ -99,7 +99,7 @@ export const useDocumentStore = create(
         }
       },
 
-      // ✅ Document content actions with permission checks
+      //Document content actions with permission checks
       updateContentWithPermissionCheck: (content) => {
         const { canEdit } = get();
         if (!canEdit) {
@@ -128,11 +128,11 @@ export const useDocumentStore = create(
         return true;
       },
 
-      // ✅ Create document with role check (matching whiteboard pattern)
+      //Create document with role check (matching whiteboard pattern)
       createDocument: async (documentData) => {
         const { userRole } = get();
         
-        // ✅ Allow all roles except explicitly restricted ones (more permissive than whiteboard)
+        //Allow all roles except explicitly restricted ones (more permissive than whiteboard)
         if (!userRole || !['OWNER', 'ADMIN', 'MEMBER'].includes(userRole)) {
           const errorMsg = 'You do not have permission to create documents';
           set({ error: errorMsg });
@@ -155,14 +155,14 @@ export const useDocumentStore = create(
           
           return { success: true, document: newDocument };
         } catch (error) {
-          console.error('❌ Create document failed:', error);
+          console.error(' Create document failed:', error);
           const errorMessage = error.response?.data?.message || 'Failed to create document';
           set({ error: errorMessage, isLoading: false });
           return { success: false, error: errorMessage };
         }
       },
 
-      // ✅ Fetch workspace documents
+      //Fetch workspace documents
       fetchWorkspaceDocuments: async (workspaceId) => {
         set({ isLoading: true, error: null });
         try {
@@ -173,14 +173,14 @@ export const useDocumentStore = create(
           });
           return { success: true, documents: response.docs || [] };
         } catch (error) {
-          console.error('❌ Fetch documents failed:', error);
+          console.error(' Fetch documents failed:', error);
           const errorMessage = error.response?.data?.message || 'Failed to fetch documents';
           set({ error: errorMessage, isLoading: false });
           return { success: false, error: errorMessage };
         }
       },
 
-      // ✅ Fetch document by ID
+      //Fetch document by ID
       fetchDocumentById: async (documentId) => {
         set({ isLoading: true, error: null });
         try {
@@ -203,7 +203,7 @@ export const useDocumentStore = create(
         }
       },
 
-      // ✅ Update document with permission check
+      //Update document with permission check
       updateDocument: async (documentId, documentData) => {
         const { canEdit } = get();
         if (!canEdit) {
@@ -241,7 +241,7 @@ export const useDocumentStore = create(
         }
       },
 
-      // ✅ Delete document with role check (matching whiteboard pattern)
+      //Delete document with role check (matching whiteboard pattern)
       deleteDocument: async (documentId) => {
         const { userRole, isDocumentOwner } = get();
         if (userRole === 'MEMBER' && !isDocumentOwner) {
@@ -271,7 +271,7 @@ export const useDocumentStore = create(
         }
       },
 
-      // ✅ Save document content to backend with permission check
+      //Save document content to backend with permission check
       saveDocumentContent: async (documentId, title, content) => {
         const { canEdit } = get();
         if (!canEdit) {
@@ -305,7 +305,7 @@ export const useDocumentStore = create(
         }
       },
 
-      // ✅ Real-time document updates (for socket integration)
+      //Real-time document updates (for socket integration)
       updateDocumentContentFromSocket: (documentId, title, content, userId) => {
         // Don't update if this is our own change
         const { currentDocument } = get();
@@ -325,7 +325,7 @@ export const useDocumentStore = create(
         }));
       },
 
-      // ✅ Handle user join/leave events
+      //Handle user join/leave events
       handleUserJoined: (userData) => {
         set(state => ({
           activeUsers: [...state.activeUsers.filter(u => u.userId !== userData.userId), userData]
@@ -338,7 +338,7 @@ export const useDocumentStore = create(
         }));
       },
 
-      // ✅ Clear all document data (matching whiteboard pattern)
+      //Clear all document data (matching whiteboard pattern)
       clearDocuments: () => set({ 
         documents: [], 
         currentDocument: null,
@@ -360,7 +360,7 @@ export const useDocumentStore = create(
         isConnected: false
       }),
 
-      // ✅ Reset document editing state
+      //Reset document editing state
       resetDocumentState: () => set({
         currentDocument: null,
         documentContent: '',

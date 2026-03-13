@@ -31,7 +31,7 @@ export const executeCodeSchema = z.object({
   saveBeforeExecution: z.boolean().default(true),
 });
 
-// ✅ Add these missing schemas
+//Add these missing schemas
 export const createCodeEditorSchema = z.object({
   title: z.string().min(1, "Title is required").max(255, "Title too long"),
   content: z.string().optional().default(""),

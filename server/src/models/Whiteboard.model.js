@@ -12,7 +12,7 @@ const whiteboardSchema = new mongoose.Schema({
     required: false,
     trim: true,
     maxLength: [500, "Board description cannot exceed 500 characters"],
-    default: "", // ✅ Add default empty string
+    default: "", //Add default empty string
   },
   creatorId: {
     type: mongoose.Schema.Types.ObjectId,

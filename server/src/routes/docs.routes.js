@@ -12,7 +12,7 @@ router.get("/workspace/:workspaceId", getWorkspaceDocsController);
 // Get a specific document
 router.get("/:id", getDocByIdController);
 
-// ✅ FIX: Route to get user role in workspace (matching whiteboard pattern)
+//FIX: Route to get user role in workspace (matching whiteboard pattern)
 router.get("/user-role/:workspaceId", getUserRoleInWorkspaceController);
 
 // Update a document

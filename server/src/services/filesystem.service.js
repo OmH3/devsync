@@ -6,7 +6,7 @@ import CodeEditorModel from "../models/CodeEditor.model.js";
 import { NotFoundException, BadRequestException } from "../utils/app-error.js";
 import { deleteChildrenRecursively, getLanguageFromExtension, updateChildrenPaths } from "../utils/filesystem.utils.js";
 
-// ✅ Get file system item content service (new)
+//Get file system item content service (new)
 export const getFileSystemItemContentService = async (fileSystemId) => {
   const fileSystemItem = await FileSystemModel.findById(fileSystemId);
   if (!fileSystemItem || !fileSystemItem.isActive) {
@@ -41,7 +41,7 @@ export const getFileSystemItemContentService = async (fileSystemId) => {
   };
 };
 
-// ✅ Update file system item content service (new)
+//Update file system item content service (new)
 export const updateFileSystemItemContentService = async (fileSystemId, userId, { content, language }) => {
   const fileSystemItem = await FileSystemModel.findById(fileSystemId);
   if (!fileSystemItem || !fileSystemItem.isActive) {
@@ -111,7 +111,7 @@ export const updateFileSystemItemContentService = async (fileSystemId, userId, {
   return { fileSystemItem: fileSystemItem };
 };
 
-// ✅ Get file system tree service (new)
+//Get file system tree service (new)
 export const getFileSystemTreeService = async (workspaceId) => {
   const workspace = await WorkspaceModel.findById(workspaceId);
   if (!workspace) {
@@ -144,7 +144,7 @@ export const getFileSystemTreeService = async (workspaceId) => {
   return { tree };
 };
 
-// ✅ Duplicate filesystem item service (new)
+//Duplicate filesystem item service (new)
 export const duplicateFileSystemItemService = async (fileSystemId, userId, { name, parentId }) => {
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -242,7 +242,7 @@ export const duplicateFileSystemItemService = async (fileSystemId, userId, { nam
   }
 };
 
-// ✅ Bulk delete filesystem items service (new)
+//Bulk delete filesystem items service (new)
 export const bulkDeleteFileSystemItemsService = async (itemIds, userId) => {
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -316,7 +316,7 @@ export const bulkDeleteFileSystemItemsService = async (itemIds, userId) => {
   }
 };
 
-// ✅ Get filesystem item history service (new)
+//Get filesystem item history service (new)
 export const getFileSystemItemHistoryService = async (fileSystemId) => {
   const fileSystemItem = await FileSystemModel.findById(fileSystemId);
   if (!fileSystemItem || !fileSystemItem.isActive) {
@@ -359,7 +359,7 @@ export const getFileSystemItemHistoryService = async (fileSystemId) => {
   return { history: history.sort((a, b) => b.timestamp - a.timestamp) };
 };
 
-// ✅ Existing services remain the same
+//Existing services remain the same
 export const createFileSystemItemService = async (userId, body) => {
   const { name, type, parentId, workspaceId } = body;
   let { path } = body;

@@ -237,7 +237,7 @@ const EnhancedDrawingCanvas = ({
 
   // Save element and persist to backend
   const saveElement = async (element) => {
-    // ✅ Check permissions before saving
+    //Check permissions before saving
     if (!canEdit || userRole === 'MEMBER') {
       console.log('Save prevented: User does not have edit permissions');
       setError && setError('You do not have permission to edit this whiteboard');
@@ -387,9 +387,9 @@ const EnhancedDrawingCanvas = ({
     return () => clearInterval(interval);
   }, []);
 
-  // ✅ Mouse event handlers with permission checks
+  //Mouse event handlers with permission checks
   const startDrawing = useCallback((e) => {
-    // ✅ Prevent all drawing interactions for members
+    //Prevent all drawing interactions for members
     if (!canEdit || userRole === 'MEMBER') {
       console.log('Drawing prevented: User does not have edit permissions');
       return;
@@ -438,7 +438,7 @@ const EnhancedDrawingCanvas = ({
   const draw = useCallback((e) => {
     const currentPos = getMousePos(e);
 
-    // ✅ Allow cursor movement for all users (members can see other cursors)
+    //Allow cursor movement for all users (members can see other cursors)
     if (socket?.connected && whiteboard?._id) {
       socket.emit('cursor-move', {
         whiteboardId: whiteboard._id,
@@ -449,7 +449,7 @@ const EnhancedDrawingCanvas = ({
       });
     }
 
-    // ✅ Only prevent actual drawing for members
+    //Only prevent actual drawing for members
     if (!canEdit || userRole === 'MEMBER') {
       return;
     }
@@ -482,7 +482,7 @@ const EnhancedDrawingCanvas = ({
   }, [isDrawing, selectedTool, socket, whiteboard?._id, drawPreviewShape, isTyping, canEdit, userRole]);
 
   const endDrawing = useCallback((e) => {
-    // ✅ Prevent drawing end for members
+    //Prevent drawing end for members
     if (!canEdit || userRole === 'MEMBER') return;
 
     // Don't end drawing if we're typing text
@@ -563,7 +563,7 @@ const EnhancedDrawingCanvas = ({
   }, [isDrawing, selectedTool, selectedColor, strokeWidth, startPosition, currentPath, socket, whiteboard?._id, redrawCanvas, saveElement, isTyping, canEdit, userRole]);
 
   const handleTextSubmit = useCallback(() => {
-    // ✅ Check permissions before submitting text
+    //Check permissions before submitting text
     if (!canEdit || userRole === 'MEMBER') {
       console.log('Text submit prevented: User does not have edit permissions');
       setError && setError('You do not have permission to edit this whiteboard');
@@ -709,7 +709,7 @@ const EnhancedDrawingCanvas = ({
       
       {/* User Count Display */}
       <div className="absolute top-4 right-4 bg-black bg-opacity-75 text-white px-3 py-2 rounded-lg text-sm font-medium pointer-events-none z-30">
-        👥 {userCount} user{userCount !== 1 ? 's' : ''}
+         {userCount} user{userCount !== 1 ? 's' : ''}
         {userRole === 'MEMBER' && (
           <div className="text-xs mt-1 text-yellow-300">
             (View Only)

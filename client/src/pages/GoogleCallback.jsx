@@ -15,14 +15,14 @@ const GoogleCallback = () => {
         const message = searchParams.get('message');
 
         if (status === 'success') {
-          // ✅ Browser-specific waiting for session establishment
+          //Browser-specific waiting for session establishment
           const isBrave = navigator.userAgent.includes('Brave');
           const isFirefox = navigator.userAgent.includes('Firefox');
           const waitTime = isBrave ? 4000 : isFirefox ? 3000 : 2000;
           
           await new Promise(resolve => setTimeout(resolve, waitTime));
           
-          // ✅ Test API call to verify session
+          //Test API call to verify session
           try {
             const testResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/user/current`, {
               method: 'GET',
@@ -44,8 +44,8 @@ const GoogleCallback = () => {
           if (result?.isAuthenticated) {
             navigate('/dashboard', { replace: true });
           } else {
-            // ✅ If current setup fails, suggest Firebase
-            console.log('🚨 Consider switching to Firebase Auth for better cross-origin support');
+            //If current setup fails, suggest Firebase
+            console.log(' Consider switching to Firebase Auth for better cross-origin support');
             navigate('/login?error=Session not established - Consider Firebase Auth', { replace: true });
           }
         } else {
@@ -53,7 +53,7 @@ const GoogleCallback = () => {
           navigate(`/login?error=${encodeURIComponent(errorMessage)}`, { replace: true });
         }
       } catch (error) {
-        console.error('❌ Error in Google callback:', error);
+        console.error(' Error in Google callback:', error);
         navigate('/login?error=Authentication error', { replace: true });
       } finally {
         setIsProcessing(false);

@@ -14,17 +14,17 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
   const [selectedItems, setSelectedItems] = useState(new Set());
   const [showBulkActions, setShowBulkActions] = useState(false);
 
-  // ✅ Real-time collaboration states
+  //Real-time collaboration states
   const [isConnected, setIsConnected] = useState(false);
   const [activeUsers, setActiveUsers] = useState([]);
   const [userCount, setUserCount] = useState(1);
   const [hasJoinedWorkspace, setHasJoinedWorkspace] = useState(false);
 
-  // ✅ Refs for managing state
+  //Refs for managing state
   const dropZoneRef = useRef(null);
   const isJoiningRef = useRef(false);
 
-  // ✅ Hooks
+  //Hooks
   const { user } = useAuth();
   const socket = useSocket();
   
@@ -55,21 +55,21 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
     fetchUserRoleInFileSystem
   } = useFilesystemStore();
 
-  // ✅ Fetch file system on mount
+  //Fetch file system on mount
   useEffect(() => {
     if (workspaceId) {
       fetchWorkspaceFileSystem(workspaceId);
     }
   }, [workspaceId, fetchWorkspaceFileSystem]);
 
-  // ✅ Socket connection and collaboration setup
+  //Socket connection and collaboration setup
   useEffect(() => {
     if (!socket || !workspaceId) return;
 
     const joinWorkspace = () => {
       if (isJoiningRef.current || hasJoinedWorkspace) return;
       
-      console.log('📁 Joining workspace for filesystem:', workspaceId);
+      console.log(' Joining workspace for filesystem:', workspaceId);
       isJoiningRef.current = true;
       socket.emit('join-workspace', workspaceId);
       
@@ -80,37 +80,37 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
 
     const leaveWorkspace = () => {
       if (!hasJoinedWorkspace) return;
-      console.log('🚪 Leaving workspace filesystem:', workspaceId);
+      console.log(' Leaving workspace filesystem:', workspaceId);
       socket.emit('leave-workspace', workspaceId);
       setHasJoinedWorkspace(false);
       setActiveUsers([]);
       setUserCount(1);
     };
 
-    // ✅ Socket event handlers
+    //Socket event handlers
     const handleWorkspaceJoined = (data) => {
-      console.log('✅ Joined workspace for filesystem:', data);
+      console.log(' Joined workspace for filesystem:', data);
       setHasJoinedWorkspace(true);
       setUserCount(data.userCount || 1);
       isJoiningRef.current = false;
     };
 
     const handleFileSystemItemCreated = (data) => {
-      console.log('📁 File system item created:', data);
+      console.log(' File system item created:', data);
       if (data.createdBy.userId !== user._id) {
         addItemFromSocket(data.fileSystemItem);
       }
     };
 
     const handleFileSystemItemUpdated = (data) => {
-      console.log('📝 File system item updated:', data);
+      console.log(' File system item updated:', data);
       if (data.updatedBy.userId !== user._id) {
         updateItemFromSocket(data.fileSystemId, data.updates);
       }
     };
 
     const handleFileSystemItemMoved = (data) => {
-      console.log('📂 File system item moved:', data);
+      console.log(' File system item moved:', data);
       if (data.movedBy.userId !== user._id) {
         // Refresh file system to get updated paths
         fetchWorkspaceFileSystem(workspaceId);
@@ -118,44 +118,44 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
     };
 
     const handleFileSystemItemDeleted = (data) => {
-      console.log('🗑️ File system item deleted:', data);
+      console.log(' File system item deleted:', data);
       if (data.deletedBy.userId !== user._id) {
         removeItemFromSocket(data.fileSystemId);
       }
     };
 
     const handleFileSystemItemDuplicated = (data) => {
-      console.log('📋 File system item duplicated:', data);
+      console.log(' File system item duplicated:', data);
       if (data.duplicatedBy.userId !== user._id) {
         addItemFromSocket(data.duplicatedItem);
       }
     };
 
     const handleUserJoinedWorkspace = (userData) => {
-      console.log('👤 User joined workspace filesystem:', userData);
+      console.log(' User joined workspace filesystem:', userData);
       setActiveUsers(prev => [...prev.filter(u => u.userId !== userData.userId), userData]);
       handleUserJoined(userData);
     };
 
     const handleUserLeftWorkspace = (userData) => {
-      console.log('👋 User left workspace filesystem:', userData);
+      console.log(' User left workspace filesystem:', userData);
       setActiveUsers(prev => prev.filter(u => u.userId !== userData.userId));
       handleUserLeft(userData);
     };
 
     const handleUserCountUpdate = (count) => {
-      console.log('👥 Workspace user count:', count);
+      console.log(' Workspace user count:', count);
       setUserCount(count);
     };
 
     const handleConnect = () => {
-      console.log('✅ Socket connected for filesystem');
+      console.log(' Socket connected for filesystem');
       setIsConnected(true);
       joinWorkspace();
     };
 
     const handleDisconnect = () => {
-      console.log('❌ Socket disconnected from filesystem');
+      console.log(' Socket disconnected from filesystem');
       setIsConnected(false);
       setHasJoinedWorkspace(false);
       setActiveUsers([]);
@@ -163,7 +163,7 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
       isJoiningRef.current = false;
     };
 
-    // ✅ Check initial connection and attach listeners
+    //Check initial connection and attach listeners
     if (socket.connected) {
       handleConnect();
     }
@@ -196,7 +196,7 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
     };
   }, [socket, workspaceId, hasJoinedWorkspace, user._id, addItemFromSocket, updateItemFromSocket, removeItemFromSocket, handleUserJoined, handleUserLeft, fetchWorkspaceFileSystem]);
 
-  // ✅ Build hierarchical file tree
+  //Build hierarchical file tree
   const buildFileTree = useCallback((items, parentId = null) => {
     return items
       .filter(item => item.parentId === parentId)
@@ -213,32 +213,32 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
       }));
   }, []);
 
-  // ✅ Get file icon with better visual indicators
+  //Get file icon with better visual indicators
   const getFileIcon = (item) => {
     if (item.type === 'folder') {
-      return expandedFolders.has(item._id) ? '📂' : '📁';
+      return expandedFolders.has(item._id) ? '' : '';
     }
     
     const ext = item.metadata?.extension?.toLowerCase();
     switch (ext) {
-      case 'js': case 'jsx': return '🟨';
-      case 'ts': case 'tsx': return '🔷';
-      case 'py': return '🐍';
-      case 'java': return '☕';
-      case 'cpp': case 'c': return '⚙️';
-      case 'html': return '🌐';
-      case 'css': case 'scss': case 'sass': return '🎨';
-      case 'json': return '📋';
-      case 'md': case 'markdown': return '📝';
-      case 'txt': return '📄';
-      case 'png': case 'jpg': case 'jpeg': case 'gif': case 'svg': return '🖼️';
-      case 'pdf': return '📕';
-      case 'zip': case 'rar': case '7z': return '📦';
-      default: return '📄';
+      case 'js': case 'jsx': return '';
+      case 'ts': case 'tsx': return '';
+      case 'py': return '';
+      case 'java': return '';
+      case 'cpp': case 'c': return '';
+      case 'html': return '';
+      case 'css': case 'scss': case 'sass': return '';
+      case 'json': return '';
+      case 'md': case 'markdown': return '';
+      case 'txt': return '';
+      case 'png': case 'jpg': case 'jpeg': case 'gif': case 'svg': return '';
+      case 'pdf': return '';
+      case 'zip': case 'rar': case '7z': return '';
+      default: return '';
     }
   };
 
-  // ✅ Handle drag and drop operations
+  //Handle drag and drop operations
   const handleDragStart = (e, item) => {
     if (!permissions?.canMove && item.creatorId !== user._id) {
       e.preventDefault();
@@ -292,7 +292,7 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
     setDraggedItem(null);
   };
 
-  // ✅ Handle item operations
+  //Handle item operations
   const handleCreateItem = async (name, type, parentId = null) => {
     const itemData = {
       name: name.trim(),
@@ -383,7 +383,7 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
     });
   };
 
-  // ✅ Enhanced File Tree Node Component
+  //Enhanced File Tree Node Component
   const FileTreeNode = ({ item, level = 0 }) => {
     const [isRenaming, setIsRenaming] = useState(false);
     const [newName, setNewName] = useState(item.name);
@@ -461,7 +461,7 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
                 toggleFolder(item._id);
               }}
             >
-              {hasChildren ? (isExpanded ? '▼' : '▶') : '▷'}
+              {hasChildren ? (isExpanded ? '' : '') : ''}
             </span>
           )}
           
@@ -508,7 +508,7 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
                 className="text-gray-400 hover:text-blue-600 text-xs"
                 title="New file in folder"
               >
-                📄
+                
               </button>
             )}
             
@@ -520,7 +520,7 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
               className="text-gray-400 hover:text-yellow-600 text-xs"
               title="Rename"
             >
-              ✏️
+              
             </button>
             
             <button
@@ -531,7 +531,7 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
               className="text-gray-400 hover:text-green-600 text-xs"
               title="Copy"
             >
-              📋
+              
             </button>
             
             <button
@@ -542,7 +542,7 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
               className="text-gray-400 hover:text-orange-600 text-xs"
               title="Cut"
             >
-              ✂️
+              
             </button>
             
             <button
@@ -553,7 +553,7 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
               className="text-gray-400 hover:text-purple-600 text-xs"
               title="Duplicate"
             >
-              📑
+              
             </button>
             
             <button
@@ -564,7 +564,7 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
               className="text-gray-400 hover:text-red-600 text-xs"
               title="Delete"
             >
-              🗑️
+              
             </button>
           </div>
         </div>
@@ -581,7 +581,7 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
     );
   };
 
-  // ✅ Create Item Modal Component
+  //Create Item Modal Component
   const CreateItemModal = () => {
     const [name, setName] = useState('');
     const [selectedType, setSelectedType] = useState(createType);
@@ -622,7 +622,7 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
                     onChange={(e) => setSelectedType(e.target.value)}
                     className="mr-2"
                   />
-                  📄 File
+                   File
                 </label>
                 <label className="flex items-center">
                   <input
@@ -632,7 +632,7 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
                     onChange={(e) => setSelectedType(e.target.value)}
                     className="mr-2"
                   />
-                  📁 Folder
+                   Folder
                 </label>
               </div>
             </div>
@@ -678,7 +678,7 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
     );
   };
 
-  // ✅ Context Menu Component
+  //Context Menu Component
   const ContextMenu = () => {
     if (!contextMenu) return null;
 
@@ -697,7 +697,7 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
           }}
           className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
         >
-          📂 Open
+           Open
         </button>
         
         <hr className="my-1" />
@@ -711,7 +711,7 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
               }}
               className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
             >
-              ✏️ Rename
+               Rename
             </button>
             
             <button
@@ -721,7 +721,7 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
               }}
               className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
             >
-              📑 Duplicate
+               Duplicate
             </button>
           </>
         )}
@@ -733,7 +733,7 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
           }}
           className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
         >
-          📋 Copy
+           Copy
         </button>
         
         <button
@@ -743,7 +743,7 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
           }}
           className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
         >
-          ✂️ Cut
+           Cut
         </button>
         
         {clipboard && (
@@ -754,7 +754,7 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
             }}
             className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
           >
-            📄 Paste
+             Paste
           </button>
         )}
         
@@ -768,7 +768,7 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
             }}
             className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 text-red-600"
           >
-            🗑️ Delete
+             Delete
           </button>
         )}
       </div>
@@ -798,7 +798,7 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
                 className="p-1 text-blue-600 hover:text-blue-800 text-xs"
                 title={`Actions for ${selectedItems.size} items`}
               >
-                ⚙️ {selectedItems.size}
+                 {selectedItems.size}
               </button>
               <div className="w-px h-4 bg-gray-300"></div>
             </>
@@ -812,7 +812,7 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
             className="p-1 text-gray-400 hover:text-gray-600"
             title="New File"
           >
-            📄
+            
           </button>
           <button
             onClick={() => {
@@ -822,7 +822,7 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
             className="p-1 text-gray-400 hover:text-gray-600"
             title="New Folder"
           >
-            📁
+            
           </button>
           
           {clipboard && (
@@ -831,7 +831,7 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
               className="p-1 text-green-600 hover:text-green-800"
               title="Paste"
             >
-              📄
+              
             </button>
           )}
         </div>
@@ -871,7 +871,7 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
           <div className="flex justify-between items-center">
             <span className="text-sm text-red-700">{error}</span>
             <button onClick={clearError} className="text-red-400 hover:text-red-600">
-              ✕
+              
             </button>
           </div>
         </div>

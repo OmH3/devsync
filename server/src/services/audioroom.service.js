@@ -5,12 +5,12 @@ const STREAM_API_SECRET = process.env.STREAM_API_SECRET;
 
 export const generateStreamToken = async (userId, userInfo) => {
   try {
-    // ✅ FIX: Use current timestamp with buffer for clock sync issues
+    //FIX: Use current timestamp with buffer for clock sync issues
     const now = Math.floor(Date.now() / 1000);
     const iat = now - 60; // Issue token 60 seconds in the past to handle clock drift
     const exp = now + (24 * 60 * 60); // Expire in 24 hours
 
-    // ✅ FIX: Updated token payload with proper structure for Stream Video
+    //FIX: Updated token payload with proper structure for Stream Video
     const tokenPayload = {
       iss: 'stream-video-js', // Required issuer for Stream Video
       sub: `user/${userId}`,   // Required subject
@@ -19,7 +19,7 @@ export const generateStreamToken = async (userId, userInfo) => {
       exp: exp                 // Expiration time
     };
 
-    // ✅ Generate JWT token with proper headers
+    //Generate JWT token with proper headers
     const token = jwt.sign(
       tokenPayload,
       STREAM_API_SECRET,
@@ -32,7 +32,7 @@ export const generateStreamToken = async (userId, userInfo) => {
       }
     );
 
-    // ✅ Return user info for Stream with proper format
+    //Return user info for Stream with proper format
     const user = {
       id: userId.toString(),
       name: userInfo?.name || `User ${userId}`,
@@ -46,7 +46,7 @@ export const generateStreamToken = async (userId, userInfo) => {
     };
 
   } catch (error) {
-    console.error('❌ Failed to generate Stream token:', error);
+    console.error(' Failed to generate Stream token:', error);
     console.error('Error details:', {
       message: error.message,
       stack: error.stack,

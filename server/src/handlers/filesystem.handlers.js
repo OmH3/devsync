@@ -1,13 +1,13 @@
-// ✅ Global room users tracking for filesystem items
+//Global room users tracking for filesystem items
 const fileSystemRoomUsers = {};
 
 export const setupFileSystemHandlers = (socket, io) => {
-  console.log('📁 Setting up File System handlers for socket:', socket.id);
+  console.log(' Setting up File System handlers for socket:', socket.id);
 
-  // ✅ Join filesystem item room (for collaborative file editing)
+  //Join filesystem item room (for collaborative file editing)
   socket.on('join-filesystem-item', async (fileSystemId) => {
     try {
-      console.log(`👤 User ${socket.userId} joining filesystem item: ${fileSystemId}`);
+      console.log(` User ${socket.userId} joining filesystem item: ${fileSystemId}`);
       
       if (!socket.userId || !fileSystemId) {
         socket.emit('error', { message: 'Missing userId or fileSystemId' });
@@ -18,7 +18,7 @@ export const setupFileSystemHandlers = (socket, io) => {
       socket.join(`filesystem:${fileSystemId}`);
       socket.currentFileSystemId = fileSystemId;
 
-      // ✅ Track users in room
+      //Track users in room
       if (!fileSystemRoomUsers[fileSystemId]) {
         fileSystemRoomUsers[fileSystemId] = [];
       }
@@ -37,41 +37,41 @@ export const setupFileSystemHandlers = (socket, io) => {
       };
       fileSystemRoomUsers[fileSystemId].push(userInfo);
 
-      // ✅ Notify user they successfully joined
+      //Notify user they successfully joined
       socket.emit('filesystem-item-joined', {
         fileSystemId,
         userCount: fileSystemRoomUsers[fileSystemId].length,
         users: fileSystemRoomUsers[fileSystemId]
       });
 
-      // ✅ Notify other users
+      //Notify other users
       socket.to(`filesystem:${fileSystemId}`).emit('user-joined-filesystem-item', {
         userId: socket.userId,
         userName: socket.userName || socket.userEmail,
         fileSystemId
       });
 
-      // ✅ Send updated user count
+      //Send updated user count
       io.to(`filesystem:${fileSystemId}`).emit('user-count', fileSystemRoomUsers[fileSystemId].length);
 
-      console.log(`✅ User ${socket.userId} joined filesystem item ${fileSystemId}. Total users: ${fileSystemRoomUsers[fileSystemId].length}`);
+      console.log(` User ${socket.userId} joined filesystem item ${fileSystemId}. Total users: ${fileSystemRoomUsers[fileSystemId].length}`);
 
     } catch (error) {
-      console.error('❌ Error joining filesystem item:', error);
+      console.error(' Error joining filesystem item:', error);
       socket.emit('error', { message: 'Failed to join filesystem item' });
     }
   });
 
-  // ✅ Leave filesystem item room
+  //Leave filesystem item room
   socket.on('leave-filesystem-item', (fileSystemId) => {
     try {
       handleLeaveFileSystemItem(socket, io, fileSystemId);
     } catch (error) {
-      console.error('❌ Error leaving filesystem item:', error);
+      console.error(' Error leaving filesystem item:', error);
     }
   });
 
-  // ✅ Handle filesystem structure changes
+  //Handle filesystem structure changes
   socket.on('filesystem-structure-change', (data) => {
     try {
       const { workspaceId, operation, item, oldPath, newPath } = data;
@@ -81,9 +81,9 @@ export const setupFileSystemHandlers = (socket, io) => {
         return;
       }
 
-      console.log(`📁 Filesystem structure change from ${socket.userId} in workspace ${workspaceId}`);
+      console.log(` Filesystem structure change from ${socket.userId} in workspace ${workspaceId}`);
 
-      // ✅ Broadcast to workspace members
+      //Broadcast to workspace members
       socket.to(`workspace-${workspaceId}`).emit('filesystem-structure-changed', {
         workspaceId,
         operation, // 'create', 'delete', 'rename', 'move'
@@ -96,11 +96,11 @@ export const setupFileSystemHandlers = (socket, io) => {
       });
 
     } catch (error) {
-      console.error('❌ Error handling filesystem structure change:', error);
+      console.error(' Error handling filesystem structure change:', error);
     }
   });
 
-  // ✅ Handle file content changes
+  //Handle file content changes
   socket.on('filesystem-content-change', (data) => {
     try {
       const { fileSystemId, content, operation, cursorPosition } = data;
@@ -110,9 +110,9 @@ export const setupFileSystemHandlers = (socket, io) => {
         return;
       }
 
-      console.log(`📝 File content change from ${socket.userId} in file ${fileSystemId}`);
+      console.log(` File content change from ${socket.userId} in file ${fileSystemId}`);
 
-      // ✅ Broadcast to other users viewing the same file
+      //Broadcast to other users viewing the same file
       socket.to(`filesystem:${fileSystemId}`).emit('filesystem-content-changed', {
         fileSystemId,
         content,
@@ -124,20 +124,20 @@ export const setupFileSystemHandlers = (socket, io) => {
       });
 
     } catch (error) {
-      console.error('❌ Error handling file content change:', error);
+      console.error(' Error handling file content change:', error);
     }
   });
 
-  // ✅ Handle file save notifications
+  //Handle file save notifications
   socket.on('filesystem-save', (data) => {
     try {
       const { fileSystemId, content } = data;
       
       if (!socket.userId || !fileSystemId) return;
 
-      console.log(`💾 File saved by ${socket.userId}: ${fileSystemId}`);
+      console.log(` File saved by ${socket.userId}: ${fileSystemId}`);
 
-      // ✅ Notify other users about save
+      //Notify other users about save
       socket.to(`filesystem:${fileSystemId}`).emit('filesystem-saved', {
         fileSystemId,
         content,
@@ -147,27 +147,27 @@ export const setupFileSystemHandlers = (socket, io) => {
       });
 
     } catch (error) {
-      console.error('❌ Error handling file save notification:', error);
+      console.error(' Error handling file save notification:', error);
     }
   });
 
-  // ✅ Handle disconnect
+  //Handle disconnect
   socket.on('disconnect', () => {
     try {
       if (socket.currentFileSystemId) {
         handleLeaveFileSystemItem(socket, io, socket.currentFileSystemId);
       }
     } catch (error) {
-      console.error('❌ Error handling filesystem disconnect:', error);
+      console.error(' Error handling filesystem disconnect:', error);
     }
   });
 };
 
-// ✅ Helper function to handle leaving filesystem item
+//Helper function to handle leaving filesystem item
 function handleLeaveFileSystemItem(socket, io, fileSystemId) {
   if (!fileSystemId || !fileSystemRoomUsers[fileSystemId]) return;
 
-  console.log(`👋 User ${socket.userId} leaving filesystem item: ${fileSystemId}`);
+  console.log(` User ${socket.userId} leaving filesystem item: ${fileSystemId}`);
 
   // Remove user from room tracking
   fileSystemRoomUsers[fileSystemId] = fileSystemRoomUsers[fileSystemId].filter(
@@ -178,14 +178,14 @@ function handleLeaveFileSystemItem(socket, io, fileSystemId) {
   socket.leave(`filesystem:${fileSystemId}`);
   socket.currentFileSystemId = null;
 
-  // ✅ Notify other users
+  //Notify other users
   socket.to(`filesystem:${fileSystemId}`).emit('user-left-filesystem-item', {
     userId: socket.userId,
     userName: socket.userName || socket.userEmail,
     fileSystemId
   });
 
-  // ✅ Send updated user count
+  //Send updated user count
   const remainingUsers = fileSystemRoomUsers[fileSystemId].length;
   io.to(`filesystem:${fileSystemId}`).emit('user-count', remainingUsers);
 
@@ -194,8 +194,8 @@ function handleLeaveFileSystemItem(socket, io, fileSystemId) {
     delete fileSystemRoomUsers[fileSystemId];
   }
 
-  console.log(`✅ User ${socket.userId} left filesystem item ${fileSystemId}. Remaining users: ${remainingUsers}`);
+  console.log(` User ${socket.userId} left filesystem item ${fileSystemId}. Remaining users: ${remainingUsers}`);
 }
 
-// ✅ Export room users for debugging
+//Export room users for debugging
 export { fileSystemRoomUsers };

@@ -21,7 +21,7 @@ const WhiteboardCanvas = ({ whiteboard }) => {
     clearError
   } = useWhiteboardStore();
 
-  // ✅ Fetch user role when whiteboard loads
+  //Fetch user role when whiteboard loads
   useEffect(() => {
     if (whiteboard?._id) {
       fetchUserRoleInWhiteboard(whiteboard._id);
@@ -46,7 +46,7 @@ const WhiteboardCanvas = ({ whiteboard }) => {
     }
   };
 
-  // ✅ Handle tool selection with permission check
+  //Handle tool selection with permission check
   const handleToolSelect = (tool) => {
     if (!canEdit) {
       alert('You do not have permission to edit this whiteboard');
@@ -72,11 +72,11 @@ const WhiteboardCanvas = ({ whiteboard }) => {
   };
 
   const tools = [
-    { id: 'pen', name: 'Pen', icon: '✏️' },
-    { id: 'eraser', name: 'Eraser', icon: '🧽' },
-    { id: 'rectangle', name: 'Rectangle', icon: '▭' },
-    { id: 'circle', name: 'Circle', icon: '○' },
-    { id: 'text', name: 'Text', icon: '📝' },
+    { id: 'pen', name: 'Pen', icon: '' },
+    { id: 'eraser', name: 'Eraser', icon: '' },
+    { id: 'rectangle', name: 'Rectangle', icon: '' },
+    { id: 'circle', name: 'Circle', icon: '' },
+    { id: 'text', name: 'Text', icon: '' },
   ];
 
   const colors = ['#000000', '#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF', '#FFA500'];
@@ -92,14 +92,14 @@ const WhiteboardCanvas = ({ whiteboard }) => {
           {whiteboard?.boardDescription && (
             <p className="text-sm text-gray-600">{whiteboard.boardDescription}</p>
           )}
-          {/* ✅ Show role and permission status */}
+          {/*  Show role and permission status */}
           <div className="flex items-center space-x-3 mt-2">
             <span className={`text-xs px-2 py-1 rounded font-medium ${
               canEdit 
                 ? 'bg-green-100 text-green-800' 
                 : 'bg-gray-100 text-gray-600'
             }`}>
-              {canEdit ? '✏️ Can Edit' : '👁️ View Only'}
+              {canEdit ? ' Can Edit' : ' View Only'}
             </span>
             {userRole && (
               <span className={`text-xs px-2 py-1 rounded ${
@@ -123,7 +123,7 @@ const WhiteboardCanvas = ({ whiteboard }) => {
         </div>
       </div>
 
-      {/* ✅ Show error message */}
+      {/*  Show error message */}
       {error && (
         <div className="bg-red-50 border-l-4 border-red-400 p-4">
           <div className="flex items-center justify-between">
@@ -132,18 +132,18 @@ const WhiteboardCanvas = ({ whiteboard }) => {
               onClick={clearError}
               className="text-red-400 hover:text-red-600"
             >
-              ✕
+              
             </button>
           </div>
         </div>
       )}
 
-      {/* ✅ Show read-only banner for members */}
+      {/*  Show read-only banner for members */}
       {userRole === 'MEMBER' && (
         <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <span className="text-yellow-400 text-lg">⚠️</span>
+              <span className="text-yellow-400 text-lg"></span>
             </div>
             <div className="ml-3">
               <p className="text-sm text-yellow-800">

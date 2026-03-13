@@ -14,16 +14,16 @@ export const googleLoginCallback = asyncHandler(async (req, res) => {
     );
   }
 
-  // ✅ CRITICAL: Log the user into the session
+  //CRITICAL: Log the user into the session
   req.logIn(user, (err) => {
     if (err) {
-      console.error('❌ Error logging in user:', err);
+      console.error(' Error logging in user:', err);
       return res.redirect(
         `${config.FRONTEND_GOOGLE_CALLBACK_URL}?status=failure&message=Login failed`
       );
     }
     
-    // ✅ Redirect to frontend callback
+    //Redirect to frontend callback
     return res.redirect(
       `${config.FRONTEND_GOOGLE_CALLBACK_URL}?status=success&redirect=dashboard`
     );
@@ -84,7 +84,7 @@ export const logOutController = asyncHandler(async(req, res) => {
                     .json({ error: "Failed to destroy session" });
             }
             
-            // ✅ Clear the correct cookie name
+            //Clear the correct cookie name
             res.clearCookie('session', { // Changed from 'session'
                 path: '/',
                 httpOnly: true,

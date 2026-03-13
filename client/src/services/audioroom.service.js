@@ -1,6 +1,6 @@
 import { api } from '../utils/api.js';
 
-// ✅ Audio Room Service Functions
+//Audio Room Service Functions
 export const getStreamToken = async (workspaceId) => {
   const response = await api.get(`/audioroom/token?workspaceId=${workspaceId}`);
   return response.data;
@@ -43,7 +43,7 @@ export const getAudioRoomStatus = async (workspaceId) => {
   return response.data;
 };
 
-// ✅ Default export
+//Default export
 const audioRoomService = {
   getStreamToken,
   startAudioRoom,

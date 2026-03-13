@@ -14,7 +14,7 @@ const CreateDocumentModal = ({ isOpen, onClose, workspaceId, userRole, onSuccess
   const { user } = useAuth();
   const { createDocument, isLoading, error, clearError } = useDocumentStore();
 
-  // ✅ Auto-focus title input when modal opens
+  //Auto-focus title input when modal opens
   useEffect(() => {
     if (isOpen && titleInputRef.current) {
       setTimeout(() => {
@@ -23,7 +23,7 @@ const CreateDocumentModal = ({ isOpen, onClose, workspaceId, userRole, onSuccess
     }
   }, [isOpen]);
 
-  // ✅ Permission check
+  //Permission check
   const canCreateDocument = userRole && ['OWNER', 'ADMIN'].includes(userRole);
 
   const handleChange = (e) => {
@@ -37,7 +37,7 @@ const CreateDocumentModal = ({ isOpen, onClose, workspaceId, userRole, onSuccess
     clearError();
   };
 
-  // ✅ Enhanced validation
+  //Enhanced validation
   const validateForm = () => {
     const errors = {};
     
@@ -60,7 +60,7 @@ const CreateDocumentModal = ({ isOpen, onClose, workspaceId, userRole, onSuccess
     return Object.keys(errors).length === 0;
   };
 
-  // ✅ Enhanced form submission
+  //Enhanced form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -74,7 +74,7 @@ const CreateDocumentModal = ({ isOpen, onClose, workspaceId, userRole, onSuccess
     setIsSubmitting(true);
     
     try {
-      console.log('📄 Creating new document:', {
+      console.log(' Creating new document:', {
         title: formData.title.trim(),
         contentLength: formData.content.length,
         workspaceId,
@@ -84,11 +84,11 @@ const CreateDocumentModal = ({ isOpen, onClose, workspaceId, userRole, onSuccess
       const result = await createDocument({
         title: formData.title.trim(),
         content: formData.content.trim(),
-        workspaceId // ✅ Ensure workspace ID is included
+        workspaceId //Ensure workspace ID is included
       });
       
       if (result.success) {
-        console.log('✅ Document created successfully:', result.document);
+        console.log(' Document created successfully:', result.document);
         
         // Reset form
         setFormData({ title: '', content: '' });
@@ -102,16 +102,16 @@ const CreateDocumentModal = ({ isOpen, onClose, workspaceId, userRole, onSuccess
         // Close modal
         onClose();
       } else {
-        console.error('❌ Failed to create document:', result.error);
+        console.error(' Failed to create document:', result.error);
       }
     } catch (error) {
-      console.error('❌ Error creating document:', error);
+      console.error(' Error creating document:', error);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // ✅ Enhanced modal close
+  //Enhanced modal close
   const handleClose = () => {
     if (isSubmitting) {
       const confirmClose = window.confirm('Document is being created. Are you sure you want to close?');
@@ -124,7 +124,7 @@ const CreateDocumentModal = ({ isOpen, onClose, workspaceId, userRole, onSuccess
     onClose();
   };
 
-  // ✅ Handle escape key
+  //Handle escape key
   useEffect(() => {
     const handleEscapeKey = (e) => {
       if (e.key === 'Escape' && isOpen) {
@@ -143,7 +143,7 @@ const CreateDocumentModal = ({ isOpen, onClose, workspaceId, userRole, onSuccess
   return (
     <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
       <div className="relative bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-        {/* ✅ Enhanced header */}
+        {/*  Enhanced header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div>
             <h3 className="text-xl font-semibold text-gray-900">Create New Document</h3>
@@ -162,7 +162,7 @@ const CreateDocumentModal = ({ isOpen, onClose, workspaceId, userRole, onSuccess
           </button>
         </div>
 
-        {/* ✅ Permission warning */}
+        {/*  Permission warning */}
         {!canCreateDocument && (
           <div className="p-4 bg-red-50 border-l-4 border-red-400">
             <div className="flex">
@@ -196,13 +196,13 @@ const CreateDocumentModal = ({ isOpen, onClose, workspaceId, userRole, onSuccess
                 onClick={clearError}
                 className="ml-auto text-red-400 hover:text-red-600"
               >
-                ✕
+                
               </button>
             </div>
           </div>
         )}
 
-        {/* ✅ Form */}
+        {/*  Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {/* Title Input */}
           <div>
@@ -267,7 +267,7 @@ const CreateDocumentModal = ({ isOpen, onClose, workspaceId, userRole, onSuccess
             </p>
           </div>
 
-          {/* ✅ User info */}
+          {/*  User info */}
           <div className="bg-gray-50 rounded-md p-4">
             <div className="flex items-center space-x-3">
               <div className="w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center">
@@ -284,7 +284,7 @@ const CreateDocumentModal = ({ isOpen, onClose, workspaceId, userRole, onSuccess
             </div>
           </div>
 
-          {/* ✅ Action Buttons */}
+          {/*  Action Buttons */}
           <div className="flex space-x-3 pt-4">
             <button
               type="submit"

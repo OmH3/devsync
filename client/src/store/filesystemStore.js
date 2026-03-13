@@ -8,24 +8,24 @@ export const useFilesystemStore = create(
       fileSystemItems: [],
       currentFolder: null,
       selectedItem: null,
-      selectedItems: [], // ✅ For multi-select
-      draggedItem: null, // ✅ For drag and drop
+      selectedItems: [], //For multi-select
+      draggedItem: null, //For drag and drop
       isLoading: false,
       error: null,
       
-      // ✅ Real-time collaboration states
+      //Real-time collaboration states
       userRole: null,
       permissions: null,
       isConnected: false,
       activeUsers: [],
       userCount: 1,
       
-      // ✅ File operations
-      copyBuffer: null, // ✅ For copy/paste operations
+      //File operations
+      copyBuffer: null, //For copy/paste operations
       clipboard: null,
       isOperationInProgress: false,
 
-      // ✅ Basic actions
+      //Basic actions
       setCurrentFolder: (folder) => set({ currentFolder: folder }),
       setSelectedItem: (item) => set({ selectedItem: item }),
       setSelectedItems: (items) => set({ selectedItems: items }),
@@ -37,11 +37,11 @@ export const useFilesystemStore = create(
       setActiveUsers: (users) => set({ activeUsers: users || [] }),
       setUserCount: (count) => set({ userCount: count }),
       
-      // ✅ Permission management
+      //Permission management
       setUserRole: (role) => set({ userRole: role }),
       setPermissions: (permissions) => set({ permissions }),
 
-      // ✅ Fetch user role and permissions for filesystem item
+      //Fetch user role and permissions for filesystem item
       fetchUserRoleInFileSystem: async (itemId) => {
         try {
           const response = await filesystemService.getUserRoleInFileSystem(itemId);
@@ -69,7 +69,7 @@ export const useFilesystemStore = create(
         }
       },
 
-      // ✅ Create file or folder with permission check
+      //Create file or folder with permission check
       createFileSystemItem: async (itemData) => {
         set({ isLoading: true, error: null, isOperationInProgress: true });
         try {
@@ -90,7 +90,7 @@ export const useFilesystemStore = create(
         }
       },
 
-      // ✅ Fetch workspace file system
+      //Fetch workspace file system
       fetchWorkspaceFileSystem: async (workspaceId) => {
         set({ isLoading: true, error: null });
         try {
@@ -107,7 +107,7 @@ export const useFilesystemStore = create(
         }
       },
 
-      // ✅ Update file system item with permission check
+      //Update file system item with permission check
       updateFileSystemItem: async (itemId, itemData) => {
         const { permissions } = get();
         if (permissions && !permissions.canEdit) {
@@ -136,7 +136,7 @@ export const useFilesystemStore = create(
         }
       },
 
-      // ✅ Move file system item (enhanced for drag & drop)
+      //Move file system item (enhanced for drag & drop)
       moveFileSystemItem: async (itemId, targetParentId) => {
         const { permissions } = get();
         if (permissions && !permissions.canMove) {
@@ -167,7 +167,7 @@ export const useFilesystemStore = create(
         }
       },
 
-      // ✅ Delete file system item with permission check
+      //Delete file system item with permission check
       deleteFileSystemItem: async (itemId) => {
         const { permissions } = get();
         if (permissions && !permissions.canDelete) {
@@ -194,7 +194,7 @@ export const useFilesystemStore = create(
         }
       },
 
-      // ✅ Bulk delete items
+      //Bulk delete items
       bulkDeleteItems: async (itemIds) => {
         const { permissions } = get();
         if (permissions && !permissions.canDelete) {
@@ -221,7 +221,7 @@ export const useFilesystemStore = create(
         }
       },
 
-      // ✅ Duplicate item
+      //Duplicate item
       duplicateFileSystemItem: async (itemId, newName, parentId) => {
         set({ error: null, isOperationInProgress: true });
         try {
@@ -242,17 +242,17 @@ export const useFilesystemStore = create(
         }
       },
 
-      // ✅ Copy to clipboard
+      //Copy to clipboard
       copyToClipboard: (item) => {
         set({ copyBuffer: item, clipboard: { type: 'copy', item } });
       },
 
-      // ✅ Cut to clipboard
+      //Cut to clipboard
       cutToClipboard: (item) => {
         set({ copyBuffer: item, clipboard: { type: 'cut', item } });
       },
 
-      // ✅ Paste from clipboard
+      //Paste from clipboard
       pasteFromClipboard: async (targetParentId) => {
         const { clipboard } = get();
         if (!clipboard) return { success: false, error: 'Nothing to paste' };
@@ -271,7 +271,7 @@ export const useFilesystemStore = create(
         }
       },
 
-      // ✅ Real-time updates from socket
+      //Real-time updates from socket
       updateItemFromSocket: (itemId, updates) => {
         set(state => ({
           fileSystemItems: state.fileSystemItems.map(item => 
@@ -297,7 +297,7 @@ export const useFilesystemStore = create(
         }));
       },
 
-      // ✅ Handle user events
+      //Handle user events
       handleUserJoined: (userData) => {
         set(state => ({
           activeUsers: [...state.activeUsers.filter(u => u.userId !== userData.userId), userData]
@@ -310,7 +310,7 @@ export const useFilesystemStore = create(
         }));
       },
 
-      // ✅ Clear all data
+      //Clear all data
       clearFileSystem: () => set({ 
         fileSystemItems: [], 
         currentFolder: null, 
@@ -327,7 +327,7 @@ export const useFilesystemStore = create(
         userRole: null
       }),
 
-      // ✅ Reset selection
+      //Reset selection
       clearSelection: () => set({
         selectedItem: null,
         selectedItems: []

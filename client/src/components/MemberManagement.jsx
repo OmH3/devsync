@@ -50,14 +50,14 @@ const MemberManagement = ({ workspaceId, onClose }) => {
       workspaceId,
       memberId: selectedMember._id,
       selectedRole,
-      memberUserId: selectedMember.userId._id // ✅ Log the actual user ID
+      memberUserId: selectedMember.userId._id //Log the actual user ID
     });
 
     setIsChangingRole(true);
     setLocalError('');
     
     try {
-      // ✅ FIXED: Use the member's user ID, not the member ID
+      //FIXED: Use the member's user ID, not the member ID
       const result = await changeMemberRole(workspaceId, selectedMember.userId._id, selectedRole);
       
       if (result.success) {
@@ -129,7 +129,7 @@ const MemberManagement = ({ workspaceId, onClose }) => {
                 }}
                 className="ml-auto text-red-400 hover:text-red-600"
               >
-                ✕
+                
               </button>
             </div>
           </div>

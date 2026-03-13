@@ -7,7 +7,7 @@ const AudioRoomButton = ({ workspaceId }) => {
     isInAudioRoom,
     startAudioRoom,
     endAudioRoom,
-    leaveAudioRoom, // ✅ ADD: Import leaveAudioRoom
+    leaveAudioRoom, //ADD: Import leaveAudioRoom
     error,
     clearError,
     isConnecting
@@ -17,19 +17,19 @@ const AudioRoomButton = ({ workspaceId }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [audioRoomActive, setAudioRoomActive] = useState(false);
 
-  // ✅ Listen for audio room status
+  //Listen for audio room status
   useEffect(() => {
     if (!socket || !workspaceId) return;
 
     socket.emit('join-workspace', { workspaceId });
 
     const handleAudioRoomStarted = (data) => {
-      console.log('🎵 Audio room started:', data);
+      console.log(' Audio room started:', data);
       setAudioRoomActive(true);
     };
 
     const handleAudioRoomEnded = (data) => {
-      console.log('🎵 Audio room ended:', data);
+      console.log(' Audio room ended:', data);
       setAudioRoomActive(false);
     };
 
@@ -46,33 +46,33 @@ const AudioRoomButton = ({ workspaceId }) => {
     setIsLoading(true);
     try {
       await startAudioRoom(workspaceId, 'Team Audio Room');
-      console.log('✅ Audio room started successfully');
+      console.log(' Audio room started successfully');
     } catch (error) {
-      console.error('❌ Failed to start audio room:', error);
+      console.error(' Failed to start audio room:', error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // ✅ FIX: Handle end room with proper cleanup
+  //FIX: Handle end room with proper cleanup
   const handleEndAudioRoom = async () => {
     if (confirm('Are you sure you want to end the audio room?')) {
       setIsLoading(true);
       try {
-        console.log('🎵 Owner ending audio room...');
+        console.log(' Owner ending audio room...');
         
-        // ✅ FIX: Leave the audio room first (cleans up Stream connection)
+        //FIX: Leave the audio room first (cleans up Stream connection)
         await leaveAudioRoom();
         
-        // ✅ Then end it for everyone (backend will emit socket event)
+        //Then end it for everyone (backend will emit socket event)
         await endAudioRoom();
         
-        // ✅ Update local state immediately
+        //Update local state immediately
         setAudioRoomActive(false);
         
-        console.log('✅ Audio room ended successfully');
+        console.log(' Audio room ended successfully');
       } catch (error) {
-        console.error('❌ Failed to end audio room:', error);
+        console.error(' Failed to end audio room:', error);
       } finally {
         setIsLoading(false);
       }
@@ -86,7 +86,7 @@ const AudioRoomButton = ({ workspaceId }) => {
         <div className="text-red-600 text-sm">
           {error}
           <button onClick={clearError} className="ml-2 text-red-400 hover:text-red-600">
-            ✕
+            
           </button>
         </div>
       )}
@@ -112,7 +112,7 @@ const AudioRoomButton = ({ workspaceId }) => {
           disabled={isLoading || isConnecting}
           className="bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white px-4 py-2 rounded-md text-sm font-medium flex items-center gap-2"
         >
-          <span className="text-lg">🎵</span>
+          <span className="text-lg"></span>
           {isLoading || isConnecting ? 'Starting...' : 'Start Audio Room'}
         </button>
       )}

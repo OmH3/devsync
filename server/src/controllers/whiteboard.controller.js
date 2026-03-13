@@ -18,7 +18,7 @@ import { getMemberRoleInWorkspace } from "../services/member.service.js";
 import { roleGuard } from "../utils/roleGuard.js";
 import { Permissions } from "../enums/role.enum.js";
 
-// ✅ Get socket instance (we'll pass this from server.js)
+//Get socket instance (we'll pass this from server.js)
 let io;
 export const setSocketIO = (socketIO) => {
   io = socketIO;
@@ -29,22 +29,22 @@ export const createWhiteboardController = asyncHandler(async (req, res) => {
   const userId = req.user?._id;
   const workspaceId = req.user?.currentWorkspace;
 
-  // ✅ Check if user has a current workspace
+  //Check if user has a current workspace
   if (!workspaceId) {
     throw new BadRequestException("No current workspace found");
   }
 
-  // ✅ Only OWNER and ADMIN can create whiteboards
+  //Only OWNER and ADMIN can create whiteboards
   const { role } = await getMemberRoleInWorkspace(userId, workspaceId);
   roleGuard(role, [Permissions.EDIT_WHITEBOARD]); // Changed from USE_WHITEBOARD
 
-  // ✅ Pass workspaceId to the service
+  //Pass workspaceId to the service
   const { whiteboard } = await createWhiteboardService(userId, { 
     ...body, 
     workspaceId 
   });
 
-  // ✅ Emit socket event
+  //Emit socket event
   if (io) {
     io.to(`workspace:${workspaceId}`).emit('whiteboard-created', {
       whiteboard,
@@ -66,13 +66,13 @@ export const getWorkspaceWhiteboardsController = asyncHandler(async (req, res) =
   const workspaceId = workspaceIdSchema.parse(req.params.workspaceId);
   const userId = req.user?._id;
 
-  // ✅ Allow all workspace members to VIEW whiteboards (including MEMBER role)
+  //Allow all workspace members to VIEW whiteboards (including MEMBER role)
   // Just check if user is a member of the workspace - no specific permission check
   try {
     const { role } = await getMemberRoleInWorkspace(userId, workspaceId);
     console.log('User role for viewing whiteboards:', role);
     
-    // ✅ As long as user has any role in workspace, they can view whiteboards
+    //As long as user has any role in workspace, they can view whiteboards
     if (!role) {
       return res.status(HTTPSTATUS.FORBIDDEN).json({
         message: "You are not a member of this workspace",
@@ -98,15 +98,15 @@ export const getWhiteboardByIdController = asyncHandler(async (req, res) => {
   const whiteboardId = whiteboardIdSchema.parse(req.params.whiteboardId);
   const userId = req.user?._id;
 
-  // ✅ Get whiteboard first, then check if user is a member
+  //Get whiteboard first, then check if user is a member
   const { whiteboard } = await getWhiteboardByIdService(whiteboardId, userId);
 
-  // ✅ Allow all workspace members to VIEW whiteboards (including MEMBER role)
+  //Allow all workspace members to VIEW whiteboards (including MEMBER role)
   try {
     const { role } = await getMemberRoleInWorkspace(userId, whiteboard.workspaceId);
     console.log('User role for viewing whiteboard:', role);
     
-    // ✅ As long as user has any role in workspace, they can view the whiteboard
+    //As long as user has any role in workspace, they can view the whiteboard
     if (!role) {
       return res.status(HTTPSTATUS.FORBIDDEN).json({
         message: "You are not a member of this workspace",
@@ -131,10 +131,10 @@ export const updateWhiteboardController = asyncHandler(async (req, res) => {
   const body = updateWhiteboardSchema.parse(req.body);
   const userId = req.user?._id;
 
-  // ✅ Get whiteboard first to check workspace
+  //Get whiteboard first to check workspace
   const { whiteboard: existingWhiteboard } = await getWhiteboardByIdService(whiteboardId, userId);
 
-  // ✅ Only OWNER and ADMIN can edit whiteboards
+  //Only OWNER and ADMIN can edit whiteboards
   const { role } = await getMemberRoleInWorkspace(
     userId,
     existingWhiteboard.workspaceId
@@ -143,7 +143,7 @@ export const updateWhiteboardController = asyncHandler(async (req, res) => {
 
   const { whiteboard } = await updateWhiteboardService(whiteboardId, userId, body);
 
-  // ✅ Emit socket event for real-time updates
+  //Emit socket event for real-time updates
   if (io) {
     io.to(`whiteboard:${whiteboardId}`).emit('whiteboard-updated', {
       whiteboardId,
@@ -166,10 +166,10 @@ export const deleteWhiteboardController = asyncHandler(async (req, res) => {
   const whiteboardId = whiteboardIdSchema.parse(req.params.whiteboardId);
   const userId = req.user?._id;
 
-  // ✅ Get whiteboard first to check workspace
+  //Get whiteboard first to check workspace
   const { whiteboard } = await getWhiteboardByIdService(whiteboardId, userId);
 
-  // ✅ Only OWNER and ADMIN can delete whiteboards
+  //Only OWNER and ADMIN can delete whiteboards
   const { role } = await getMemberRoleInWorkspace(userId, whiteboard.workspaceId);
   roleGuard(role, [Permissions.EDIT_WHITEBOARD]);
 
@@ -189,15 +189,15 @@ export const getUserRoleInWhiteboardController = asyncHandler(async (req, res) =
 
   console.log('Fetching role for userId:', userId, 'in whiteboard:', whiteboardId);
 
-  // ✅ Get whiteboard first
+  //Get whiteboard first
   const { whiteboard } = await getWhiteboardByIdService(whiteboardId, userId);
   
-  // ✅ Get user's role in the workspace
+  //Get user's role in the workspace
   try {
     const { role } = await getMemberRoleInWorkspace(userId, whiteboard.workspaceId);
     console.log('Found role:', role, 'for user in workspace:', whiteboard.workspaceId);
 
-    // ✅ Check if role was found
+    //Check if role was found
     if (!role) {
       console.error('No role found for user in workspace');
       return res.status(HTTPSTATUS.FORBIDDEN).json({
@@ -206,7 +206,7 @@ export const getUserRoleInWhiteboardController = asyncHandler(async (req, res) =
       });
     }
 
-    // ✅ Return role and permissions - allow viewing for all members
+    //Return role and permissions - allow viewing for all members
     return res.status(HTTPSTATUS.OK).json({
       message: "User role fetched successfully",
       role: role,

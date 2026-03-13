@@ -16,7 +16,7 @@ export const useCodeEditorStore = create(
       hasUnsavedChanges: false,
       lastSaved: null,
       
-      // ✅ Real-time collaboration states
+      //Real-time collaboration states
       userRole: null,
       permissions: null,
       isConnected: false,
@@ -24,11 +24,11 @@ export const useCodeEditorStore = create(
       userCount: 1,
       hasJoinedEditor: false,
       
-      // ✅ Cursor and selection tracking
+      //Cursor and selection tracking
       cursors: {}, // Other users' cursors
       selections: {},
 
-      // ✅ Basic actions
+      //Basic actions
       setCurrentEditor: (editor) => set({ 
         currentEditor: editor,
         editorContent: editor?.content || '',
@@ -51,17 +51,17 @@ export const useCodeEditorStore = create(
       setHasUnsavedChanges: (hasChanges) => set({ hasUnsavedChanges: hasChanges }),
       setLastSaved: (timestamp) => set({ lastSaved: timestamp }),
       
-      // ✅ Connection and collaboration
+      //Connection and collaboration
       setIsConnected: (connected) => set({ isConnected: connected }),
       setActiveUsers: (users) => set({ activeUsers: users || [] }),
       setUserCount: (count) => set({ userCount: count }),
       setHasJoinedEditor: (joined) => set({ hasJoinedEditor: joined }),
       
-      // ✅ Permission management
+      //Permission management
       setUserRole: (role) => set({ userRole: role }),
       setPermissions: (permissions) => set({ permissions }),
 
-      // ✅ Fetch user role and permissions for code editor
+      //Fetch user role and permissions for code editor
       fetchUserRoleInCodeEditor: async (editorId) => {
         try {
           const response = await codeeditorService.getUserRoleInCodeEditor(editorId);
@@ -89,7 +89,7 @@ export const useCodeEditorStore = create(
         }
       },
 
-      // ✅ Fetch code editor by file ID
+      //Fetch code editor by file ID
       fetchCodeEditorByFileId: async (fileId) => {
         set({ isLoading: true, error: null });
         try {
@@ -112,7 +112,7 @@ export const useCodeEditorStore = create(
         }
       },
 
-      // ✅ Update code editor with permission check
+      //Update code editor with permission check
       updateCodeEditor: async (editorId, editorData) => {
         const { permissions } = get();
         if (permissions && !permissions.canEdit) {
@@ -141,8 +141,8 @@ export const useCodeEditorStore = create(
         }
       },
 
-      // ✅ Save code editor content (dedicated for real-time collaboration)
-      // ✅ FIXED: Save code editor content (matching the function you asked about)
+      //Save code editor content (dedicated for real-time collaboration)
+      //FIXED: Save code editor content (matching the function you asked about)
 saveCodeEditorContent: async (editorId, title, content) => {
   const { permissions } = get();
   if (permissions && !permissions.canEdit) {
@@ -150,17 +150,17 @@ saveCodeEditorContent: async (editorId, title, content) => {
     return { success: false, error: 'Permission denied' };
   }
 
-  set({ isExecuting: true, error: null }); // ✅ FIXED: Use isExecuting for consistency
+  set({ isExecuting: true, error: null }); //FIXED: Use isExecuting for consistency
   try {
     const result = await codeeditorService.saveCodeEditorContent(
       editorId, 
       title, 
       content,
-      get().currentEditor?.language || 'javascript' // ✅ FIXED: Include language
+      get().currentEditor?.language || 'javascript' //FIXED: Include language
     );
     
     if (result.codeEditor) {
-      // ✅ FIXED: Update current editor properly
+      //FIXED: Update current editor properly
       set(state => ({
         currentEditor: {
           ...state.currentEditor,
@@ -179,14 +179,14 @@ saveCodeEditorContent: async (editorId, title, content) => {
     
     return { success: true, editor: result.codeEditor };
   } catch (error) {
-    console.error('❌ Save error:', error);
+    console.error(' Save error:', error);
     const errorMessage = error.response?.data?.message || 'Save failed';
     set({ error: errorMessage, isExecuting: false });
     return { success: false, error: errorMessage };
   }
 },
 
-      // ✅ Execute code
+      //Execute code
       executeCode: async (editorId, executionData) => {
         set({ isExecuting: true, error: null });
         try {
@@ -205,7 +205,7 @@ saveCodeEditorContent: async (editorId, title, content) => {
         }
       },
 
-      // ✅ Fetch execution history
+      //Fetch execution history
       fetchExecutionHistory: async (editorId) => {
         set({ isLoading: true, error: null });
         try {
@@ -222,7 +222,7 @@ saveCodeEditorContent: async (editorId, title, content) => {
         }
       },
 
-      // ✅ Real-time updates from socket
+      //Real-time updates from socket
       updateEditorFromSocket: (editorId, updates) => {
         const { currentEditor } = get();
         if (currentEditor?._id === editorId) {
@@ -239,7 +239,7 @@ saveCodeEditorContent: async (editorId, title, content) => {
         }));
       },
 
-      // ✅ Cursor and selection management
+      //Cursor and selection management
       updateCursor: (userId, cursorPosition, selection) => {
         set(state => ({
           cursors: {
@@ -257,7 +257,7 @@ saveCodeEditorContent: async (editorId, title, content) => {
         });
       },
 
-      // ✅ Handle user events
+      //Handle user events
       handleUserJoined: (userData) => {
         set(state => ({
           activeUsers: [...state.activeUsers.filter(u => u.userId !== userData.userId), userData]
@@ -271,7 +271,7 @@ saveCodeEditorContent: async (editorId, title, content) => {
         get().removeCursor(userData.userId);
       },
 
-      // ✅ Content management with permission checks
+      //Content management with permission checks
       updateContentWithPermissionCheck: (content) => {
         const { permissions } = get();
         if (!permissions?.canEdit) {
@@ -300,7 +300,7 @@ saveCodeEditorContent: async (editorId, title, content) => {
         return true;
       },
 
-      // ✅ Clear editor data
+      //Clear editor data
       clearEditor: () => set({ 
         currentEditor: null,
         editorContent: '',
@@ -319,7 +319,7 @@ saveCodeEditorContent: async (editorId, title, content) => {
         userRole: null
       }),
 
-      // ✅ Reset editor state
+      //Reset editor state
       resetEditorState: () => set({
         editorContent: '',
         editorTitle: '',

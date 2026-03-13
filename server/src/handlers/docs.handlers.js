@@ -9,11 +9,11 @@ export const setupDocsHandlers = (socket, io) => {
   // Join document room
   socket.on('join-doc', async (docId) => {
     try {
-      console.log(`📄 User ${socket.userId?.slice(-8)} attempting to join document ${docId}`);
+      console.log(` User ${socket.userId?.slice(-8)} attempting to join document ${docId}`);
       
       const doc = await DocModel.findById(docId);
       if (!doc || !doc.isActive) {
-        console.log(`❌ Document ${docId} not found or inactive`);
+        console.log(` Document ${docId} not found or inactive`);
         socket.emit('error', { message: 'Document not found' });
         return;
       }
@@ -25,7 +25,7 @@ export const setupDocsHandlers = (socket, io) => {
       });
 
       if (!member) {
-        console.log(`❌ User ${socket.userId?.slice(-8)} not authorized for document ${docId}`);
+        console.log(` User ${socket.userId?.slice(-8)} not authorized for document ${docId}`);
         socket.emit('error', { message: 'Not authorized to access this document' });
         return;
       }
@@ -74,9 +74,9 @@ export const setupDocsHandlers = (socket, io) => {
       // Broadcast user count to all users in room
       io.to(roomId).emit('user-count', userCount);
 
-      console.log(`✅ User ${socket.userId?.slice(-8)} joined document ${docId}, room size: ${userCount}`);
+      console.log(` User ${socket.userId?.slice(-8)} joined document ${docId}, room size: ${userCount}`);
     } catch (error) {
-      console.error('❌ Error joining document:', error);
+      console.error(' Error joining document:', error);
       socket.emit('error', { message: 'Failed to join document' });
     }
   });
@@ -86,7 +86,7 @@ export const setupDocsHandlers = (socket, io) => {
     const { docId, title, content, operation } = data;
     const roomId = `doc:${docId}`;
     
-    console.log(`📝 Text change in doc ${docId} by user ${socket.userId?.slice(-8)}`);
+    console.log(` Text change in doc ${docId} by user ${socket.userId?.slice(-8)}`);
     
     socket.to(roomId).emit('doc-text-changed', {
       docId,
@@ -118,7 +118,7 @@ export const setupDocsHandlers = (socket, io) => {
     const { docId, title, content } = data;
     const roomId = `doc:${docId}`;
     
-    console.log(`💾 Document ${docId} saved by user ${socket.userId?.slice(-8)}`);
+    console.log(` Document ${docId} saved by user ${socket.userId?.slice(-8)}`);
     
     socket.to(roomId).emit('doc-saved', {
       docId,
@@ -229,7 +229,7 @@ export const setupDocsHandlers = (socket, io) => {
     const roomId = `doc:${docId}`;
     socket.leave(roomId);
     
-    console.log(`🚪 User ${socket.userId?.slice(-8)} leaving document ${docId}`);
+    console.log(` User ${socket.userId?.slice(-8)} leaving document ${docId}`);
     
     // Update user count
     if (roomUsers[roomId]) {
@@ -255,7 +255,7 @@ export const setupDocsHandlers = (socket, io) => {
 
   // Handle disconnect - cleanup document rooms
   socket.on('disconnect', () => {
-    console.log(`🔌 User ${socket.userId?.slice(-8)} disconnected, cleaning up document rooms`);
+    console.log(` User ${socket.userId?.slice(-8)} disconnected, cleaning up document rooms`);
     
     if (socket.currentDoc) {
       const roomId = `doc:${socket.currentDoc}`;

@@ -31,7 +31,7 @@ const WhiteboardMain = React.memo(({ workspaceId, workspace }) => {
     setCurrentWhiteboard(null);
   }, [setCurrentWhiteboard]);
 
-  // ✅ Handle tool changes with permission checks
+  //Handle tool changes with permission checks
   const handleToolChange = (tool) => {
     if (userRole === 'MEMBER') {
       alert('Members cannot edit whiteboards');
@@ -58,11 +58,11 @@ const WhiteboardMain = React.memo(({ workspaceId, workspace }) => {
 
   // Memoize tools array to prevent re-creation
   const tools = useMemo(() => [
-    { id: 'pen', name: 'Pen', icon: '✏️' },
-    { id: 'eraser', name: 'Eraser', icon: '🧽' },
+    { id: 'pen', name: 'Pen', icon: '' },
+    { id: 'eraser', name: 'Eraser', icon: '' },
     { id: 'rectangle', name: 'Rectangle', icon: '⬛' },
-    { id: 'circle', name: 'Circle', icon: '⚪' },
-    { id: 'text', name: 'Text', icon: '📝' },
+    { id: 'circle', name: 'Circle', icon: '' },
+    { id: 'text', name: 'Text', icon: '' },
   ], []);
 
   // Memoize colors array to prevent re-creation
@@ -113,7 +113,7 @@ const WhiteboardMain = React.memo(({ workspaceId, workspace }) => {
   if (showCanvas && selectedWhiteboard) {
     return (
       <div className="h-full flex">
-        {/* ✅ Show sidebar for all users but disable tools for members */}
+        {/*  Show sidebar for all users but disable tools for members */}
         <div className="w-64 border-r border-gray-200 bg-gray-50 p-4">
           <button
             onClick={handleBackToList}
@@ -125,7 +125,7 @@ const WhiteboardMain = React.memo(({ workspaceId, workspace }) => {
             Back to Whiteboards
           </button>
 
-          {/* ✅ Show user role status */}
+          {/*  Show user role status */}
           {userRole && (
             <div className="mb-4 p-3 bg-white rounded-lg border">
               <div className="text-sm font-medium text-gray-900 mb-1">Your Role</div>
@@ -143,11 +143,11 @@ const WhiteboardMain = React.memo(({ workspaceId, workspace }) => {
             </div>
           )}
 
-          {/* ✅ Show read-only warning for members */}
+          {/*  Show read-only warning for members */}
           {userRole === 'MEMBER' && (
             <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
               <div className="flex items-center">
-                <span className="text-yellow-400 text-sm mr-2">⚠️</span>
+                <span className="text-yellow-400 text-sm mr-2"></span>
                 <div>
                   <div className="text-sm font-medium text-yellow-800">Read-Only Mode</div>
                   <div className="text-xs text-yellow-700 mt-1">
@@ -226,7 +226,7 @@ const WhiteboardMain = React.memo(({ workspaceId, workspace }) => {
             </div>
           </div>
 
-          {/* ✅ Add drawing statistics for members (view-only info) */}
+          {/*  Add drawing statistics for members (view-only info) */}
           {userRole === 'MEMBER' && selectedWhiteboard.metadata && (
             <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
               <h5 className="text-sm font-medium text-blue-900 mb-2">Whiteboard Stats</h5>

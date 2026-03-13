@@ -26,13 +26,13 @@ export const workspaceService = {
     return response.data;
   },
 
-  // ✅ FIXED: Correct API endpoint
+  //FIXED: Correct API endpoint
   async getWorkspaceMembers(workspaceId) {
     const response = await api.get(`/workspace/members/${workspaceId}`);
     return response.data;
   },
 
-  // ✅ FIXED: Correct API endpoint
+  //FIXED: Correct API endpoint
   async changeMemberRole(workspaceId, memberId, roleId) {
     const response = await api.put(`/workspace/change/member/role/${workspaceId}`, {
       memberId,

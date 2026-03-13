@@ -93,10 +93,10 @@ const WorkspaceSettings = ({ workspace, onClose }) => {
   };
 
   const tabs = [
-    { id: 'general', name: 'General', icon: '⚙️' },
-    { id: 'members', name: 'Members', icon: '👥' },
-    { id: 'tools', name: 'Tools', icon: '🔧' },
-    { id: 'danger', name: 'Danger Zone', icon: '⚠️' }
+    { id: 'general', name: 'General', icon: '' },
+    { id: 'members', name: 'Members', icon: '' },
+    { id: 'tools', name: 'Tools', icon: '' },
+    { id: 'danger', name: 'Danger Zone', icon: '' }
   ];
 
   if (showMemberManagement) {
@@ -151,7 +151,7 @@ const WorkspaceSettings = ({ workspace, onClose }) => {
                     onClick={clearError}
                     className="ml-auto text-red-400 hover:text-red-600"
                   >
-                    ✕
+                    
                   </button>
                 </div>
               </div>

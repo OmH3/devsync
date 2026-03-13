@@ -159,7 +159,7 @@ export const useWorkspaceStore = create(
         }
       },
 
-      // ✅ FIXED: Change member role with proper state update
+      //FIXED: Change member role with proper state update
       changeMemberRole: async (workspaceId, memberId, roleId) => {
         set({ error: null });
         
@@ -168,7 +168,7 @@ export const useWorkspaceStore = create(
           const response = await workspaceService.changeMemberRole(workspaceId, memberId, roleId);
           console.log('Change role response:', response);
           
-          // ✅ Update the specific member in the workspaceMembers array
+          //Update the specific member in the workspaceMembers array
           set(state => ({
             workspaceMembers: state.workspaceMembers.map(member => {
               if (member._id === response.member._id) {
