@@ -6,9 +6,9 @@ import * as ResizablePrimitive from "react-resizable-panels"
 function ResizablePanelGroup({
   className,
   ...props
-}: ResizablePrimitive.GroupProps) {
+}: React.ComponentProps<typeof ResizablePrimitive.PanelGroup>) {
   return (
-    <ResizablePrimitive.Group
+    <ResizablePrimitive.PanelGroup
       data-slot="resizable-panel-group"
       className={cn(
         "flex h-full w-full aria-[orientation=vertical]:flex-col",

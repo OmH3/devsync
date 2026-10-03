@@ -141,7 +141,7 @@ export default function FileTree({ workspaceId, token, activeFile, setActiveFile
         if (oldDoc.length > 0) oldDoc.delete(0, oldDoc.length);
         
         const oldBoard = ydoc.getMap(`whiteboard-sync-${fileName}`);
-        if (oldBoard.keys().length > 0) oldBoard.clear();
+        if (Array.from(oldBoard.keys()).length > 0) oldBoard.clear();
       }
     } catch (error: any) {
       alert(error.response?.data?.error || "Failed to delete file");
