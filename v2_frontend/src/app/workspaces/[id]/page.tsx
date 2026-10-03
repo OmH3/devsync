@@ -72,7 +72,15 @@ export default function WorkspaceRoom() {
     fetchRole();
 
     const roomParam = `ws?workspace_id=${workspaceId}&token=${token}`;
-    const provider = new WebsocketProvider(window.location.protocol === "https:" ? `wss://${window.location.host}/api` : `ws://${window.location.host}/api`, roomParam, ydoc);
+    
+    // Parse the API URL to get the host for the WebSocket
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "";
+    // If it's https, we use wss://, otherwise ws://
+    const wsProtocol = apiUrl.startsWith("https") ? "wss:" : "ws:";
+    const wsHost = apiUrl.replace(/^https?:\/\//, "");
+    
+    // Connect DIRECTLY to the Oracle backend for WebSockets, bypassing Vercel entirely!
+    const provider = new WebsocketProvider(`${wsProtocol}//${wsHost}/api`, roomParam, ydoc);
     providerRef.current = provider;
 
     provider.awareness.setLocalState({ userId });
