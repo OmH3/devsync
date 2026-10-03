@@ -102,7 +102,7 @@ const Whiteboard = forwardRef<WhiteboardRef, WhiteboardProps>(({ workspaceId, to
 
       </div>
 
-      <Tldraw className="w-full h-full" onMount={handleMount} isReadonly={userRole === "viewer"} />
+      <Tldraw className="w-full h-full" onMount={handleMount} />
     </div>
   );
 });
