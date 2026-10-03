@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "DevSync V2 Architecture",
+    "subtitle": "Next.js + Golang + PostgreSQL + Redis + Docker",
+    "output": "v2-system.html",
+    "quality_profile": "showcase",
+    "animation": "trace"
+  },
+  "components": [
+    { "id": "client", "type": "external", "label": "Client Browser", "sublabel": "React / Monaco / Yjs", "pos": [40, 300], "size": [140, 60] },
+    { "id": "nextjs", "type": "frontend", "label": "Next.js App Router", "sublabel": "Server Components", "pos": [260, 200], "size": [140, 60] },
+    { "id": "go_api", "type": "backend", "label": "Go API Gateway", "sublabel": "Gin / Websockets", "pos": [500, 300], "size": [140, 60] },
+    { "id": "postgres", "type": "database", "label": "PostgreSQL", "sublabel": "Relational Data & Trees", "pos": [740, 200], "size": [140, 60] },
+    { "id": "redis", "type": "database", "label": "Redis", "sublabel": "Pub/Sub & Caching", "pos": [740, 300], "size": [140, 60] },
+    { "id": "go_worker", "type": "backend", "label": "Code Executor", "sublabel": "Go Worker", "pos": [740, 400], "size": [140, 60] },
+    { "id": "docker", "type": "cloud", "label": "Docker Engine", "sublabel": "Ephemeral Sandboxes", "pos": [980, 400], "size": [140, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Frontend (Vercel/Node)", "wraps": ["nextjs"] },
+    { "kind": "region", "label": "Core Backend", "wraps": ["go_api", "postgres", "redis"] },
+    { "kind": "security-group", "label": "Isolated Execution", "wraps": ["go_worker", "docker"] }
+  ],
+  "connections": [
+    { "id": "c_to_n", "from": "client", "to": "nextjs", "label": "HTTPS (SSR)" },
+    { "id": "c_to_api", "from": "client", "to": "go_api", "label": "WSS (Yjs / Chat)", "fromSide": "right", "toSide": "left", "via": [[220, 330], [220, 330]] },
+    { "id": "n_to_api", "from": "nextjs", "to": "go_api", "label": "HTTPS (Internal API)" },
+    { "id": "api_to_pg", "from": "go_api", "to": "postgres", "label": "pgx (SQL)" },
+    { "id": "api_to_redis", "from": "go_api", "to": "redis", "label": "Pub/Sub", "variant": "dashed" },
+    { "id": "api_to_worker", "from": "go_api", "to": "go_worker", "label": "gRPC / WSS" },
+    { "id": "worker_to_docker", "from": "go_worker", "to": "docker", "label": "Docker API", "variant": "security" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "Real-time Collaboration", "items": ["Monaco + Yjs syncs over WSS directly to Go.", "Go broadcasts state across instances via Redis Pub/Sub."] },
+    { "dot": "rose", "title": "Security & Execution", "items": ["Legacy child_process.spawn is replaced by Docker API.", "Go Worker spawns ephemeral containers with restricted networking."] }
+  ]
+}

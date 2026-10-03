@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "ok": false,
+  "command": "finalize",
+  "status": "running",
+  "type": "architecture",
+  "quality": "showcase",
+  "startedAt": "2026-10-02T10:16:10.601Z",
+  "specification": {
+    "path": "\\\\wsl.localhost\\Ubuntu-24.04\\home\\om\\devsync\\.archify\\architecture-v2-system-20261002-1545\\candidate.json",
+    "sha256": "5d705a4198944f4f681be7c3705933270ee394a5c20195daed26bf5346e01196",
+    "bytes": 2721
+  },
+  "artifact": {
+    "path": "\\\\wsl.localhost\\Ubuntu-24.04\\home\\om\\devsync\\.archify\\architecture-v2-system-20261002-1545\\v2-system.html"
+  },
+  "stages": {},
+  "diagnostics": [],
+  "evidence": {
+    "receipt": "\\\\wsl.localhost\\Ubuntu-24.04\\home\\om\\devsync\\.archify\\architecture-v2-system-20261002-1545\\v2-system.finalize.json",
+    "summaryReceipt": "\\\\wsl.localhost\\Ubuntu-24.04\\home\\om\\devsync\\.archify\\architecture-v2-system-20261002-1545\\v2-system.finalize-summary.json"
+  },
+  "visualReview": "not-requested"
+}

@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  # The Relational Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: devsync_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: devsync_admin
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-supersecret}
+      POSTGRES_DB: devsync_v2
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - devsync_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U devsync_admin -d devsync_v2"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # The Go Backend
+  backend:
+    build:
+      context: ./v2_backend
+      dockerfile: Dockerfile
+    container_name: devsync_backend
+    restart: always
+    environment:
+      - PORT=8080
+      - DATABASE_URL=postgres://devsync_admin:${DB_PASSWORD:-supersecret}@postgres:5432/devsync_v2?sslmode=disable
+    ports:
+      - "8080:8080"
+    volumes:
+      # CRITICAL: Gives the Go backend permission to spawn execution sandboxes on the host machine
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - devsync_net
+
+networks:
+  devsync_net:
+    driver: bridge
+
+volumes:
+  postgres_data:
