@@ -20,7 +20,11 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         const originalRequest = error.config;
 
         // If the error is 401 Unauthorized, and we haven't already tried retrying this exact request
-        if (error.response?.status === 401 && !originalRequest._retry) {
+        if (
+          error.response?.status === 401 && 
+          !originalRequest._retry &&
+          !originalRequest.url?.includes("/api/auth/refresh")
+        ) {
           originalRequest._retry = true;
 
           const authStore = useAuthStore.getState();
