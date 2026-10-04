@@ -412,7 +412,7 @@ export default function WorkspaceRoom() {
         {activeView === 'code' && (
           <ResizablePanelGroup direction="horizontal" className="h-full w-full">
             {/* Left Panel: File Tree (Sidebar) */}
-            <ResizablePanel defaultSize={18} minSize={12} maxSize={35} className="border-r border-zinc-800 bg-zinc-900/40 flex flex-col">
+            <ResizablePanel defaultSize="18%" minSize="12%" maxSize="35%" className="border-r border-zinc-800 bg-zinc-900/40 flex flex-col">
               <FileTree userRole={userRole} 
                 workspaceId={workspaceId} 
                 token={token} 
@@ -428,9 +428,9 @@ export default function WorkspaceRoom() {
             <ResizableHandle className="bg-zinc-800 w-1 transition-colors hover:bg-blue-500" />
 
             {/* Center Panel: Code Editor + Terminal */}
-            <ResizablePanel defaultSize={82} className="flex flex-col bg-[#1e1e1e]">
+            <ResizablePanel defaultSize="82%" className="flex flex-col bg-[#1e1e1e]">
               <ResizablePanelGroup direction="vertical" className="h-full w-full">
-                <ResizablePanel defaultSize={70} className="flex flex-col">
+                <ResizablePanel defaultSize="70%" className="flex flex-col">
                   <div className="h-10 border-b border-zinc-800 bg-zinc-900 flex items-center px-4 text-sm text-zinc-300 gap-2 shrink-0">
                     <FileCode2 className="h-4 w-4 text-zinc-500" /> {activeFile}
                   </div>
@@ -451,7 +451,7 @@ export default function WorkspaceRoom() {
                 {terminalOutput !== null && (
                   <>
                     <ResizableHandle className="bg-zinc-800 h-1 transition-colors hover:bg-blue-500" />
-                    <ResizablePanel defaultSize={30} minSize={10} className="flex flex-col bg-[#1e1e1e]">
+                    <ResizablePanel defaultSize="30%" minSize="10%" className="flex flex-col bg-[#1e1e1e]">
                       <div className="h-10 border-b border-zinc-800 bg-zinc-900 flex items-center px-4 text-sm text-zinc-400 gap-2 shrink-0 font-mono">
                         <TerminalSquare className="h-4 w-4" /> Terminal Output
                         <div className="ml-auto text-xs opacity-50">Docker Sandbox</div>
@@ -471,7 +471,7 @@ export default function WorkspaceRoom() {
 
         {activeView === 'whiteboard' && (
           <ResizablePanelGroup direction="horizontal" className="h-full w-full">
-            <ResizablePanel defaultSize={18} minSize={12} maxSize={35} className="border-r border-zinc-800 bg-zinc-900/40 flex flex-col">
+            <ResizablePanel defaultSize="18%" minSize="12%" maxSize="35%" className="border-r border-zinc-800 bg-zinc-900/40 flex flex-col">
               <FileTree userRole={userRole} 
                 workspaceId={workspaceId} 
                 token={token} 
@@ -484,7 +484,7 @@ export default function WorkspaceRoom() {
               />
             </ResizablePanel>
             <ResizableHandle className="bg-zinc-800 w-1 hover:bg-yellow-500/50 transition-colors cursor-col-resize" />
-            <ResizablePanel defaultSize={82} className="relative bg-[#121212]">
+            <ResizablePanel defaultSize="82%" className="relative bg-[#121212]">
               <Whiteboard userRole={userRole} 
                 key={activeBoard}
                 ref={whiteboardRef}
@@ -501,7 +501,7 @@ export default function WorkspaceRoom() {
 
         {activeView === 'documents' && (
           <ResizablePanelGroup direction="horizontal" className="h-full w-full">
-            <ResizablePanel defaultSize={18} minSize={12} maxSize={35} className="border-r border-zinc-800 bg-zinc-900/40 flex flex-col">
+            <ResizablePanel defaultSize="18%" minSize="12%" maxSize="35%" className="border-r border-zinc-800 bg-zinc-900/40 flex flex-col">
               <FileTree userRole={userRole} 
                 workspaceId={workspaceId} 
                 token={token} 
@@ -514,7 +514,7 @@ export default function WorkspaceRoom() {
               />
             </ResizablePanel>
             <ResizableHandle className="bg-zinc-800 w-1 hover:bg-yellow-500/50 transition-colors cursor-col-resize" />
-            <ResizablePanel defaultSize={82} className="relative bg-[#121212]">
+            <ResizablePanel defaultSize="82%" className="relative bg-[#121212]">
               <DocumentEditor userRole={userRole} 
                 key={activeDoc}
                 ref={docEditorRef}
