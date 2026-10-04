@@ -53,8 +53,12 @@ export default function AudioRoom({ workspaceId, token, userId }: AudioRoomProps
         });
       };
 
-      // 3. Connect to Go WebSocket Signaling Server
-      const wsUrl = `${window.location.protocol === "https:" ? "wss:" : "ws:"}//${window.location.host}/api/webrtc/join?workspace_id=${workspaceId}&token=${token}`;
+      // 3. Connect to Go WebSocket Signaling Server directly bypassing Vercel
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "";
+      const wsProtocol = apiUrl.startsWith("https") ? "wss:" : "ws:";
+      const wsHost = apiUrl.replace(/^https?:\/\//, "");
+      
+      const wsUrl = `${wsProtocol}//${wsHost}/webrtc/join?workspace_id=${workspaceId}&token=${token}`;
       const ws = new WebSocket(wsUrl);
       wsRef.current = ws;
 
