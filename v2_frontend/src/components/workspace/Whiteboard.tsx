@@ -102,7 +102,7 @@ const Whiteboard = forwardRef<WhiteboardRef, WhiteboardProps>(({ workspaceId, to
 
       </div>
 
-      <Tldraw className="w-full h-full" onMount={handleMount} />
+      <Tldraw className="w-full h-full" onMount={handleMount} licenseKey={process.env.NEXT_PUBLIC_TLDRAW_LICENSE_KEY} />
     </div>
   );
 });
