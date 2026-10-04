@@ -92,7 +92,7 @@ const Whiteboard = forwardRef<WhiteboardRef, WhiteboardProps>(({ workspaceId, to
   }
 
   return (
-    <div className="w-full h-full relative" style={{ height: "100%", width: "100%" }}>
+    <div className="absolute inset-0 w-full h-full">
       {/* Sync Status Overlay */}
       <div className="absolute top-4 left-4 z-[999] flex flex-col gap-2 pointer-events-none">
         <div className={`px-2 py-1 text-xs rounded-full border flex items-center gap-2 shadow-sm backdrop-blur-sm transition-colors ${connected ? 'bg-emerald-500/20 text-emerald-600 border-emerald-500/30' : 'bg-orange-500/20 text-orange-500 border-orange-500/30'}`}>
