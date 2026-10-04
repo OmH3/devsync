@@ -80,7 +80,7 @@ export default function WorkspaceRoom() {
     const wsHost = apiUrl.replace(/^https?:\/\//, "");
     
     // Connect DIRECTLY to the Oracle backend for WebSockets, bypassing Vercel entirely!
-    const provider = new WebsocketProvider(`${wsProtocol}//${wsHost}/api`, roomParam, ydoc);
+    const provider = new WebsocketProvider(`${wsProtocol}//${wsHost}`, roomParam, ydoc);
     providerRef.current = provider;
 
     provider.awareness.setLocalState({ userId });
