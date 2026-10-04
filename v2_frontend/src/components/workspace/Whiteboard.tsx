@@ -1,10 +1,9 @@
 "use client";
 
-import { forwardRef, useImperativeHandle, useState, useEffect, useRef } from "react";
-import axios from "axios";
-import { Loader2, Users } from "lucide-react";
-import { Tldraw, Editor } from "tldraw";
-import "tldraw/tldraw.css";
+import { forwardRef, useImperativeHandle, useState, useEffect, useMemo } from "react";
+import { Excalidraw, serializeAsJSON, restoreElements } from "@excalidraw/excalidraw";
+import "@excalidraw/excalidraw/index.css";
+import type { ExcalidrawImperativeAPI, BinaryFiles } from "@excalidraw/excalidraw/types";
 import * as Y from "yjs";
 import { WebsocketProvider } from "y-websocket";
 
@@ -23,44 +22,92 @@ export interface WhiteboardRef {
   broadcastUpdate: (snapshot: string) => void;
 }
 
-const Whiteboard = forwardRef<WhiteboardRef, WhiteboardProps>(({ workspaceId, token, ydoc, provider, activeFile, initialContent, userRole }, ref) => {
-  const [editor, setEditor] = useState<Editor | null>(null);
+type SceneElements = ReturnType<ExcalidrawImperativeAPI["getSceneElements"]>;
+
+interface ParsedScene {
+  elements: SceneElements;
+  files: BinaryFiles;
+  backgroundColor?: string;
+}
+
+/**
+ * Safely parses a stored Excalidraw JSON string.
+ * Returns an empty scene for empty content or legacy (tldraw) snapshots that
+ * do not contain an `elements` array, so old boards simply open blank.
+ */
+function parseScene(raw: string): ParsedScene {
+  const empty: ParsedScene = { elements: [] as unknown as SceneElements, files: {} };
+  if (!raw) return empty;
+  try {
+    const parsed = JSON.parse(raw);
+    if (!parsed || !Array.isArray(parsed.elements)) return empty;
+    return {
+      elements: restoreElements(parsed.elements, null) as unknown as SceneElements,
+      files: (parsed.files ?? {}) as BinaryFiles,
+      backgroundColor: parsed.appState?.viewBackgroundColor,
+    };
+  } catch (e) {
+    console.error("Failed to parse whiteboard snapshot", e);
+    return empty;
+  }
+}
+
+const Whiteboard = forwardRef<WhiteboardRef, WhiteboardProps>(({ ydoc, provider, activeFile, initialContent, userRole }, ref) => {
+  const [api, setApi] = useState<ExcalidrawImperativeAPI | null>(null);
   const [connected, setConnected] = useState(false);
+
+  // Parsed once per mounted board (the parent remounts us via key={activeBoard})
+  const initialData = useMemo(() => {
+    const scene = parseScene(initialContent);
+    return {
+      elements: scene.elements,
+      files: scene.files,
+      appState: scene.backgroundColor ? { viewBackgroundColor: scene.backgroundColor } : undefined,
+      scrollToContent: true,
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useImperativeHandle(ref, () => ({
     getSnapshot: () => {
-      if (!editor) return "";
-      return JSON.stringify(editor.store.getStoreSnapshot());
+      if (!api) return "";
+      try {
+        return serializeAsJSON(api.getSceneElements(), api.getAppState(), api.getFiles(), "local");
+      } catch (e) {
+        console.error("Failed to serialize whiteboard", e);
+        return "";
+      }
     },
     broadcastUpdate: (snapshot: string) => {
       if (ydoc && activeFile) {
-        // We set the snapshot string in the Yjs map. 
-        // This instantly synchronizes it to all other connected clients!
+        // Setting the snapshot string in the Yjs map synchronizes it to all other clients instantly
         const ymap = ydoc.getMap(`whiteboard-sync-${activeFile}`);
         ymap.set("latest_snapshot", snapshot);
       }
     }
   }));
 
-  // 2. Setup Yjs WebSocket for broadcasting manual saves
+  // Yjs WebSocket: receive manual saves broadcast by other users + connection status
   useEffect(() => {
     if (!ydoc || !provider || !activeFile) return;
-    
+
     setConnected(provider.wsconnected);
     const handleStatus = (event: { status: string }) => setConnected(event.status === "connected");
     provider.on("status", handleStatus);
 
     const ymap = ydoc.getMap(`whiteboard-sync-${activeFile}`);
-    const observer = (event: any) => {
-      if (event.keysChanged.has("latest_snapshot")) {
-        const newSnapshotStr = ymap.get("latest_snapshot") as string;
-        if (newSnapshotStr && editor) {
-          try {
-            editor.store.loadStoreSnapshot(JSON.parse(newSnapshotStr));
-          } catch (e) {
-            console.error("Failed to sync remote whiteboard save", e);
-          }
+    const observer = (event: Y.YMapEvent<unknown>) => {
+      if (!event.keysChanged.has("latest_snapshot")) return;
+      const newSnapshotStr = ymap.get("latest_snapshot") as string | undefined;
+      if (!newSnapshotStr || !api) return;
+      try {
+        const scene = parseScene(newSnapshotStr);
+        api.updateScene({ elements: scene.elements });
+        if (Object.keys(scene.files).length > 0) {
+          api.addFiles(Object.values(scene.files));
         }
+      } catch (e) {
+        console.error("Failed to sync remote whiteboard save", e);
       }
     };
     ymap.observe(observer);
@@ -69,18 +116,7 @@ const Whiteboard = forwardRef<WhiteboardRef, WhiteboardProps>(({ workspaceId, to
       provider.off("status", handleStatus);
       ymap.unobserve(observer);
     };
-  }, [ydoc, provider, editor, activeFile]);
-
-  const handleMount = (editorInstance: Editor) => {
-    if (initialContent) {
-      try {
-        editorInstance.store.loadStoreSnapshot(JSON.parse(initialContent));
-      } catch (e) {
-        console.error("Failed to load whiteboard snapshot", e);
-      }
-    }
-    setEditor(editorInstance);
-  };
+  }, [ydoc, provider, api, activeFile]);
 
   if (!activeFile) {
     return (
@@ -99,10 +135,14 @@ const Whiteboard = forwardRef<WhiteboardRef, WhiteboardProps>(({ workspaceId, to
           <div className={`w-2 h-2 rounded-full ${connected ? 'bg-emerald-500' : 'bg-orange-500 animate-pulse'}`}></div>
           {connected ? 'WebSocket Synced' : 'Connecting...'}
         </div>
-
       </div>
 
-      <Tldraw className="w-full h-full" onMount={handleMount} licenseKey={process.env.NEXT_PUBLIC_TLDRAW_LICENSE_KEY} />
+      <Excalidraw
+        excalidrawAPI={(instance) => setApi(instance)}
+        initialData={initialData}
+        theme="dark"
+        viewModeEnabled={userRole === "viewer"}
+      />
     </div>
   );
 });
