@@ -42,7 +42,7 @@ git clone -b perf/node-react-ux https://github.com/OmH3/devsync.git && cd devsyn
 cp .env.production.example .env.production
 # edit: DOMAIN, PUBLIC_ORIGIN, FRONTEND_ORIGIN, and SESSION_SECRET=$(openssl rand -hex 32)
 docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build
-# First deployment ONLY: seed roles. The seeder deletes and recreates roles, so never rerun it on live data.
+# First deployment: seed roles (idempotent upsert; safe to re-run, keeps existing role ids).
 docker compose --env-file .env.production -f docker-compose.prod.yml exec app node src/seeders/role.seeder.js
 ```
 
