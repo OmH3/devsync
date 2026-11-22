@@ -1,3 +1,4 @@
+import { notify } from '../store/toastStore.js';
 import React, { useState, useEffect, useRef } from 'react';
 import { useDocumentStore } from '../store/documentStore.js';
 import { useAuth } from '../hooks/useAuth.js';
@@ -65,7 +66,7 @@ const CreateDocumentModal = ({ isOpen, onClose, workspaceId, userRole, onSuccess
     e.preventDefault();
     
     if (!canCreateDocument) {
-      alert('You do not have permission to create documents');
+      notify('You do not have permission to create documents');
       return;
     }
     

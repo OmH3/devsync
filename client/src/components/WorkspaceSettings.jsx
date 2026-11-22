@@ -1,3 +1,4 @@
+import { notify } from '../store/toastStore.js';
 import React, { useState, useEffect } from 'react';
 import { useWorkspaceStore } from '../store/workspaceStore.js';
 import MemberManagement from './MemberManagement.jsx';
@@ -89,7 +90,7 @@ const WorkspaceSettings = ({ workspace, onClose }) => {
 
   const copyInviteCode = (code) => {
     navigator.clipboard.writeText(code);
-    alert('Invite code copied to clipboard!');
+    notify('Invite code copied to clipboard!');
   };
 
   const tabs = [

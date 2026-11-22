@@ -1,3 +1,4 @@
+import { notify } from '../store/toastStore.js';
 import React, { useState, useEffect } from 'react';
 import { useWhiteboardStore } from '../store/whiteboardStore.js';
 import EnhancedDrawingCanvas from './EnhancedDrawingCanvas.jsx';
@@ -34,7 +35,7 @@ const WhiteboardCanvas = ({ whiteboard }) => {
 
   const handleClearCanvas = async () => {
     if (!canEdit) {
-      alert('You do not have permission to clear this whiteboard');
+      notify('You do not have permission to clear this whiteboard');
       return;
     }
 
@@ -49,7 +50,7 @@ const WhiteboardCanvas = ({ whiteboard }) => {
   //Handle tool selection with permission check
   const handleToolSelect = (tool) => {
     if (!canEdit) {
-      alert('You do not have permission to edit this whiteboard');
+      notify('You do not have permission to edit this whiteboard');
       return;
     }
     setSelectedTool(tool);
@@ -57,7 +58,7 @@ const WhiteboardCanvas = ({ whiteboard }) => {
 
   const handleColorSelect = (color) => {
     if (!canEdit) {
-      alert('You do not have permission to edit this whiteboard');
+      notify('You do not have permission to edit this whiteboard');
       return;
     }
     setSelectedColor(color);
@@ -65,7 +66,7 @@ const WhiteboardCanvas = ({ whiteboard }) => {
 
   const handleStrokeWidthChange = (width) => {
     if (!canEdit) {
-      alert('You do not have permission to edit this whiteboard');
+      notify('You do not have permission to edit this whiteboard');
       return;
     }
     setStrokeWidth(width);

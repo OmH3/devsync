@@ -1,0 +1,66 @@
+# Single-host production stack for the Node/React edition of DevSync:
+#   Caddy (HTTPS, static React build) -> Node/Express + Socket.IO -> MongoDB (private replica set)
+# Usage: docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    # Single-node replica set: required for the transactions the API uses.
+    command: ["--replSet", "rs0", "--bind_ip_all", "--wiredTigerCacheSizeGB", "0.25"]
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test:
+        - CMD
+        - mongosh
+        - --quiet
+        - --eval
+        - "try { rs.status().ok } catch (e) { rs.initiate({_id:'rs0',members:[{_id:0,host:'mongo:27017'}]}).ok }"
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 20s
+    # No published ports: MongoDB is reachable only from this Compose network.
+
+  app:
+    build: ./server
+    restart: unless-stopped
+    depends_on:
+      mongo:
+        condition: service_healthy
+    env_file: .env.production
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: "8000"
+      MONGO_URI: mongodb://mongo:27017/devsync?replicaSet=rs0
+      TRUST_PROXY_HOPS: "1"
+      CODE_EXECUTION_ENABLED: "false"
+      LOG_PRETTY: "false"
+    expose:
+      - "8000"
+    deploy:
+      resources:
+        limits:
+          memory: 384m
+
+  web:
+    build:
+      context: .
+      dockerfile: deploy/web.Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - app
+    environment:
+      DOMAIN: ${DOMAIN:?set DOMAIN in .env.production}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - caddy-data:/data
+      - caddy-config:/config
+
+volumes:
+  mongo-data:
+  caddy-data:
+  caddy-config:

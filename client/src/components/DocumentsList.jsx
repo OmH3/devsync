@@ -1,3 +1,4 @@
+import { notify } from '../store/toastStore.js';
 import React, { useState, useEffect } from 'react';
 import { useDocumentStore } from '../store/documentStore.js';
 import { useAuth } from '../hooks/useAuth.js';
@@ -71,7 +72,7 @@ const DocumentsList = ({ workspaceId, workspace }) => {
     const canDeleteThis = canDelete || (userRole === 'MEMBER' && isOwner);
 
     if (!canDeleteThis) {
-      alert('You do not have permission to delete this document');
+      notify('You do not have permission to delete this document');
       return;
     }
 
@@ -90,7 +91,7 @@ const DocumentsList = ({ workspaceId, workspace }) => {
         }
       } else {
         console.error(' Failed to delete document:', result.error);
-        alert(`Failed to delete document: ${result.error}`);
+        notify(`Failed to delete document: ${result.error}`);
       }
     }
   };

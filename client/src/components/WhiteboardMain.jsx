@@ -1,3 +1,4 @@
+import { notify } from '../store/toastStore.js';
 import React, { useState, useCallback, useMemo } from 'react';
 import WhiteboardList from './WhiteboardList.jsx';
 import WhiteboardCanvas from './WhiteboardCanvas.jsx';
@@ -34,7 +35,7 @@ const WhiteboardMain = React.memo(({ workspaceId, workspace }) => {
   //Handle tool changes with permission checks
   const handleToolChange = (tool) => {
     if (userRole === 'MEMBER') {
-      alert('Members cannot edit whiteboards');
+      notify('Members cannot edit whiteboards');
       return;
     }
     setSelectedTool(tool);
@@ -42,7 +43,7 @@ const WhiteboardMain = React.memo(({ workspaceId, workspace }) => {
 
   const handleColorChange = (color) => {
     if (userRole === 'MEMBER') {
-      alert('Members cannot edit whiteboards');
+      notify('Members cannot edit whiteboards');
       return;
     }
     setSelectedColor(color);
@@ -50,7 +51,7 @@ const WhiteboardMain = React.memo(({ workspaceId, workspace }) => {
 
   const handleStrokeWidthChange = (width) => {
     if (userRole === 'MEMBER') {
-      alert('Members cannot edit whiteboards');
+      notify('Members cannot edit whiteboards');
       return;
     }
     setStrokeWidth(width);

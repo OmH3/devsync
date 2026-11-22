@@ -1,81 +1,36 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
+import PageLoader from '../components/ui/PageLoader.jsx';
 
+// Finishes the Google sign-in: the server has already set the session cookie, so we only
+// need to confirm it and continue (no artificial browser-specific delay).
 const GoogleCallback = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { checkAuth } = useAuthStore();
-  const [isProcessing, setIsProcessing] = useState(true);
+  const checkAuth = useAuthStore((state) => state.checkAuth);
 
   useEffect(() => {
-    const handleCallback = async () => {
-      try {
-        const status = searchParams.get('status');
-        const message = searchParams.get('message');
+    const failWith = (message) => navigate(`/login?error=${encodeURIComponent(message)}`, { replace: true });
 
-        if (status === 'success') {
-          //Browser-specific waiting for session establishment
-          const isBrave = navigator.userAgent.includes('Brave');
-          const isFirefox = navigator.userAgent.includes('Firefox');
-          const waitTime = isBrave ? 4000 : isFirefox ? 3000 : 2000;
-          
-          await new Promise(resolve => setTimeout(resolve, waitTime));
-          
-          //Test API call to verify session
-          try {
-            const testResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/user/current`, {
-              method: 'GET',
-              credentials: 'include',
-              headers: {
-                'Content-Type': 'application/json'
-              }
-            });
-            
-            if (!testResponse.ok) {
-              throw new Error('API verification failed');
-            }
-          } catch (apiError) {
-            console.error('API verification failed:', apiError);
-          }
-          
-          const result = await checkAuth();
-          
-          if (result?.isAuthenticated) {
-            navigate('/dashboard', { replace: true });
-          } else {
-            //If current setup fails, suggest Firebase
-            console.log(' Consider switching to Firebase Auth for better cross-origin support');
-            navigate('/login?error=Session not established - Consider Firebase Auth', { replace: true });
-          }
-        } else {
-          const errorMessage = message || 'Google authentication failed';
-          navigate(`/login?error=${encodeURIComponent(errorMessage)}`, { replace: true });
-        }
-      } catch (error) {
-        console.error(' Error in Google callback:', error);
-        navigate('/login?error=Authentication error', { replace: true });
-      } finally {
-        setIsProcessing(false);
+    const finish = async () => {
+      if (searchParams.get('status') !== 'success') {
+        failWith(searchParams.get('message') || 'Google authentication failed');
+        return;
+      }
+      try {
+        const result = await checkAuth();
+        if (result?.isAuthenticated) navigate('/dashboard', { replace: true });
+        else failWith('Sign-in could not be completed. Please try again.');
+      } catch {
+        failWith('Authentication error');
       }
     };
 
-    handleCallback();
+    finish();
   }, [searchParams, navigate, checkAuth]);
 
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="text-center">
-        <div className="text-lg mb-4 text-gray-700">
-          Processing Google authentication...
-        </div>
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
-        <div className="text-sm text-gray-500 mt-4">
-          Testing cross-origin authentication...
-        </div>
-      </div>
-    </div>
-  );
+  return <PageLoader label="Completing Google sign-in" />;
 };
 
 export default GoogleCallback;

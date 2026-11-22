@@ -1,3 +1,4 @@
+import { notify } from '../store/toastStore.js';
 import React, { useState, useEffect } from 'react';
 import { useWorkspaceStore } from '../store/workspaceStore.js';
 
@@ -66,7 +67,7 @@ const MemberManagement = ({ workspaceId, onClose }) => {
         setSelectedRole('');
         
         // Optional: Show success message
-        alert(`Role changed to ${result.member.role.name} successfully!`);
+        notify(`Role changed to ${result.member.role.name} successfully!`);
       } else {
         setLocalError(result.error || 'Failed to change role');
       }

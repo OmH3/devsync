@@ -1,3 +1,4 @@
+import { notify } from '../store/toastStore.js';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useWhiteboardStore } from '../store/whiteboardStore.js';
 import CreateWhiteboardModal from './CreateWhiteboardModal.jsx';
@@ -36,7 +37,7 @@ const WhiteboardList = ({ workspaceId, onWhiteboardSelect }) => {
 
   const handleDeleteWhiteboard = useCallback(async (whiteboardId, whiteboardTitle) => {
     if (!canDeleteWhiteboards) {
-      alert('You do not have permission to delete whiteboards');
+      notify('You do not have permission to delete whiteboards');
       return;
     }
 
@@ -45,7 +46,7 @@ const WhiteboardList = ({ workspaceId, onWhiteboardSelect }) => {
     if (window.confirm(confirmMessage)) {
       const result = await deleteWhiteboard(whiteboardId);
       if (!result.success) {
-        alert(result.error || 'Failed to delete whiteboard');
+        notify(result.error || 'Failed to delete whiteboard');
       }
     }
   }, [deleteWhiteboard, canDeleteWhiteboards]);

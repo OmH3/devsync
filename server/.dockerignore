@@ -1,0 +1,7 @@
+node_modules
+bench
+test
+temp_executions
+.env*
+!.env.example
+*.md

@@ -32,3 +32,29 @@ use it as a controlled capacity claim. Additional sequential runs are underway.
 M01 remains in progress. No later milestone is complete yet. Full browser
 journeys, final performance measurements, deployment packaging, and pushing the
 completed branch remain outstanding.
+
+## 22 November 2026 (later): frontend, UX and deployment slice
+
+Branch `perf/node-react-ux`. Client-only and deployment changes; the server-side
+M02-M04 work (env/logger/session files) that was already in the working tree is
+**not** part of this commit and is still unverified.
+
+Done:
+
+- Route-level code splitting; editors and the Stream SDK load on demand; Stream
+  only loads when `/api/capabilities` reports audio enabled and a key is configured.
+  Login-path JS is about 112 kB gzip (previously a single 289 kB gzip bundle).
+- One shared Socket.IO connection per tab with reference-counted workspace rooms
+  and automatic room restore after reconnect (`client/src/realtime/sharedSocket.js`).
+- Removed the debug overlay, `alert()` calls (replaced by accessible toasts) and the
+  2-4 s browser-specific Google callback delay.
+- Dashboard redesign: sidebar with workspace switcher, header with invite action,
+  URL-addressable views (`?view=documents`), skeleton loading, mobile drawer,
+  focus-visible styles, reduced-motion support. Light theme only for now.
+- Same-origin API/WebSocket configuration (`client/src/config/env.js`, Vite dev proxy).
+- Deployment: `docker-compose.prod.yml` (Caddy + Node + MongoDB replica set),
+  `server/Dockerfile`, `deploy/`, `docs/DEPLOY_AWS_FREE_TIER.md`.
+
+Verified: client production build succeeds; new files lint clean.
+Not verified: Docker stack build/run (Docker unavailable in this session's sandbox),
+browser journeys, cross-user realtime behaviour, post-change benchmarks.

@@ -1,67 +1,54 @@
-import React from 'react'
+import React, { lazy, Suspense } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
-import Login from './pages/Login.jsx'
-import Register from './pages/Register.jsx'
-import Dashboard from './pages/Dashboard.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
 import { useAuth } from './hooks/useAuth.js'
-import BackgroundAudioRoom from './components/BackgroundAudioRoom.jsx'
+import { useCapabilities } from './hooks/useCapabilities.js'
 import { useWorkspaceStore } from './store/workspaceStore.js'
-import GoogleCallback from './pages/GoogleCallback';
+import { STREAM_API_KEY } from './config/env.js'
+import PageLoader from './components/ui/PageLoader.jsx'
+
+// Route-level code splitting keeps the login screen small.
+const Login = lazy(() => import('./pages/Login.jsx'))
+const Register = lazy(() => import('./pages/Register.jsx'))
+const Dashboard = lazy(() => import('./pages/Dashboard.jsx'))
+const GoogleCallback = lazy(() => import('./pages/GoogleCallback.jsx'))
+// The Stream SDK is large; load it only when audio is enabled and configured.
+const BackgroundAudioRoom = lazy(() => import('./components/BackgroundAudioRoom.jsx'))
 
 function App() {
   const { isAuthenticated, isLoading } = useAuth()
-  const { currentWorkspace } = useWorkspaceStore()
-  
-  // Show loading only if we're actually checking authentication
-  // This prevents the loading spinner when user is just not logged in
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
-        </div>
-      </div>
-    )
-  }
-  
-  return (
-    <div className="App">
-      <Routes>
-        <Route 
-          path="/" 
-          element={
-            isAuthenticated ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />
-          } 
-        />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route 
-          path="/dashboard" 
-          element={
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
-          } 
-        />
+  const currentWorkspaceId = useWorkspaceStore((state) => state.currentWorkspace?._id)
+  const capabilities = useCapabilities()
 
-        {/*  Add Google OAuth callback route */}
-        <Route 
-          path="/google/callback" 
-          element={<GoogleCallback />} 
-        />
-        {/* Add more protected routes here */}
-      </Routes>
-      {isAuthenticated && currentWorkspace && (
-        <>
-          <div className="fixed top-4 left-4 bg-blue-500 text-white p-2 rounded text-xs z-50">
-            DEBUG: Audio Room Should Show - Workspace: {currentWorkspace._id}
-          </div>
-          <BackgroundAudioRoom workspaceId={currentWorkspace._id} />
-        </>
+  if (isLoading) return <PageLoader label="Checking your session" />
+
+  const audioAvailable = capabilities.audio && Boolean(STREAM_API_KEY)
+
+  return (
+    <>
+      <Suspense fallback={<PageLoader label="Loading" />}>
+        <Routes>
+          <Route path="/" element={<Navigate to={isAuthenticated ? '/dashboard' : '/login'} replace />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/google/callback" element={<GoogleCallback />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Suspense>
+      {audioAvailable && isAuthenticated && currentWorkspaceId && (
+        <Suspense fallback={null}>
+          <BackgroundAudioRoom workspaceId={currentWorkspaceId} />
+        </Suspense>
       )}
-    </div>
+    </>
   )
 }
 

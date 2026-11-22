@@ -1,24 +1,21 @@
 import { useEffect, useState } from 'react';
-import { io } from 'socket.io-client';
-import { useAuth } from './useAuth';
+import { useAuthStore } from '../store/authStore.js';
+import { acquireSocket, releaseSocket } from '../realtime/sharedSocket.js';
 
+// Returns the tab-wide shared socket while a user is signed in.
+// Subscribes only to the user id so profile edits do not reconnect the socket.
 export const useSocket = () => {
   const [socket, setSocket] = useState(null);
-  const { user } = useAuth();
+  const userId = useAuthStore((state) => state.user?._id ?? state.user?.id ?? null);
 
   useEffect(() => {
-    if (user) {
-      const newSocket = io(import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000', {
-        withCredentials: true,
-      });
-
-      setSocket(newSocket);
-
-      return () => {
-        newSocket.close();
-      };
-    }
-  }, [user]);
+    if (!userId) return undefined;
+    setSocket(acquireSocket());
+    return () => {
+      releaseSocket();
+      setSocket(null);
+    };
+  }, [userId]);
 
   return socket;
 };

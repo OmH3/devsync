@@ -1,3 +1,4 @@
+import { notify } from '../store/toastStore.js';
 import React, { useState } from 'react';
 import { useWhiteboardStore } from '../store/whiteboardStore.js';
 
@@ -13,7 +14,7 @@ const CreateWhiteboardModal = ({ isOpen, onClose, workspaceId, onSuccess }) => {
     e.preventDefault();
     
     if (!formData.boardTitle.trim()) {
-      alert('Please enter a board title');
+      notify('Please enter a board title');
       return;
     }
 
