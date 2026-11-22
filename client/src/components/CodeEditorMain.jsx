@@ -494,9 +494,9 @@ const CodeEditorMain = ({ workspaceId, workspace }) => {
           style={{ width: `${sidebarWidth}px` }}
         >
           {/* Sidebar Header */}
-          <div className="p-3 border-b border-gray-200 bg-gray-50">
+          <div className="px-3 py-2 border-b border-gray-200 bg-gray-50">
             <div className="flex items-center justify-between">
-              <h3 className="font-medium text-gray-900">File Explorer</h3>
+              <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">Layout</span>
               <div className="flex items-center space-x-1">
                 <button
                   onClick={() => handleViewModeChange('split')}

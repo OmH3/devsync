@@ -54,13 +54,12 @@ const EnhancedDrawingCanvas = ({
     }
   }, [socket?.userId]);
 
-  // Load existing drawing data
+  // Load existing drawing data when switching boards
   useEffect(() => {
-    if (whiteboard && whiteboard.boardElements) {
-      console.log('Loading existing drawing data:', whiteboard.boardElements);
+    if (whiteboard?._id && Array.isArray(whiteboard.boardElements)) {
       setDrawingData(whiteboard.boardElements);
     }
-  }, [whiteboard, setDrawingData]);
+  }, [whiteboard?._id, setDrawingData]);
 
   // Redraw canvas with existing data
   const redrawCanvas = useCallback(() => {
@@ -325,12 +324,14 @@ const EnhancedDrawingCanvas = ({
       const current = useWhiteboardStore.getState().drawingData || [];
       if (!current.some((e) => e.id === element.id)) {
         useWhiteboardStore.setState({ drawingData: [...current, element] });
+        setTimeout(() => redrawCanvas(), 20);
       }
     };
 
     const handleWhiteboardUpdated = ({ updates }) => {
       if (Array.isArray(updates?.boardElements)) {
         useWhiteboardStore.setState({ drawingData: updates.boardElements });
+        setTimeout(() => redrawCanvas(), 20);
       }
     };
 
@@ -517,15 +518,16 @@ const EnhancedDrawingCanvas = ({
         socket.emit('draw-end', { whiteboardId: whiteboard._id });
       }
 
-      // Save path to drawing data
-      if (currentPath.length > 0) {
+      // Save path to drawing data (compute synchronously from startPosition + currentPath + currentPos)
+      const finalPoints = currentPath.length > 0 ? [...currentPath, currentPos] : [startPosition, currentPos];
+      if (finalPoints.length > 1) {
         const newElement = {
           id: Date.now().toString(),
           type: 'path',
           tool: selectedTool,
           color: selectedTool === 'eraser' ? '#ffffff' : selectedColor,
           lineWidth: strokeWidth,
-          points: currentPath,
+          points: finalPoints,
           timestamp: new Date().toISOString()
         };
         

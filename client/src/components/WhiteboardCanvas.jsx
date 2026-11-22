@@ -163,40 +163,40 @@ const WhiteboardCanvas = ({ whiteboard }) => {
       )}
 
       {/* Toolbar - Show for all users but disable tools for members */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gray-50">
+      <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 border-b border-gray-200 bg-gray-50">
         {/* Tools */}
-        <div className="flex items-center space-x-2">
-          <span className="text-sm font-medium text-gray-700 mr-2">Tools:</span>
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="text-xs font-medium text-gray-600 mr-1">Tools:</span>
           {tools.map(tool => (
             <button
               key={tool.id}
               onClick={() => handleToolSelect(tool.id)}
               disabled={!canEdit}
-              className={`p-2 rounded-md text-sm font-medium transition-colors ${
+              className={`px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors ${
                 selectedTool === tool.id
-                  ? 'bg-indigo-100 text-indigo-700 border-2 border-indigo-500'
+                  ? 'bg-indigo-100 text-indigo-700 border border-indigo-500'
                   : canEdit 
                     ? 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
                     : 'bg-gray-200 text-gray-400 border border-gray-200 cursor-not-allowed'
               }`}
               title={canEdit ? tool.name : `${tool.name} (Read-only)`}
             >
-              <span className="text-lg mr-1">{tool.icon}</span>
+              <span className="mr-1">{tool.icon}</span>
               {tool.name}
             </button>
           ))}
         </div>
 
         {/* Colors */}
-        <div className="flex items-center space-x-2">
-          <span className="text-sm font-medium text-gray-700 mr-2">Colors:</span>
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs font-medium text-gray-600 mr-1">Colors:</span>
           {colors.map(color => (
             <button
               key={color}
               onClick={() => handleColorSelect(color)}
               disabled={!canEdit}
-              className={`w-8 h-8 rounded border-2 ${
-                selectedColor === color ? 'border-gray-600' : 'border-gray-300'
+              className={`w-6 h-6 rounded border-2 ${
+                selectedColor === color ? 'border-gray-900 scale-110' : 'border-gray-300'
               } ${!canEdit ? 'cursor-not-allowed opacity-50' : ''}`}
               style={{ backgroundColor: color }}
               title={canEdit ? color : `${color} (Read-only)`}
@@ -204,34 +204,35 @@ const WhiteboardCanvas = ({ whiteboard }) => {
           ))}
         </div>
 
-        {/* Stroke Width */}
-        <div className="flex items-center space-x-2">
-          <span className="text-sm font-medium text-gray-700">Width:</span>
-          <input
-            type="range"
-            min="1"
-            max="20"
-            value={strokeWidth}
-            onChange={(e) => handleStrokeWidthChange(parseInt(e.target.value))}
-            disabled={!canEdit}
-            className={`w-20 ${!canEdit ? 'cursor-not-allowed opacity-50' : ''}`}
-          />
-          <span className="text-sm text-gray-700 w-8">{strokeWidth}px</span>
-        </div>
+        {/* Stroke Width & Clear */}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs font-medium text-gray-600">Width:</span>
+            <input
+              type="range"
+              min="1"
+              max="20"
+              value={strokeWidth}
+              onChange={(e) => handleStrokeWidthChange(parseInt(e.target.value))}
+              disabled={!canEdit}
+              className={`w-20 ${!canEdit ? 'cursor-not-allowed opacity-50' : ''}`}
+            />
+            <span className="text-xs text-gray-700 w-7">{strokeWidth}px</span>
+          </div>
 
-        {/* Clear Button */}
-        <button
-          onClick={handleClearCanvas}
-          disabled={!canEdit}
-          className={`px-4 py-2 rounded-md text-sm font-medium ${
-            canEdit 
-              ? 'bg-red-600 hover:bg-red-700 text-white'
-              : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-          }`}
-          title={canEdit ? 'Clear Canvas' : 'Clear Canvas (Read-only)'}
-        >
-          Clear Canvas
-        </button>
+          <button
+            onClick={handleClearCanvas}
+            disabled={!canEdit}
+            className={`px-3 py-1.5 rounded-md text-xs font-medium ${
+              canEdit 
+                ? 'bg-red-600 hover:bg-red-700 text-white'
+                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+            }`}
+            title={canEdit ? 'Clear Canvas' : 'Clear Canvas (Read-only)'}
+          >
+            Clear
+          </button>
+        </div>
       </div>
 
       {/* Canvas */}
