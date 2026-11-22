@@ -58,3 +58,52 @@ Done:
 Verified: client production build succeeds; new files lint clean.
 Not verified: Docker stack build/run (Docker unavailable in this session's sandbox),
 browser journeys, cross-user realtime behaviour, post-change benchmarks.
+
+## 22 November 2026 (real-world multi-user Chrome E2E verification & fixes)
+
+Tested against the live containerized production stack (`docker-compose.prod.yml`:
+Caddy HTTPS + Node/Express + Socket.IO + MongoDB 7 replica set) using two isolated
+headless Chrome instances (Alice and Bob) over CDP without VeilGate.
+
+Bugs uncovered and fixed during E2E testing:
+
+1. **Multi-tab / multi-workspace creation bug:** `createDocController`,
+   `createWhiteboardController`, `createFileSystemItemController`, and
+   `createCodeEditorController` ignored `req.body.workspaceId` (and Zod stripped it),
+   falling back to `User.currentWorkspace` in MongoDB—so switching workspaces in the
+   UI still created items in the user's original default workspace. Fixed schemas and
+   controllers to honor the explicit `body.workspaceId` first.
+2. **Socket `join-workspace` payload mismatch & `user-count` collision:**
+   `workspace.handlers.js` expected a raw `workspaceId` string while several client
+   components and reconnect logic sent `{ workspaceId }`, causing a CastError on
+   `MemberModel.findOne`. In addition, `user-count` was emitted with the same event
+   name by workspace, doc, whiteboard, and code rooms. Normalized `join-workspace` /
+   `leave-workspace` to accept both shapes, emitted `workspace-user-count`, and
+   replayed `workspace-joined` in `sharedSocket.js` when multiple components share a
+   workspace room.
+3. **Whiteboard collaboration & layout bugs:**
+   - Removed the duplicate tool/color/width sidebar in `WhiteboardMain.jsx`.
+   - `WhiteboardCanvas` now fetches fresh board data on mount, broadcasts completed
+     elements (`whiteboard-draw` -> `whiteboard-element-added`) and `clear-canvas`
+     events to peers, and reads the latest store snapshot when saving.
+   - `WhiteboardList` now fetches the user's workspace role on mount so permissions
+     are accurate before opening a board.
+4. **UI/UX & lifecycle polish:**
+   - Removed raw debug overlays from `DocumentEditor`, `CodeEditor`, and
+     `EnhancedDrawingCanvas`; changed nested editors from `h-screen` to `h-full` /
+     viewport-aware containers.
+   - Restyled `RegisterForm.jsx` to match `LoginForm.jsx` and capability-gated the
+     Google OAuth button; gated the Code Editor `Run` button on `capabilities.codeExecution`.
+   - Restored direct `Members` and `Settings` actions in the `Dashboard` header and
+     workspace overview; replaced broken empty icon labels and external
+     `via.placeholder.com` avatar URLs.
+   - Fixed an uncaught `TypeError: Cannot read properties of null (reading 'focus')`
+     when `CreateDocumentModal` closed before its 100 ms focus timer fired.
+   - Cleared workspace, document, whiteboard, code-editor, and filesystem stores on
+     logout and auto-selected the first workspace on login.
+
+All 9 multi-user Chrome E2E journeys (registration, workspace creation, invite join,
+member role promotion to ADMIN with toast verification, live document sync & save,
+live whiteboard drawing sync & persistence, live code editor file creation/sync/save
+& capability gating, and logout store cleanup) passed with **0 page exceptions** and
+**0 HTTP >= 400 errors**.

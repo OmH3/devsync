@@ -28,7 +28,7 @@ const WorkspaceList = ({ onSelectWorkspace }) => {
 
   const getWorkspaceActions = (workspace) => {
     return (
-      <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+      <div className="flex space-x-1 opacity-75 group-hover:opacity-100 transition-opacity">
         <button
           onClick={(e) => handleShowMembers(workspace, e)}
           className="text-gray-400 hover:text-indigo-600 p-2 rounded transition-colors"

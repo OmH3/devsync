@@ -11,8 +11,9 @@ const WhiteboardList = ({ workspaceId, onWhiteboardSelect }) => {
     isLoading, 
     error, 
     fetchWorkspaceWhiteboards, 
+    fetchUserRoleInWorkspace,
     deleteWhiteboard,
-    userRole, //Get user role from store
+    userRole,
     clearError
   } = useWhiteboardStore();
 
@@ -20,12 +21,13 @@ const WhiteboardList = ({ workspaceId, onWhiteboardSelect }) => {
   const canCreateWhiteboards = userRole !== 'MEMBER';
   const canDeleteWhiteboards = userRole === 'OWNER' || userRole === 'ADMIN';
 
-  // Fetch whiteboards when component mounts or workspaceId changes
+  // Fetch whiteboards and workspace role when component mounts or workspaceId changes
   useEffect(() => {
-    if (workspaceId && !isLoading) {
+    if (workspaceId) {
+      fetchUserRoleInWorkspace(workspaceId);
       fetchWorkspaceWhiteboards(workspaceId);
     }
-  }, [workspaceId]); // Remove fetchWorkspaceWhite  boards from dependencies to prevent infinite calls
+  }, [workspaceId, fetchUserRoleInWorkspace, fetchWorkspaceWhiteboards]);
 
   const handleCreateSuccess = useCallback((newWhiteboard) => {
     console.log('New whiteboard created:', newWhiteboard);
@@ -80,10 +82,11 @@ const WhiteboardList = ({ workspaceId, onWhiteboardSelect }) => {
                 e.stopPropagation();
                 handleDeleteWhiteboard(whiteboard._id, whiteboard.boardTitle);
               }}
-              className="text-gray-400 hover:text-red-600 ml-2"
+              aria-label={`Delete ${whiteboard.boardTitle}`}
+              className="text-gray-400 hover:text-red-600 ml-2 px-1"
               title="Delete whiteboard"
             >
-              
+              ×
             </button>
           )}
         </div>
@@ -105,13 +108,9 @@ const WhiteboardList = ({ workspaceId, onWhiteboardSelect }) => {
         
         <div className="mt-3 flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            {whiteboard.creatorId?.profilePicture && (
-              <img
-                src={whiteboard.creatorId.profilePicture}
-                alt={whiteboard.creatorId.name}
-                className="w-6 h-6 rounded-full"
-              />
-            )}
+            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-100 text-xs font-semibold text-indigo-700">
+              {(whiteboard.creatorId?.name || 'U').charAt(0).toUpperCase()}
+            </div>
             <span className="text-xs text-gray-600">
               {whiteboard.creatorId?.name || 'Unknown'}
             </span>
@@ -155,8 +154,8 @@ const WhiteboardList = ({ workspaceId, onWhiteboardSelect }) => {
         <div className="p-4 bg-red-50 border-b border-red-200">
           <div className="flex justify-between items-center">
             <span className="text-sm text-red-700">{error}</span>
-            <button onClick={clearError} className="text-red-400 hover:text-red-600">
-              
+            <button onClick={clearError} aria-label="Dismiss error" className="text-red-400 hover:text-red-600">
+              ×
             </button>
           </div>
         </div>

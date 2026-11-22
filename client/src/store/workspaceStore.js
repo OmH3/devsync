@@ -47,11 +47,17 @@ export const useWorkspaceStore = create(
         set({ isLoading: true, error: null });
         try {
           const response = await workspaceService.getAllUserWorkspaces();
+          const workspaces = response.workspaces || [];
+          const prevCurrent = get().currentWorkspace;
+          const matchedCurrent = prevCurrent
+            ? workspaces.find((ws) => ws._id === prevCurrent._id) || workspaces[0] || null
+            : workspaces[0] || null;
           set({ 
-            workspaces: response.workspaces || [], 
+            workspaces, 
+            currentWorkspace: matchedCurrent,
             isLoading: false 
           });
-          return { success: true, workspaces: response.workspaces || [] };
+          return { success: true, workspaces };
         } catch (error) {
           const errorMessage = error.response?.data?.message || 'Failed to fetch workspaces';
           set({ error: errorMessage, isLoading: false });

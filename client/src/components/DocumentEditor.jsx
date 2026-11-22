@@ -594,7 +594,7 @@ const DocumentEditor = ({ document, workspaceId, onClose }) => {
   const connectionStatus = getConnectionStatus();
 
   return (
-    <div className="h-screen flex flex-col bg-white">
+    <div className="h-[calc(100vh-11rem)] min-h-[540px] flex flex-col bg-white rounded-lg border border-slate-200 overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-gray-200">
         <div className="flex items-center space-x-4">
@@ -716,9 +716,10 @@ const DocumentEditor = ({ document, workspaceId, onClose }) => {
             </div>
             <button
               onClick={() => setError('')}
+              aria-label="Dismiss error"
               className="ml-auto text-red-400 hover:text-red-600"
             >
-              
+              ×
             </button>
           </div>
         </div>
@@ -820,17 +821,6 @@ const DocumentEditor = ({ document, workspaceId, onClose }) => {
             {connectionStatus.icon} {connectionStatus.status}
           </span>
         </div>
-      </div>
-
-      {/*  Enhanced debug info */}
-      <div className="absolute bottom-4 left-4 bg-black bg-opacity-75 text-white px-3 py-2 rounded-lg text-xs pointer-events-none z-30">
-        Socket: {socket ? '' : ''} | 
-        Connected: {isConnected ? '' : ''} | 
-        Joined: {hasJoinedDocument ? '' : ''} |
-        Role: {userRole || 'None'} |
-        Edit: {documentPermissions.canEdit ? '' : ''} |
-        DocOwner: {documentPermissions.isDocumentOwner ? '' : ''} |
-        Saving: {isSaving ? '' : ''}
       </div>
     </div>
   );

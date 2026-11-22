@@ -128,9 +128,10 @@ const MemberManagement = ({ workspaceId, onClose }) => {
                   clearError();
                   setLocalError('');
                 }}
+                aria-label="Dismiss error"
                 className="ml-auto text-red-400 hover:text-red-600"
               >
-                
+                ×
               </button>
             </div>
           </div>
@@ -172,14 +173,9 @@ const MemberManagement = ({ workspaceId, onClose }) => {
                 {workspaceMembers?.map((member) => (
                   <div key={member._id} className="flex items-center justify-between bg-white p-4 rounded-md border">
                     <div className="flex items-center space-x-3">
-                      <img
-                        src={member.userId?.profilePicture || 'https://via.placeholder.com/40'}
-                        alt={member.userId?.name || 'Unknown User'}
-                        className="w-10 h-10 rounded-full"
-                        onError={(e) => {
-                          e.target.src = 'https://via.placeholder.com/40';
-                        }}
-                      />
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-100 text-sm font-semibold text-indigo-700">
+                        {(member.userId?.name || member.userId?.email || 'U').charAt(0).toUpperCase()}
+                      </div>
                       <div>
                         <p className="font-medium text-gray-900">{member.userId?.name || 'Unknown User'}</p>
                         <p className="text-sm text-gray-500">{member.userId?.email || 'No email'}</p>

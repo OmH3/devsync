@@ -95,6 +95,11 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
       isJoiningRef.current = false;
     };
 
+    const handleWorkspaceUserCount = (payload) => {
+      if (payload?.workspaceId && payload.workspaceId !== workspaceId) return;
+      if (typeof payload?.userCount === 'number') setUserCount(payload.userCount);
+    };
+
     const handleFileSystemItemCreated = (data) => {
       console.log(' File system item created:', data);
       if (data.createdBy.userId !== user._id) {
@@ -143,9 +148,9 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
       handleUserLeft(userData);
     };
 
-    const handleUserCountUpdate = (count) => {
-      console.log(' Workspace user count:', count);
-      setUserCount(count);
+    const handleUserCountUpdate = (payload) => {
+      const count = typeof payload === 'object' && payload !== null ? payload.userCount : payload;
+      if (typeof count === 'number') setUserCount(count);
     };
 
     const handleConnect = () => {
@@ -171,6 +176,7 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
     socket.on('connect', handleConnect);
     socket.on('disconnect', handleDisconnect);
     socket.on('workspace-joined', handleWorkspaceJoined);
+    socket.on('workspace-user-count', handleWorkspaceUserCount);
     socket.on('filesystem-item-created', handleFileSystemItemCreated);
     socket.on('filesystem-item-updated', handleFileSystemItemUpdated);
     socket.on('filesystem-item-moved', handleFileSystemItemMoved);
@@ -178,12 +184,13 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
     socket.on('filesystem-item-duplicated', handleFileSystemItemDuplicated);
     socket.on('user-joined-workspace', handleUserJoinedWorkspace);
     socket.on('user-left-workspace', handleUserLeftWorkspace);
-    socket.on('user-count', handleUserCountUpdate);
+    socket.on('workspace-user-count', handleUserCountUpdate);
 
     return () => {
       socket.off('connect', handleConnect);
       socket.off('disconnect', handleDisconnect);
       socket.off('workspace-joined', handleWorkspaceJoined);
+      socket.off('workspace-user-count', handleWorkspaceUserCount);
       socket.off('filesystem-item-created', handleFileSystemItemCreated);
       socket.off('filesystem-item-updated', handleFileSystemItemUpdated);
       socket.off('filesystem-item-moved', handleFileSystemItemMoved);
@@ -191,7 +198,7 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
       socket.off('filesystem-item-duplicated', handleFileSystemItemDuplicated);
       socket.off('user-joined-workspace', handleUserJoinedWorkspace);
       socket.off('user-left-workspace', handleUserLeftWorkspace);
-      socket.off('user-count', handleUserCountUpdate);
+      socket.off('workspace-user-count', handleUserCountUpdate);
       leaveWorkspace();
     };
   }, [socket, workspaceId, hasJoinedWorkspace, user._id, addItemFromSocket, updateItemFromSocket, removeItemFromSocket, handleUserJoined, handleUserLeft, fetchWorkspaceFileSystem]);
@@ -216,25 +223,22 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
   //Get file icon with better visual indicators
   const getFileIcon = (item) => {
     if (item.type === 'folder') {
-      return expandedFolders.has(item._id) ? '' : '';
+      return expandedFolders.has(item._id) ? '📂' : '📁';
     }
     
     const ext = item.metadata?.extension?.toLowerCase();
     switch (ext) {
-      case 'js': case 'jsx': return '';
-      case 'ts': case 'tsx': return '';
-      case 'py': return '';
-      case 'java': return '';
-      case 'cpp': case 'c': return '';
-      case 'html': return '';
-      case 'css': case 'scss': case 'sass': return '';
-      case 'json': return '';
-      case 'md': case 'markdown': return '';
-      case 'txt': return '';
-      case 'png': case 'jpg': case 'jpeg': case 'gif': case 'svg': return '';
-      case 'pdf': return '';
-      case 'zip': case 'rar': case '7z': return '';
-      default: return '';
+      case 'js': case 'jsx': return 'JS';
+      case 'ts': case 'tsx': return 'TS';
+      case 'py': return 'PY';
+      case 'java': return 'JV';
+      case 'cpp': case 'c': return 'C+';
+      case 'html': return '<>';
+      case 'css': case 'scss': case 'sass': return '#';
+      case 'json': return '{}';
+      case 'md': case 'markdown': return 'MD';
+      case 'txt': return '📄';
+      default: return '📄';
     }
   };
 
@@ -455,13 +459,13 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
           {/* Folder expand/collapse indicator */}
           {item.type === 'folder' && (
             <span
-              className="mr-1 text-xs text-gray-500 cursor-pointer select-none"
+              className="mr-1 text-xs text-gray-500 cursor-pointer select-none w-3 inline-block"
               onClick={(e) => {
                 e.stopPropagation();
                 toggleFolder(item._id);
               }}
             >
-              {hasChildren ? (isExpanded ? '' : '') : ''}
+              {hasChildren ? (isExpanded ? '▾' : '▸') : ''}
             </span>
           )}
           
@@ -505,10 +509,10 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
                   setCreateType('file');
                   setShowCreateModal(true);
                 }}
-                className="text-gray-400 hover:text-blue-600 text-xs"
+                className="px-1 text-gray-500 hover:text-blue-600 text-xs"
                 title="New file in folder"
               >
-                
+                +
               </button>
             )}
             
@@ -517,32 +521,10 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
                 e.stopPropagation();
                 setIsRenaming(true);
               }}
-              className="text-gray-400 hover:text-yellow-600 text-xs"
+              className="px-1 text-gray-500 hover:text-yellow-600 text-xs"
               title="Rename"
             >
-              
-            </button>
-            
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                copyToClipboard(item);
-              }}
-              className="text-gray-400 hover:text-green-600 text-xs"
-              title="Copy"
-            >
-              
-            </button>
-            
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                cutToClipboard(item);
-              }}
-              className="text-gray-400 hover:text-orange-600 text-xs"
-              title="Cut"
-            >
-              
+              ✎
             </button>
             
             <button
@@ -550,10 +532,10 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
                 e.stopPropagation();
                 handleDuplicateItem(item);
               }}
-              className="text-gray-400 hover:text-purple-600 text-xs"
+              className="px-1 text-gray-500 hover:text-purple-600 text-xs"
               title="Duplicate"
             >
-              
+              ⧉
             </button>
             
             <button
@@ -561,10 +543,10 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
                 e.stopPropagation();
                 handleDeleteItem(item);
               }}
-              className="text-gray-400 hover:text-red-600 text-xs"
+              className="px-1 text-gray-500 hover:text-red-600 text-xs"
               title="Delete"
             >
-              
+              ×
             </button>
           </div>
         </div>
@@ -809,29 +791,29 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
               setCreateType('file');
               setShowCreateModal(true);
             }}
-            className="p-1 text-gray-400 hover:text-gray-600"
+            className="px-2 py-1 text-xs font-medium text-slate-700 bg-white border border-slate-300 rounded hover:bg-slate-100"
             title="New File"
           >
-            
+            + File
           </button>
           <button
             onClick={() => {
               setCreateType('folder');
               setShowCreateModal(true);
             }}
-            className="p-1 text-gray-400 hover:text-gray-600"
+            className="px-2 py-1 text-xs font-medium text-slate-700 bg-white border border-slate-300 rounded hover:bg-slate-100"
             title="New Folder"
           >
-            
+            + Folder
           </button>
           
           {clipboard && (
             <button
               onClick={() => pasteFromClipboard(currentFolder?._id || null)}
-              className="p-1 text-green-600 hover:text-green-800"
+              className="px-2 py-1 text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded hover:bg-emerald-100"
               title="Paste"
             >
-              
+              Paste
             </button>
           )}
         </div>
@@ -870,8 +852,8 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
         <div className="p-3 bg-red-50 border-b border-red-200">
           <div className="flex justify-between items-center">
             <span className="text-sm text-red-700">{error}</span>
-            <button onClick={clearError} className="text-red-400 hover:text-red-600">
-              
+            <button onClick={clearError} aria-label="Dismiss error" className="text-red-400 hover:text-red-600">
+              ×
             </button>
           </div>
         </div>

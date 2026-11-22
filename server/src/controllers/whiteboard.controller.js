@@ -27,7 +27,7 @@ export const setSocketIO = (socketIO) => {
 export const createWhiteboardController = asyncHandler(async (req, res) => {
   const body = createWhiteboardSchema.parse(req.body);
   const userId = req.user?._id;
-  const workspaceId = req.user?.currentWorkspace;
+  const workspaceId = body.workspaceId || req.user?.currentWorkspace;
 
   //Check if user has a current workspace
   if (!workspaceId) {

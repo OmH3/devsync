@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { whiteboardService } from "../services/whiteboard.service.js";
+import { documentService } from "../services/document.service.js";
 
 export const useWhiteboardStore = create(
   persist(
@@ -33,6 +34,19 @@ export const useWhiteboardStore = create(
       setLoading: (isLoading) => set({ isLoading }),
       setError: (error) => set({ error }),
       clearError: () => set({ error: null }),
+
+      //Add method to fetch user role in workspace before any whiteboard is opened
+      fetchUserRoleInWorkspace: async (workspaceId) => {
+        try {
+          const response = await documentService.getUserRoleInWorkspace(workspaceId);
+          const { role } = response;
+          const canEdit = role === 'OWNER' || role === 'ADMIN';
+          set({ userRole: role, canEdit });
+          return { success: true, role, canEdit };
+        } catch (error) {
+          return { success: false, error: error.response?.data?.message || 'Failed to fetch role' };
+        }
+      },
 
       //Add method to fetch user role
       fetchUserRoleInWhiteboard: async (whiteboardId) => {
@@ -93,10 +107,10 @@ export const useWhiteboardStore = create(
             boardElements: elementsArray
           });
           
-          set((state) => ({
+          set({
             drawingData: elementsArray,
             currentWhiteboard: response.whiteboard
-          }));
+          });
           
           return { success: true };
         } catch (error) {

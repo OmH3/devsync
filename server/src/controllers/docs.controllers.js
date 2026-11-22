@@ -31,8 +31,7 @@ export const setSocketIO = (socketIO) => {
 export const createDocController = asyncHandler(async (req, res) => {
   const body = createDocSchema.parse(req.body);
   const userId = req.user?._id;
-  const currentUser = await UserModel.findById(userId).select('currentWorkspace');
-  const workspaceId = currentUser.currentWorkspace;
+  const workspaceId = body.workspaceId || (await UserModel.findById(userId).select('currentWorkspace'))?.currentWorkspace;
 
   console.log(' Create document request:', {
     userId,

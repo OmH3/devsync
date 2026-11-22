@@ -42,10 +42,12 @@ const CreateWhiteboardModal = ({ isOpen, onClose, workspaceId, onSuccess }) => {
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-lg font-semibold">Create New Whiteboard</h2>
           <button
+            type="button"
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
+            aria-label="Close modal"
+            className="text-gray-400 hover:text-gray-600 text-xl leading-none px-1"
           >
-            
+            ×
           </button>
         </div>
 

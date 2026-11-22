@@ -32,6 +32,7 @@ export const workspaceIdSchema = z
 export const createWhiteboardSchema = z.object({
   boardTitle: boardTitleSchema,
   boardDescription: boardDescriptionSchema.optional(),
+  workspaceId: workspaceIdSchema.optional(),
 });
 
 // Update whiteboard schema

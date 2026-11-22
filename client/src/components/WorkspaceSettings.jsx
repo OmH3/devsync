@@ -150,9 +150,10 @@ const WorkspaceSettings = ({ workspace, onClose }) => {
                   <div className="text-sm text-red-700">{error}</div>
                   <button
                     onClick={clearError}
+                    aria-label="Dismiss error"
                     className="ml-auto text-red-400 hover:text-red-600"
                   >
-                    
+                    ×
                   </button>
                 </div>
               </div>

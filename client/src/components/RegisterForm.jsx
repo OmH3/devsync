@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../hooks/useAuth.js';
+import { useCapabilities } from '../hooks/useCapabilities.js';
 import { Link, useNavigate } from 'react-router-dom';
 
 const RegisterForm = () => {
@@ -12,6 +13,7 @@ const RegisterForm = () => {
   const [validationErrors, setValidationErrors] = useState({});
   
   const { register, isLoading, error, clearError, googleLogin } = useAuth();
+  const { googleAuth } = useCapabilities();
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -65,30 +67,31 @@ const RegisterForm = () => {
     
     if (result.success) {
       navigate('/login', { 
-        state: { message: 'Registration successfull! Please login.' }
+        state: { message: 'Registration successful! Please sign in.' }
       });
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Create your account
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Or{' '}
+    <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 via-white to-indigo-50 px-4 py-12">
+      <div className="w-full max-w-md space-y-6 rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+        <div className="text-center">
+          <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-600 text-lg font-bold text-white" aria-hidden="true">D</div>
+          <h1 className="mt-4 text-2xl font-semibold tracking-tight text-slate-900">
+            Create your DevSync account
+          </h1>
+          <p className="mt-1 text-sm text-slate-600">
+            Already have an account?{' '}
             <Link
               to="/login"
               className="font-medium text-indigo-600 hover:text-indigo-500"
             >
-              sign in to your existing account
+              Sign in
             </Link>
           </p>
         </div>
         
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+        <form className="space-y-6" onSubmit={handleSubmit} noValidate>
           {error && (
             <div className="rounded-md bg-red-50 p-4">
               <div className="text-sm text-red-700">{error}</div>
@@ -179,13 +182,14 @@ const RegisterForm = () => {
             </button>
           </div>
           
+          {googleAuth && (
           <div className="mt-6">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-gray-300" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-gray-50 text-gray-500">Or continue with</span>
+                <span className="px-2 bg-white text-gray-500">Or continue with</span>
               </div>
             </div>
 
@@ -205,9 +209,10 @@ const RegisterForm = () => {
               </button>
             </div>
           </div>
+          )}
         </form>
       </div>
-    </div>
+    </main>
   );
 };
 

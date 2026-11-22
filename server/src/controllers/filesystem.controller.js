@@ -41,8 +41,7 @@ export const setSocketIO = (socketIO) => {
 export const createFileSystemItemController = asyncHandler(async (req, res) => {
   const body = createFileSystemItemSchema.parse(req.body);
   const userId = req.user?._id;
-  const currentUser = await UserModel.findById(userId).select('currentWorkspace');
-  const workspaceId = currentUser.currentWorkspace;
+  const workspaceId = body.workspaceId || (await UserModel.findById(userId).select('currentWorkspace'))?.currentWorkspace;
 
   //Check if user has a current workspace
   if (!workspaceId) {

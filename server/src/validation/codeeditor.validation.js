@@ -36,7 +36,8 @@ export const createCodeEditorSchema = z.object({
   title: z.string().min(1, "Title is required").max(255, "Title too long"),
   content: z.string().optional().default(""),
   language: z.string().optional().default("javascript"),
-  fileSystemId: z.string().optional()
+  fileSystemId: z.string().optional(),
+  workspaceId: z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid workspace ID").optional(),
 });
 
 export const saveCodeEditorContentSchema = z.object({

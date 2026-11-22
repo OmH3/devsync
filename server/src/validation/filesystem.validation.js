@@ -18,7 +18,8 @@ export const createFileSystemItemSchema = z.object({
   name: nameSchema,
   type: typeSchema,
   path: pathSchema.optional(),
-  parentId: z.string().trim().nullable().optional()
+  parentId: z.string().trim().nullable().optional(),
+  workspaceId: z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid workspace ID").optional(),
 });
 
 export const updateFileSystemItemSchema = z.object({

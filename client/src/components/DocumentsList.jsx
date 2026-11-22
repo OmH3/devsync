@@ -210,9 +210,10 @@ const DocumentsList = ({ workspaceId, workspace }) => {
             </div>
             <button
               onClick={clearError}
+              aria-label="Dismiss error"
               className="ml-auto text-red-400 hover:text-red-600"
             >
-              
+              ×
             </button>
           </div>
         </div>
@@ -299,7 +300,7 @@ const DocumentsList = ({ workspaceId, workspace }) => {
                     <div className="p-6">
                       <div className="flex items-start justify-between mb-3">
                         <h3 className="text-lg font-semibold text-gray-900 truncate pr-2">{document.title}</h3>
-                        <div className="flex space-x-1 ml-2 opacity-60 hover:opacity-100 transition-opacity">
+                        <div className="flex space-x-1 ml-2 opacity-80 hover:opacity-100 transition-opacity">
                           <button
                             onClick={() => handleOpenDocument(document)}
                             className="text-gray-400 hover:text-indigo-600 p-1 rounded-md hover:bg-gray-100"

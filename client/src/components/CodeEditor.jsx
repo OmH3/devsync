@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useSocket } from '../hooks/useSocket.js';
 import { useCodeEditorStore } from '../store/codeeditorStore.js';
 import { useAuth } from '../hooks/useAuth.js';
+import { useCapabilities } from '../hooks/useCapabilities.js';
 
 const CodeEditor = ({ fileItem, workspaceId, onClose }) => {
   const [code, setCode] = useState('');
@@ -41,6 +42,7 @@ const CodeEditor = ({ fileItem, workspaceId, onClose }) => {
   //Hooks
   const { user } = useAuth();
   const socket = useSocket();
+  const { codeExecution: codeExecutionEnabled } = useCapabilities();
   
   const { 
     currentEditor,
@@ -918,7 +920,7 @@ const handleExecuteCode = useCallback(async () => {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-white">
+    <div className="h-full flex flex-col bg-white">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gray-50">
         <div className="flex items-center space-x-4">
@@ -1013,12 +1015,12 @@ const handleExecuteCode = useCallback(async () => {
 
           <button
             onClick={() => setShowCollaborators(!showCollaborators)}
-            className={`p-2 rounded-md text-sm font-medium ${
+            className={`px-2.5 py-1.5 rounded-md text-sm font-medium ${
               showCollaborators ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
             title={`${activeUsers.length} active users`}
           >
-             {activeUsers.length}
+            Peers ({activeUsers.length})
           </button>
           
           <button
@@ -1049,7 +1051,7 @@ const handleExecuteCode = useCallback(async () => {
             </button>
           )}
           
-          {editorPermissions?.canExecute && (
+          {editorPermissions?.canExecute && codeExecutionEnabled && (
             <button
               onClick={handleExecuteCode}
               disabled={isExecuting || !code.trim()}
@@ -1061,7 +1063,7 @@ const handleExecuteCode = useCallback(async () => {
                   Running...
                 </span>
               ) : (
-                'Run '
+                'Run ▶'
               )}
             </button>
           )}
@@ -1082,9 +1084,10 @@ const handleExecuteCode = useCallback(async () => {
             </div>
             <button
               onClick={() => setError('')}
+              aria-label="Dismiss error"
               className="ml-auto text-red-400 hover:text-red-600"
             >
-              
+              ×
             </button>
           </div>
         </div>
@@ -1259,9 +1262,10 @@ const handleExecuteCode = useCallback(async () => {
                 <h4 className="font-medium text-gray-900">Console Output</h4>
                 <button
                   onClick={() => setShowExecutionPanel(false)}
+                  aria-label="Close console"
                   className="text-gray-400 hover:text-gray-600"
                 >
-                  
+                  ×
                 </button>
               </div>
             </div>
@@ -1368,17 +1372,6 @@ const handleExecuteCode = useCallback(async () => {
             {connectionStatus.icon} {connectionStatus.status}
           </span>
         </div>
-      </div>
-
-      {/* Debug Info (remove in production) */}
-      <div className="absolute bottom-4 left-4 bg-black bg-opacity-75 text-white px-3 py-2 rounded-lg text-xs pointer-events-none z-30">
-        Socket: {socket ? '' : ''} | 
-        Connected: {isConnected ? '' : ''} | 
-        Joining: {isJoiningRef.current ? '' : ''} |
-        Joined: {hasJoinedEditor ? '' : ''} |
-        Edit: {editorPermissions?.canEdit ? '' : ''} |
-        Execute: {editorPermissions?.canExecute ? '' : ''} |
-        Saving: {isSaving ? '' : ''}
       </div>
     </div>
   );

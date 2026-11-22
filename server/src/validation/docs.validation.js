@@ -9,6 +9,7 @@ export const contentSchema = z.string().default("");
 export const createDocSchema = z.object({
     title: titleSchema,
     content: contentSchema.optional(),
+    workspaceId: z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid workspace ID").optional(),
 });
 
 export const docIdSchema = z

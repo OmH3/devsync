@@ -17,11 +17,11 @@ const CreateDocumentModal = ({ isOpen, onClose, workspaceId, userRole, onSuccess
 
   //Auto-focus title input when modal opens
   useEffect(() => {
-    if (isOpen && titleInputRef.current) {
-      setTimeout(() => {
-        titleInputRef.current.focus();
-      }, 100);
-    }
+    if (!isOpen) return undefined;
+    const timer = setTimeout(() => {
+      titleInputRef.current?.focus();
+    }, 100);
+    return () => clearTimeout(timer);
   }, [isOpen]);
 
   //Permission check
@@ -48,7 +48,7 @@ const CreateDocumentModal = ({ isOpen, onClose, workspaceId, userRole, onSuccess
       errors.title = 'Title must be at least 2 characters long';
     } else if (formData.title.length > 255) {
       errors.title = 'Title must be less than 255 characters';
-    } else if (!/^[a-zA-Z0-9\s\-_\.]+$/.test(formData.title.trim())) {
+    } else if (!/^[a-zA-Z0-9\s\-_.]+$/.test(formData.title.trim())) {
       errors.title = 'Title can only contain letters, numbers, spaces, hyphens, underscores, and dots';
     }
 
@@ -195,9 +195,10 @@ const CreateDocumentModal = ({ isOpen, onClose, workspaceId, userRole, onSuccess
               </div>
               <button
                 onClick={clearError}
+                aria-label="Dismiss error"
                 className="ml-auto text-red-400 hover:text-red-600"
               >
-                
+                ×
               </button>
             </div>
           </div>

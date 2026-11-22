@@ -1,6 +1,7 @@
 import { notify } from '../store/toastStore.js';
 import React, { useState, useEffect } from 'react';
 import { useWhiteboardStore } from '../store/whiteboardStore.js';
+import { useSocket } from '../hooks/useSocket.js';
 import EnhancedDrawingCanvas from './EnhancedDrawingCanvas.jsx';
 
 const WhiteboardCanvas = ({ whiteboard }) => {
@@ -18,16 +19,19 @@ const WhiteboardCanvas = ({ whiteboard }) => {
     userRole,
     canEdit,
     fetchUserRoleInWhiteboard,
+    fetchWhiteboardById,
     error,
     clearError
   } = useWhiteboardStore();
+  const socket = useSocket();
 
-  //Fetch user role when whiteboard loads
+  //Fetch user role and fresh board elements when whiteboard loads
   useEffect(() => {
     if (whiteboard?._id) {
       fetchUserRoleInWhiteboard(whiteboard._id);
+      fetchWhiteboardById(whiteboard._id);
     }
-  }, [whiteboard?._id, fetchUserRoleInWhiteboard]);
+  }, [whiteboard?._id, fetchUserRoleInWhiteboard, fetchWhiteboardById]);
 
   const handleUserCountChange = (count) => {
     setUserCount(count);
@@ -42,6 +46,7 @@ const WhiteboardCanvas = ({ whiteboard }) => {
     if (window.confirm('Are you sure you want to clear the entire canvas?')) {
       const success = clearDrawingData();
       if (success && whiteboard?._id) {
+        socket?.emit('clear-canvas', { whiteboardId: whiteboard._id });
         await saveDrawingData(whiteboard._id, []);
       }
     }
@@ -73,11 +78,11 @@ const WhiteboardCanvas = ({ whiteboard }) => {
   };
 
   const tools = [
-    { id: 'pen', name: 'Pen', icon: '' },
-    { id: 'eraser', name: 'Eraser', icon: '' },
-    { id: 'rectangle', name: 'Rectangle', icon: '' },
-    { id: 'circle', name: 'Circle', icon: '' },
-    { id: 'text', name: 'Text', icon: '' },
+    { id: 'pen', name: 'Pen', icon: '✎' },
+    { id: 'eraser', name: 'Eraser', icon: '⌫' },
+    { id: 'rectangle', name: 'Rectangle', icon: '▭' },
+    { id: 'circle', name: 'Circle', icon: '◯' },
+    { id: 'text', name: 'Text', icon: 'T' },
   ];
 
   const colors = ['#000000', '#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF', '#FFA500'];
@@ -131,9 +136,10 @@ const WhiteboardCanvas = ({ whiteboard }) => {
             <p className="text-sm text-red-700">{error}</p>
             <button 
               onClick={clearError}
+              aria-label="Dismiss error"
               className="text-red-400 hover:text-red-600"
             >
-              
+              ×
             </button>
           </div>
         </div>

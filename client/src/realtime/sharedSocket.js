@@ -15,25 +15,37 @@ const workspaceIdOf = (payload) => (typeof payload === 'object' && payload !== n
 // component unmounting does not remove the others from the room.
 function installWorkspaceRefCounting(instance) {
   const rawEmit = instance.emit.bind(instance);
+  instance.on('workspace-joined', (data) => {
+    const id = workspaceIdOf(data);
+    if (id && workspaceRooms.has(id)) {
+      workspaceRooms.get(id).lastJoinedPayload = data;
+    }
+  });
   instance.emit = (event, ...args) => {
     if (event !== 'join-workspace' && event !== 'leave-workspace') return rawEmit(event, ...args);
 
     const id = workspaceIdOf(args[0]);
-    const count = workspaceRooms.get(id) ?? 0;
+    const entry = workspaceRooms.get(id) ?? { count: 0, lastJoinedPayload: { workspaceId: id, userCount: 1 } };
     if (event === 'join-workspace') {
-      workspaceRooms.set(id, count + 1);
-      return count === 0 ? rawEmit(event, ...args) : instance;
+      entry.count += 1;
+      workspaceRooms.set(id, entry);
+      if (entry.count === 1) return rawEmit(event, ...args);
+      // Already in the room: synthesize the local ack so the new subscriber updates its state
+      queueMicrotask(() => {
+        instance.listeners('workspace-joined').forEach((fn) => fn(entry.lastJoinedPayload));
+      });
+      return instance;
     }
-    if (count <= 1) {
+    if (entry.count <= 1) {
       workspaceRooms.delete(id);
       return rawEmit(event, ...args);
     }
-    workspaceRooms.set(id, count - 1);
+    entry.count -= 1;
     return instance;
   };
   // After a reconnect the server has forgotten our rooms; restore them.
   instance.on('connect', () => {
-    workspaceRooms.forEach((_count, id) => rawEmit('join-workspace', { workspaceId: id }));
+    workspaceRooms.forEach((_entry, id) => rawEmit('join-workspace', { workspaceId: id }));
   });
 }
 

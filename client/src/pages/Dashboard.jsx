@@ -7,6 +7,8 @@ import { notify } from '../store/toastStore.js';
 import CreateWorkspaceForm from '../components/CreateWorkspaceForm.jsx';
 import JoinWorkspace from '../components/JoinWorkspace.jsx';
 import WorkspaceList from '../components/WorkspaceList.jsx';
+import WorkspaceSettings from '../components/WorkspaceSettings.jsx';
+import MemberManagement from '../components/MemberManagement.jsx';
 import AudioRoomButton from '../components/AudioRoomButton.jsx';
 
 // Heavy editors are loaded on demand, only when their view is opened.
@@ -38,6 +40,8 @@ const Dashboard = () => {
 
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [showJoinForm, setShowJoinForm] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [showMembers, setShowMembers] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // The active view lives in the URL (?view=documents) so it can be bookmarked and shared.
@@ -90,18 +94,23 @@ const Dashboard = () => {
         );
       default:
         return (
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {VIEWS.filter((view) => view.id !== 'overview').map((view) => (
-              <button
-                key={view.id}
-                type="button"
-                onClick={() => openView(view.id)}
-                className="rounded-xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:border-indigo-300 hover:shadow-md"
-              >
-                <div className="text-base font-semibold text-slate-900">{view.label}</div>
-                <div className="mt-1 text-sm text-slate-500">{view.hint}</div>
-              </button>
-            ))}
+          <div className="space-y-6">
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {VIEWS.filter((view) => view.id !== 'overview').map((view) => (
+                <button
+                  key={view.id}
+                  type="button"
+                  onClick={() => openView(view.id)}
+                  className="rounded-xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:border-indigo-300 hover:shadow-md"
+                >
+                  <div className="text-base font-semibold text-slate-900">{view.label}</div>
+                  <div className="mt-1 text-sm text-slate-500">{view.hint}</div>
+                </button>
+              ))}
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+              <WorkspaceList onSelectWorkspace={selectWorkspace} />
+            </div>
           </div>
         );
     }
@@ -242,6 +251,22 @@ const Dashboard = () => {
               >
                 Invite · <code className="font-mono">{currentWorkspace.inviteCode}</code>
               </button>
+              <button
+                type="button"
+                onClick={() => setShowMembers(true)}
+                className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                title="Manage members"
+              >
+                Members
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowSettings(true)}
+                className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                title="Workspace settings"
+              >
+                Settings
+              </button>
             </div>
           )}
         </header>
@@ -256,6 +281,12 @@ const Dashboard = () => {
       )}
       {showJoinForm && (
         <JoinWorkspace onClose={() => setShowJoinForm(false)} onSuccess={fetchUserWorkspaces} />
+      )}
+      {showSettings && currentWorkspace && (
+        <WorkspaceSettings workspace={currentWorkspace} onClose={() => setShowSettings(false)} />
+      )}
+      {showMembers && currentWorkspace && (
+        <MemberManagement workspaceId={currentWorkspace._id} onClose={() => setShowMembers(false)} />
       )}
     </div>
   );

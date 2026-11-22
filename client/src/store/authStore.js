@@ -1,10 +1,23 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { authService } from '../services/auth.service.js';
+import { useWorkspaceStore } from './workspaceStore.js';
+import { useDocumentStore } from './documentStore.js';
+import { useWhiteboardStore } from './whiteboardStore.js';
+import { useCodeEditorStore } from './codeeditorStore.js';
+import { useFilesystemStore } from './filesystemStore.js';
+
+const clearAccountStores = () => {
+  useWorkspaceStore.getState().clearWorkspaces();
+  useDocumentStore.getState().clearDocuments();
+  useWhiteboardStore.getState().clearWhiteboards();
+  useCodeEditorStore.getState().clearEditor();
+  useFilesystemStore.getState().clearFileSystem();
+};
 
 export const useAuthStore = create(
   persist(
-    (set, get) => ({
+    (set) => ({
       user: null,
       isAuthenticated: false,
       isLoading: false,
@@ -55,17 +68,17 @@ export const useAuthStore = create(
         set({ isLoading: true });
         try {
           await authService.logout();
-          set({ 
-            user: null, 
-            isAuthenticated: false, 
-            isLoading: false,
-            error: null 
-          });
-          return { success: true };
-        } catch (error) {
-          set({ isLoading: false });
-          return { success: false };
+        } catch {
+          // Even if the network request fails, clear local session state
         }
+        clearAccountStores();
+        set({ 
+          user: null, 
+          isAuthenticated: false, 
+          isLoading: false,
+          error: null 
+        });
+        return { success: true };
       },
 
       googleLogin: () => {
@@ -83,7 +96,7 @@ export const useAuthStore = create(
             error: null 
           });
           return { isAuthenticated, user };
-        } catch (error) {
+        } catch {
           // Don't treat 401 as an error - user is just not logged in
           set({ 
             isAuthenticated: false, 
@@ -95,11 +108,14 @@ export const useAuthStore = create(
         }
       },
 
-      clearAuth: () => set({ 
-        user: null, 
-        isAuthenticated: false, 
-        error: null 
-      }),
+      clearAuth: () => {
+        clearAccountStores();
+        set({ 
+          user: null, 
+          isAuthenticated: false, 
+          error: null 
+        });
+      },
     }),
     {
       name: 'auth-storage',

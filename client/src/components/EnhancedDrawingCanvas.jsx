@@ -40,11 +40,11 @@ const EnhancedDrawingCanvas = ({
 
   // Auto-focus text input when typing starts
   useEffect(() => {
-    if (isTyping && textInputRef.current) {
-      setTimeout(() => {
-        textInputRef.current.focus();
-      }, 50);
-    }
+    if (!isTyping) return undefined;
+    const timer = setTimeout(() => {
+      textInputRef.current?.focus();
+    }, 50);
+    return () => clearTimeout(timer);
   }, [isTyping]);
 
   // Update refs when props change
@@ -253,15 +253,17 @@ const EnhancedDrawingCanvas = ({
       return;
     }
     
+    // Broadcast newly committed element to peers in the room immediately
+    if (socket?.connected && whiteboard?._id) {
+      socket.emit('whiteboard-draw', { whiteboardId: whiteboard._id, element });
+    }
+
     // Wait for state update and then save to backend
     setTimeout(async () => {
       try {
-        const updatedData = [...drawingData, element];
-        console.log('Saving to backend, total elements:', updatedData.length);
-        
+        const updatedData = useWhiteboardStore.getState().drawingData;
         if (whiteboard?._id) {
-          const result = await saveDrawingData(whiteboard._id, updatedData);
-          console.log('Save result:', result);
+          await saveDrawingData(whiteboard._id, updatedData);
         }
       } catch (error) {
         console.error('Error saving to backend:', error);
@@ -310,13 +312,25 @@ const EnhancedDrawingCanvas = ({
     };
 
     const handleClearCanvas = () => {
-      const success = clearDrawingData();
-      if (success) {
-        const canvas = canvasRef.current;
-        const ctx = ctxRef.current;
-        if (canvas && ctx) {
-          ctx.clearRect(0, 0, canvas.width / window.devicePixelRatio, canvas.height / window.devicePixelRatio);
-        }
+      useWhiteboardStore.setState({ drawingData: [], canvasElements: [] });
+      const canvas = canvasRef.current;
+      const ctx = ctxRef.current;
+      if (canvas && ctx) {
+        ctx.clearRect(0, 0, canvas.width / window.devicePixelRatio, canvas.height / window.devicePixelRatio);
+      }
+    };
+
+    const handleRemoteElementAdded = ({ element }) => {
+      if (!element) return;
+      const current = useWhiteboardStore.getState().drawingData || [];
+      if (!current.some((e) => e.id === element.id)) {
+        useWhiteboardStore.setState({ drawingData: [...current, element] });
+      }
+    };
+
+    const handleWhiteboardUpdated = ({ updates }) => {
+      if (Array.isArray(updates?.boardElements)) {
+        useWhiteboardStore.setState({ drawingData: updates.boardElements });
       }
     };
 
@@ -350,6 +364,8 @@ const EnhancedDrawingCanvas = ({
     socket.on('draw-move', handleDrawMove);
     socket.on('draw-end', handleDrawEnd);
     socket.on('clear-canvas', handleClearCanvas);
+    socket.on('whiteboard-element-added', handleRemoteElementAdded);
+    socket.on('whiteboard-updated', handleWhiteboardUpdated);
     socket.on('user-count', handleUserCount);
     socket.on('cursor-update', handleCursorUpdate);
     socket.on('whiteboard-joined', handleWhiteboardJoined);
@@ -361,6 +377,8 @@ const EnhancedDrawingCanvas = ({
       socket.off('draw-move', handleDrawMove);
       socket.off('draw-end', handleDrawEnd);
       socket.off('clear-canvas', handleClearCanvas);
+      socket.off('whiteboard-element-added', handleRemoteElementAdded);
+      socket.off('whiteboard-updated', handleWhiteboardUpdated);
       socket.off('user-count', handleUserCount);
       socket.off('cursor-update', handleCursorUpdate);
       socket.off('whiteboard-joined', handleWhiteboardJoined);
@@ -708,22 +726,10 @@ const EnhancedDrawingCanvas = ({
       ))}
       
       {/* User Count Display */}
-      <div className="absolute top-4 right-4 bg-black bg-opacity-75 text-white px-3 py-2 rounded-lg text-sm font-medium pointer-events-none z-30">
-         {userCount} user{userCount !== 1 ? 's' : ''}
+      <div className="absolute top-4 right-4 bg-slate-900/80 text-white px-3 py-1.5 rounded-lg text-xs font-medium pointer-events-none z-30">
+        {userCount} user{userCount !== 1 ? 's' : ''} online
         {userRole === 'MEMBER' && (
-          <div className="text-xs mt-1 text-yellow-300">
-            (View Only)
-          </div>
-        )}
-      </div>
-
-      {/* Debug Info */}
-      <div className="absolute bottom-4 left-4 bg-black bg-opacity-75 text-white px-3 py-2 rounded-lg text-xs pointer-events-none z-30">
-        Elements: {drawingData.length} | Tool: {selectedTool}
-        {userRole && (
-          <div className="mt-1">
-            Role: {userRole} | Edit: {canEdit ? 'Yes' : 'No'}
-          </div>
+          <span className="ml-1.5 text-amber-300">(View Only)</span>
         )}
       </div>
     </div>
