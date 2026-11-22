@@ -26,5 +26,9 @@ const memberSchema = new mongoose.Schema({
     timestamps: true,
 }
 )
+
+memberSchema.index({ userId: 1, workspaceId: 1 });
+memberSchema.index({ workspaceId: 1 });
+
 const MemberModel = mongoose.model('Member', memberSchema);
 export default MemberModel;

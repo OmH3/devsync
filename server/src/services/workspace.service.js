@@ -50,6 +50,7 @@ export const getAllWorkspacesUserIsMemberService = async (userId) => {
   const memberships = await MemberModel.find({ userId })
     .populate("workspaceId")
     .select("-password")
+    .lean()
     .exec();
 
   const workspaces = memberships.map((membership) => membership.workspaceId);

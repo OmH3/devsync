@@ -5,7 +5,6 @@ import { NotFoundException } from "../utils/app-error.js";
 import { loginOrCreateAccountService, verifyUserService } from "../services/auth.service.js";
 import { ProviderEnum } from "../enums/account-provider.enum.js";
 import { Strategy as LocalStrategy } from "passport-local";
-import UserModel from "../models/User.model.js";
 passport.use(
   new GoogleStrategy(
     {
@@ -18,8 +17,6 @@ passport.use(
     async (req, accessToken, refreshToken, profile, done) => {
       try {
         const { email, sub: googleId, picture } = profile._json;
-        console.log(profile, "profile");
-        console.log(googleId, "googleId");
         if (!googleId) {
           throw new NotFoundException("Google ID (sub) is missing");
         }
@@ -39,29 +36,19 @@ passport.use(
 );
 
 passport.use(
-    new LocalStrategy(
-        {
+  new LocalStrategy(
+    {
       usernameField: "email",
       passwordField: "password",
-      session: true,
+      session: false,
     },
     async (email, password, done) => {
-        try {
-            const user = await verifyUserService({ email, password });
-            return done(null, user);
-        } catch (error) {
-            return done(error, false, { message: error?.message })
-        }
+      try {
+        const user = await verifyUserService({ email, password });
+        return done(null, user);
+      } catch (error) {
+        return done(error, false, { message: error?.message });
+      }
     }
-    )
+  )
 );
-
-passport.serializeUser((user, done) => done(null, user._id));
-passport.deserializeUser(async (id, done) => {
-  try {
-        const user = await UserModel.findById(id);
-        done(null, user ? user.omitPassword() : null);
-    } catch (error) {
-        done(error, null);
-    }
-});

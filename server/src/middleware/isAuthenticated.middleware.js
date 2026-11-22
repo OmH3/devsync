@@ -1,28 +1,38 @@
-import { UnauthorizedException } from "../utils/app-error.js"
-import UserModel from '../models/User.model.js';
+import { UnauthorizedException } from "../utils/app-error.js";
+import { extractTokenFromHeader, verifySessionToken } from "../utils/jwt.js";
 
-const isAuthenticated = (req, res, next)=>{
-    if(!req.user || !req.user._id){
-        throw new UnauthorizedException("Unauthorized. Please login");
-    }
-    next();
-}
-
-export const authenticateSocket = async (socket, next) => {
+const isAuthenticated = (req, res, next) => {
+  const token = extractTokenFromHeader(req.headers.cookie, req.headers.authorization);
+  if (!token) {
+    throw new UnauthorizedException("Unauthorized. Please login");
+  }
   try {
-    // Get user from session (shared with Express)
-    const userId = socket.request.session?.passport?.user;
-    
-    if (!userId) {
-      return next(new Error('Authentication failed'));
+    const user = verifySessionToken(token);
+    if (!user || !user._id) {
+      throw new UnauthorizedException("Unauthorized. Please login");
+    }
+    req.user = user;
+    next();
+  } catch {
+    throw new UnauthorizedException("Unauthorized. Please login");
+  }
+};
+
+export const authenticateSocket = (socket, next) => {
+  try {
+    const token = extractTokenFromHeader(
+      socket.handshake?.headers?.cookie || socket.request?.headers?.cookie,
+      socket.handshake?.headers?.authorization || socket.request?.headers?.authorization
+    );
+    if (!token) {
+      return next(new Error("Authentication failed"));
     }
 
-    const user = await UserModel.findById(userId).select('-password');
-    if (!user) {
-      return next(new Error('User not found'));
+    const user = verifySessionToken(token);
+    if (!user || !user._id) {
+      return next(new Error("Authentication failed"));
     }
 
-    // Attach user info to socket
     socket.userId = user._id.toString();
     socket.userEmail = user.email;
     socket.userName = user.name;
@@ -30,8 +40,7 @@ export const authenticateSocket = async (socket, next) => {
 
     next();
   } catch (error) {
-    console.error('Socket authentication error:', error);
-    next(new Error('Authentication failed'));
+    return next(new Error("Authentication failed"));
   }
 };
 

@@ -8,7 +8,9 @@ export const setupWhiteboardHandlers = (socket, io) => {
   // Join whiteboard room
   socket.on('join-whiteboard', async (whiteboardId) => {
     try {
-      const whiteboard = await WhiteboardModel.findById(whiteboardId);
+      const whiteboard = await WhiteboardModel.findById(whiteboardId)
+        .select('workspaceId isActive')
+        .lean();
       if (!whiteboard || !whiteboard.isActive) {
         socket.emit('error', { message: 'Whiteboard not found' });
         return;
@@ -18,7 +20,9 @@ export const setupWhiteboardHandlers = (socket, io) => {
       const member = await MemberModel.findOne({
         userId: socket.userId,
         workspaceId: whiteboard.workspaceId
-      });
+      })
+        .select('_id')
+        .lean();
 
       if (!member) {
         socket.emit('error', { message: 'Not authorized to access this whiteboard' });

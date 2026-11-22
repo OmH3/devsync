@@ -17,13 +17,17 @@ router.get(
   "/google",
   passport.authenticate("google", {
     scope: ["profile", "email"],
+    session: false,
   })
 );
 
-router.get('/google/callback',passport.authenticate('google',{
+router.get(
+  "/google/callback",
+  passport.authenticate("google", {
     failureRedirect: "/login",
-}),
-googleLoginCallback
-)
+    session: false,
+  }),
+  googleLoginCallback
+);
 
 export default router;

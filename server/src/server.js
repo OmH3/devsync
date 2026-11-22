@@ -2,8 +2,6 @@ import express from "express";
 import { createServer } from "http";
 import { Server } from "socket.io";
 import "dotenv/config";
-import session from "express-session";
-import MongoStore from 'connect-mongo';
 import passport from "passport";
 import cors from "cors";
 
@@ -66,40 +64,9 @@ app.use(
   })
 );
 
-const sessionMiddleware = session({
-  secret: config.SESSION_SECRET,
-  resave: false,
-  saveUninitialized: false,
-  name: "session",
-  store: MongoStore.create({
-    mongoUrl: process.env.MONGO_URI,
-    collectionName: 'sessions',
-    ttl: 7 * 24 * 60 * 60,
-    autoRemove: 'native',
-    touchAfter: 24 * 3600, // lazy session update
-  }).on('error', (error) => {
-    console.error('MongoStore session error:', error);
-  }),
-  cookie: {
-    maxAge: 24 * 60 * 60 * 1000,
-    secure: true,
-    httpOnly: true,
-    sameSite: "none",
-    path: "/",
-  },
-});
-
-app.use(sessionMiddleware);
 app.use(passport.initialize());
-app.use(passport.session());
-// Removed sensitive debug logging for production
 
 // --- Socket.IO Integration ---
-// This middleware allows Socket.IO to share the same session as Express.
-io.use((socket, next) => {
-  sessionMiddleware(socket.request, {}, next);
-});
-
 // Initialize Socket.IO handlers and pass the instance to controllers.
 setupSocketIO(io);
 setWhiteboardSocketIO(io);

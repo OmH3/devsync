@@ -2,7 +2,8 @@
 // Starts the real server as a child process, seeds a user + whiteboard through the real API,
 // then measures HTTP and Socket.IO whiteboard performance.
 import { fork, spawn, execSync } from 'node:child_process';
-import { performance } from 'node:perf_hooks';
+import { performance, monitorEventLoopDelay } from 'node:perf_hooks';
+import { createHash } from 'node:crypto';
 import os from 'node:os';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -10,11 +11,15 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import dotenv from 'dotenv';
 import autocannon from 'autocannon';
 import { io as ioc } from 'socket.io-client';
-import pidusage from 'pidusage';
+import { DeliveryTracker, nextDeadline } from './metrics.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const SERVER_DIR = path.resolve(HERE, '..');
 const label = process.argv[2] || 'baseline';
+if (!/^[a-zA-Z0-9_-]+$/.test(label)) throw new Error('Use a plain alphanumeric result label');
+const resultFile = path.join(HERE, 'results', `${label}.json`);
+if (fs.existsSync(resultFile)) throw new Error(`Refusing to overwrite ${resultFile}`);
+const phases = (process.env.BENCH_PHASES || 'http-health,http-authenticated-read,join-storm,draw').split(',');
 
 const P = {
   httpConnections: +(process.env.HTTP_CONNECTIONS || 50),
@@ -23,7 +28,12 @@ const P = {
   sendHz: +(process.env.SEND_HZ || 60),
   socketSeconds: +(process.env.SOCKET_SECONDS || 15),
   joinClients: +(process.env.JOIN_CLIENTS || 100),
+  warmupSeconds: 2,
+  drainTimeoutSeconds: 5,
 };
+for (const value of [P.httpConnections, P.httpSeconds, P.sendHz, P.socketSeconds, P.joinClients, ...P.socketLevels]) {
+  if (!Number.isFinite(value) || value <= 0) throw new Error('Benchmark parameters must be positive numbers');
+}
 
 const env = { ...process.env, ...dotenv.parse(fs.readFileSync(path.join(HERE, 'bench.env'))) };
 const BASE = `http://localhost:${env.PORT}`;
@@ -45,36 +55,32 @@ function startServer() {
   return child;
 }
 
-function ipc(child, type, reply) {
-  return new Promise((resolve) => {
-    if (!reply) return resolve(child.send({ type }));
-    const on = (m) => { if (m?.type === reply) { child.off('message', on); resolve(m); } };
-    child.on('message', on);
-    child.send({ type });
+let requestId = 0;
+function ipc(child, type, extra = {}) {
+  return new Promise((resolve, reject) => {
+    const id = ++requestId;
+    const cleanup = () => { clearTimeout(timeout); child.off('message', on); child.off('exit', exited); };
+    const on = m => { if (m?.id === id) { cleanup(); m.error ? reject(new Error(m.error)) : resolve(m.result); } };
+    const exited = () => { cleanup(); reject(new Error('Server exited during measurement')); };
+    const timeout = setTimeout(() => { cleanup(); reject(new Error(`IPC timeout: ${type}`)); }, 90000);
+    child.on('message', on); child.once('exit', exited);
+    child.send({ id, type, ...extra }, err => { if (err) { cleanup(); reject(err); } });
   });
 }
 
-async function measured(child, fn) {
-  await ipc(child, 'lag-reset');
-  const samples = [];
-  const timer = setInterval(async () => {
-    try { const s = await pidusage(child.pid); samples.push(s); } catch {}
-  }, 500);
-  const cpu0 = process.cpuUsage(); const t0 = performance.now();
-  const result = await fn();
-  const wallMs = performance.now() - t0; const cpu = process.cpuUsage(cpu0);
-  clearInterval(timer);
-  const lag = await ipc(child, 'lag-get', 'lag');
-  const cpus = samples.map((s) => s.cpu);
+async function measured(child, name, fn) {
+  await ipc(child, 'measure-start');
+  const lag = monitorEventLoopDelay({ resolution: 10 }); lag.enable();
+  const cpu0 = process.cpuUsage(), t0 = performance.now();
+  let result;
+  try { result = await fn(); } finally { lag.disable(); }
+  const wallMs = performance.now() - t0, cpu = process.cpuUsage(cpu0);
+  const profileFile = path.join(HERE, 'results', `${label}-${name}.cpuprofile`);
+  const server = await ipc(child, 'measure-stop', { profileFile });
   return {
-    result,
-    server: {
-      cpuAvgPct: +(cpus.reduce((a, b) => a + b, 0) / (cpus.length || 1)).toFixed(1),
-      cpuMaxPct: +Math.max(0, ...cpus).toFixed(1),
-      rssMaxMB: +(Math.max(0, ...samples.map((s) => s.memory)) / 1048576).toFixed(1),
-      eventLoopLagMs: { mean: lag.mean, p50: lag.p50, p99: lag.p99, max: lag.max },
-    },
-    generatorCpuPct: +(((cpu.user + cpu.system) / 1000 / wallMs) * 100).toFixed(1),
+    result, server,
+    generatorCpuPct: +((cpu.user + cpu.system) / 10 / wallMs).toFixed(2),
+    generatorEventLoopLagMs: { p99: +(lag.percentile(99) / 1e6).toFixed(3), max: +(lag.max / 1e6).toFixed(3) },
   };
 }
 
@@ -89,7 +95,8 @@ async function waitHealthy() {
 
 async function seedRoles() {
   await new Promise((resolve, reject) => {
-    const p = spawn(process.execPath, ['src/seeders/role.seeder.js'], { cwd: SERVER_DIR, env, stdio: 'ignore' });
+    const p = spawn(process.execPath, ['bench/seed-roles.mjs'], { cwd: SERVER_DIR, env, stdio: 'inherit', timeout: 30000 });
+    p.on('error', reject);
     p.on('exit', (c) => (c === 0 ? resolve() : reject(new Error(`role seeder exited ${c}`))));
   });
 }
@@ -98,7 +105,13 @@ async function setupUser() {
   const creds = { email: 'bench@devsync.test', password: 'benchmark-pass-1', name: 'Bench User' };
   const post = (url, body, headers = {}) =>
     fetch(`${API}${url}`, { method: 'POST', headers: { 'content-type': 'application/json', ...FWD, ...headers }, body: JSON.stringify(body) });
-  await post('/auth/register', creds); // 400 "already exists" on reruns is fine
+  const registration = await post('/auth/register', creds);
+  if (!registration.ok) {
+    const detail = await registration.text();
+    if (registration.status !== 400 || !detail.includes('Email already exists')) {
+      throw new Error(`registration failed: ${registration.status} ${detail}`);
+    }
+  }
   const login = await post('/auth/login', { email: creds.email, password: creds.password });
   if (!login.ok) throw new Error(`login failed: ${login.status} ${await login.text()}`);
   const cookie = login.headers.getSetCookie().map((c) => c.split(';')[0]).join('; ');
@@ -112,19 +125,22 @@ async function setupUser() {
 
 // ---------- HTTP phase ----------
 async function httpPhase(child, name, urlPath, cookie) {
-  const { result, server, generatorCpuPct } = await measured(child, () =>
-    autocannon({
+  const options = {
       url: `${API}${urlPath}`,
       connections: P.httpConnections,
       duration: P.httpSeconds,
       headers: { ...FWD, ...(cookie ? { cookie } : {}) },
-    }));
+  };
+  await autocannon({ ...options, duration: P.warmupSeconds });
+  const { result, server, generatorCpuPct, generatorEventLoopLagMs } = await measured(child, name, () => autocannon(options));
   return {
     name, path: urlPath,
     reqPerSec: Math.round(result.requests.average),
     latencyMs: { avg: result.latency.average, p50: result.latency.p50, p97_5: result.latency.p97_5, p99: result.latency.p99, max: result.latency.max },
     non2xx: result.non2xx, errors: result.errors, timeouts: result.timeouts,
-    server, generatorCpuPct,
+    completedRequests: result.requests.total, elapsedSeconds: result.duration,
+    server, generatorCpuPct, generatorEventLoopLagMs,
+    generatorBound: generatorCpuPct > 85,
   };
 }
 
@@ -134,7 +150,7 @@ function connectClient(cookie) {
     const t0 = performance.now();
     const s = ioc(BASE, { transports: ['websocket'], extraHeaders: { cookie, ...FWD }, reconnection: false, forceNew: true, timeout: 20000 });
     s.once('connect', () => resolve({ s, connectMs: performance.now() - t0 }));
-    s.once('connect_error', (e) => reject(new Error(`connect_error: ${e.message}`)));
+    s.once('connect_error', (e) => { s.disconnect(); reject(new Error(`connect_error: ${e.message}`)); });
   });
 }
 function joinBoard(s, whiteboardId) {
@@ -150,12 +166,14 @@ const pct = (arr, p) => { if (!arr.length) return null; const a = [...arr].sort(
 
 async function joinStorm(child, { cookie, whiteboardId }) {
   const n = P.joinClients; let failures = 0;
-  const { result, server } = await measured(child, async () => {
+  const { result, server } = await measured(child, 'join-storm', async () => {
     const t0 = performance.now();
     const res = await Promise.allSettled(Array.from({ length: n }, async () => {
       const { s, connectMs } = await connectClient(cookie);
-      const joinMs = await joinBoard(s, whiteboardId);
-      return { s, connectMs, joinMs, totalMs: connectMs + joinMs };
+      try {
+        const joinMs = await joinBoard(s, whiteboardId);
+        return { s, connectMs, joinMs, totalMs: connectMs + joinMs };
+      } catch (e) { s.disconnect(); throw e; }
     }));
     const ok = res.filter((r) => r.status === 'fulfilled').map((r) => r.value);
     failures = n - ok.length;
@@ -174,46 +192,74 @@ async function joinStorm(child, { cookie, whiteboardId }) {
 }
 
 async function drawLoad(child, { cookie, whiteboardId }, C) {
-  const BUCKET_US = 100, NB = 30000; // 100us buckets up to 3s
-  const hist = new Uint32Array(NB); let overflow = 0;
-  let sent = 0, recv = 0, measuring = false;
-  const clients = [];
-  for (let i = 0; i < C; i++) clients.push((await connectClient(cookie)).s);
-  await Promise.all(clients.map((s) => joinBoard(s, whiteboardId)));
-  clients.forEach((s) => s.on('draw-move', (d) => {
-    if (d.offsetY !== 1) return;
-    const lat = nowUs() - d.offsetX; recv++;
-    const b = Math.floor(lat / BUCKET_US); if (b < NB) hist[b]++; else overflow++;
-  }));
-
-  const out = await measured(child, async () => {
-    const timers = clients.map((s) => setInterval(() => {
-      if (measuring) sent++;
-      s.emit('draw-move', { whiteboardId, offsetX: nowUs(), offsetY: measuring ? 1 : 0 });
-    }, 1000 / P.sendHz));
-    await sleep(2000); measuring = true;           // warmup
-    await sleep(P.socketSeconds * 1000); measuring = false;
-    timers.forEach(clearInterval);
-    await sleep(2000);                              // drain in-flight messages
-    return null;
-  });
-  clients.forEach((s) => s.disconnect()); await sleep(500);
-
-  const expected = sent * (C - 1);
-  const q = (p) => { const target = (p / 100) * recv; let acc = 0; for (let b = 0; b < NB; b++) { acc += hist[b]; if (acc >= target) return +(((b + 1) * BUCKET_US) / 1000).toFixed(1); } return '>3000'; };
-  return {
-    name: 'whiteboard-draw-fanout', clientsInRoom: C, sendHzPerClient: P.sendHz, seconds: P.socketSeconds,
-    inboundMsgPerSec: Math.round(sent / P.socketSeconds),
-    deliveredMsgPerSec: Math.round(recv / P.socketSeconds),
-    deliveredRatio: expected ? +(recv / expected).toFixed(4) : null,
-    latencyMs: { p50: q(50), p95: q(95), p99: q(99) },
-    server: out.server, generatorCpuPct: out.generatorCpuPct,
-    generatorBound: out.generatorCpuPct > 85,
-  };
+  const tracker = new DeliveryTracker(C), clients = [];
+  let tickTimer;
+  try {
+    for (let i = 0; i < C; i++) clients.push((await connectClient(cookie)).s);
+    await Promise.all(clients.map(s => joinBoard(s, whiteboardId)));
+    clients.forEach((s, i) => s.on('draw-move', d => tracker.receive(i, d.offsetY, d.offsetX, nowUs())));
+    const sendFor = async (seconds, track) => {
+      const start = performance.now(), end = start + seconds * 1000, cpu0 = process.cpuUsage();
+      let deadline = start;
+      await new Promise(resolve => {
+        const tick = () => {
+          const now = performance.now();
+          if (now >= end) { if (track) tracker.close(); resolve(); return; }
+          if (now >= deadline) {
+            clients.forEach((s, i) => {
+              const stamp = nowUs(), sequence = track ? tracker.sent(i, stamp) : 0;
+              s.emit('draw-move', { whiteboardId, offsetX: stamp, offsetY: sequence });
+            });
+            deadline = nextDeadline(start, performance.now(), 1000 / P.sendHz);
+          }
+          tickTimer = setTimeout(tick, Math.max(1, Math.min(deadline, end) - performance.now()));
+        };
+        tick();
+      });
+      const elapsedMs = performance.now() - start, cpu = process.cpuUsage(cpu0);
+      return { elapsedMs, cpuPct: +((cpu.user + cpu.system) / 10 / elapsedMs).toFixed(2) };
+    };
+    await sendFor(P.warmupSeconds, false);
+    await sleep(250);
+    const out = await measured(child, `draw-${C}`, async () => {
+      const send = await sendFor(P.socketSeconds, true);
+      const drainAt = performance.now();
+      while (tracker.received < tracker.expected && performance.now() - drainAt < P.drainTimeoutSeconds * 1000) await sleep(10);
+      tracker.finish();
+      return { send, drainMs: performance.now() - drainAt };
+    });
+    const summary = tracker.summary(out.result.send.elapsedMs, out.result.drainMs);
+    const generatorBound = out.result.send.cpuPct > 85;
+    const targetRateMissed = summary.actualSendHzPerClient < P.sendHz * 0.9;
+    return {
+      name: 'whiteboard-draw-fanout', clientsInRoom: C, sendHzPerClient: P.sendHz, seconds: P.socketSeconds,
+      ...summary, server: out.server, generatorCpuPct: out.result.send.cpuPct,
+      generatorEventLoopLagMs: out.generatorEventLoopLagMs, generatorBound, targetRateMissed,
+      capacityClaimValid: !generatorBound && !targetRateMissed && summary.missingDeliveries === 0 && summary.invalidDeliveries === 0,
+    };
+  } finally {
+    clearTimeout(tickTimer); clients.forEach(s => s.disconnect()); await sleep(500);
+  }
 }
 
 // ---------- main ----------
 const gitSha = (() => { try { return execSync('git rev-parse --short HEAD', { cwd: SERVER_DIR }).toString().trim(); } catch { return 'unknown'; } })();
+function treeHash(dir, include = () => true) {
+  const hash = createHash('sha256');
+  const walk = folder => {
+    for (const entry of fs.readdirSync(folder, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
+      const file = path.join(folder, entry.name);
+      if (entry.isDirectory()) { if (entry.name !== 'results') walk(file); }
+      else if (include(file)) { hash.update(path.relative(dir, file).replaceAll('\\', '/')); hash.update(fs.readFileSync(file)); }
+    }
+  };
+  walk(dir); return hash.digest('hex');
+}
+const source = {
+  appSha256: treeHash(path.join(SERVER_DIR, 'src')),
+  harnessSha256: treeHash(HERE, file => ['run.mjs', 'instrument.mjs', 'metrics.mjs', 'seed-roles.mjs', 'bench.env', 'docker-compose.bench.yml'].includes(path.basename(file))),
+  lockSha256: createHash('sha256').update(fs.readFileSync(path.join(SERVER_DIR, 'package-lock.json'))).digest('hex'),
+};
 console.log(`[bench] label=${label} commit=${gitSha}`);
 await seedRoles();
 const child = startServer();
@@ -225,19 +271,20 @@ try {
   const log = (r) => { results.push(r); console.log('[bench]', r.name, JSON.stringify(r).slice(0, 220)); };
 
   await sleep(1000);
-  log(await httpPhase(child, 'http-health', '/health', null));
-  log(await httpPhase(child, 'http-authenticated-read', '/workspace/all', state.cookie));
-  log(await joinStorm(child, state));
-  for (const c of P.socketLevels) { log(await drawLoad(child, state, c)); await sleep(1000); }
+  if (phases.includes('http-health')) log(await httpPhase(child, 'http-health', '/health', null));
+  if (phases.includes('http-authenticated-read')) log(await httpPhase(child, 'http-authenticated-read', '/workspace/all', state.cookie));
+  if (phases.includes('join-storm')) log(await joinStorm(child, state));
+  if (phases.includes('draw')) for (const c of P.socketLevels) { log(await drawLoad(child, state, c)); await sleep(1000); }
 
   const out = {
-    label, commit: gitSha, timestamp: new Date().toISOString(),
+    label, commit: gitSha, workingTreeDirty: execSync('git status --porcelain', { cwd: SERVER_DIR }).toString().trim().length > 0,
+    timestamp: new Date().toISOString(),
     machine: { platform: os.platform(), arch: os.arch(), cpu: os.cpus()[0]?.model, cores: os.cpus().length, memGB: +(os.totalmem() / 2 ** 30).toFixed(1), node: process.version },
+    schemaVersion: 2, source, profiling: env.BENCH_PROFILE === '1', phases,
     params: P, results,
   };
-  const file = path.join(HERE, 'results', `${label}.json`);
-  fs.writeFileSync(file, JSON.stringify(out, null, 2));
-  console.log(`[bench] wrote ${file}`);
+  fs.writeFileSync(resultFile, JSON.stringify(out, null, 2), { flag: 'wx' });
+  console.log(`[bench] wrote ${resultFile}`);
 } catch (e) {
   console.error('[bench] FAILED:', e);
   exitCode = 1;

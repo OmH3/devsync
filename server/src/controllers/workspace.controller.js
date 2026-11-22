@@ -12,6 +12,7 @@ import {
   updateWorkspaceByIdService,
 } from "../services/workspace.service.js";
 import { roleGuard } from "../utils/roleGuard.js";
+import { setSessionCookie } from "../utils/jwt.js";
 import {
   changeRoleSchema,
   createWorkspaceSchema,
@@ -25,6 +26,7 @@ export const createWorskpaceController = asyncHandler(async (req, res) => {
   const userId = req.user?._id;
 
   const { workspace } = await createWorkspaceService(userId, body);
+  setSessionCookie(res, { ...req.user, currentWorkspace: workspace._id });
 
   return res.status(HTTPSTATUS.CREATED).json({
     message: "Workspace created successfully",
@@ -133,6 +135,7 @@ export const deleteWorkspaceByIdController = asyncHandler(
       workspaceId,
       userId
     );
+    setSessionCookie(res, { ...req.user, currentWorkspace });
 
     return res.status(HTTPSTATUS.OK).json({
       message: "Workspace deleted successfully",
