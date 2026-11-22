@@ -885,8 +885,8 @@ This ledger starts with all implementation milestones not started. The planning 
 
 | Milestone | Status | Commit or evidence | Next action |
 | --- | --- | --- | --- |
-| M00 Preserve and separate | Not started | Existing local checkout remains unmodified by implementation | Inventory changes and create the implementation branch |
-| M01 Baseline | Not started | Existing reports require audit/reproduction | Read harness diffs and verify provenance |
+| M00 Preserve and separate | Complete | Checkpoint f8471a2; artifact hashes; real API benchmark and client build passed; see IMPLEMENTATION_PROGRESS.md | Keep original evidence and history |
+| M01 Baseline | In progress | First real preserved-checkpoint run completed; lint/build/audit baseline captured | Finish controlled repeated runs and reporting |
 | M02 Runtime/tooling | Not started | — | Follow M00/M01 |
 | M03 API/logging | Not started | — | Follow M02 |
 | M04 Authentication/access | Not started | — | Follow M03 |

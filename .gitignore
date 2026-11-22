@@ -6,14 +6,9 @@ node_modules/
 # Testing
 coverage/
 
-# Next.js
-.next/
-out/
+# Build artifacts
+dist/
 build/
-
-# Go
-v2_backend/main
-v2_backend/main.exe
 
 # Misc
 .DS_Store
@@ -26,6 +21,10 @@ v2_backend/main.exe
 .env.test.local
 .env.production.local
 .env.prod
+.env.*
+!.env.example
+*.cpuprofile
+temp_executions/
 
 # Logs
 npm-debug.log*

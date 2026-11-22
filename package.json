@@ -1,5 +1,10 @@
 {
-  "dependencies": {
-    "tldraw": "^5.5.2"
+  "name": "devsync",
+  "private": true,
+  "scripts": {
+    "build": "npm --prefix client run build",
+    "test:bench": "node --test server/bench/metrics.test.mjs",
+    "bench": "npm --prefix server run bench",
+    "lint:client": "npm --prefix client run lint"
   }
 }
