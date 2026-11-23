@@ -1,42 +1,29 @@
-import { HTTPSTATUS } from "../config/http.config.js";
-import { ErrorCodeEnum } from "../enums/error-code.enum.js";
-import { ZodError } from "zod";
-import { AppError } from "../utils/app-error.js";
-const formatZodError = (res, error) => {
-  const errors = error.issues.map((err) => ({
-    field: err.path.join("."),
-    message: err.message,
-  }));
+import { ZodError } from 'zod';
+import { AppError } from '../utils/app-error.js';
 
-  return res.status(HTTPSTATUS.BAD_REQUEST).json({
-    message: "Validation failed",
-    errors,
-    errorCode: ErrorCodeEnum.VALIDATION_ERROR,
-  });
-};
-
-export const errorHandler = (error, req, res, next) => {
-  console.error(`Error occurred on PATH: ${req.path}`, error);
-
-  if (error instanceof SyntaxError) {
-    return res.status(HTTPSTATUS.BAD_REQUEST).json({
-      message: "Invalid JSON format. Please check your request body.",
-    });
-  }
-
+export function errorHandler(error, req, res, next) {
+  if (res.headersSent) return next(error);
+  let status = 500;
+  let code = 'INTERNAL_SERVER_ERROR';
+  let message = 'An unexpected error occurred. Please try again.';
+  let fields;
   if (error instanceof ZodError) {
-    return formatZodError(res, error);
+    status = 400; code = 'VALIDATION_ERROR'; message = 'Please check the highlighted fields.';
+    fields = error.issues.map(issue => ({ path: issue.path.join('.'), message: issue.message }));
+  } else if (error.type === 'entity.parse.failed') {
+    status = 400; code = 'INVALID_JSON'; message = 'Request body must be valid JSON.';
+  } else if (error.type === 'entity.too.large') {
+    status = 413; code = 'PAYLOAD_TOO_LARGE'; message = 'Request exceeds the allowed size.';
+  } else if (error instanceof AppError) {
+    status = error.statusCode; code = error.errorCode; message = error.message;
+  } else if (error.name === 'CastError') {
+    status = 400; code = 'INVALID_IDENTIFIER'; message = 'Invalid resource identifier.';
+  } else if (error.code === 11000) {
+    status = 409; code = 'CONFLICT'; message = 'A record with these details already exists.';
   }
-
-  if (error instanceof AppError) {
-    return res.status(error.statusCode).json({
-      message: error.message,
-      errorCode: error.errorCode,
-    });
-  }
-
-  return res.status(HTTPSTATUS.INTERNAL_SERVER_ERROR).json({
-    message: "Internal Server Error",
-    error: error?.message || "Unknown error occurred",
+  // The request completion logger owns the single error log; never attach raw bodies.
+  res.err = status >= 500 ? error : undefined;
+  return res.status(status).json({
+    message, errorCode: code, error: { code, message, ...(fields ? { fields } : {}) }, requestId: req.id,
   });
-};
+}

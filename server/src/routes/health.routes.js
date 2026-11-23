@@ -3,6 +3,12 @@ import mongoose from 'mongoose';
 
 const router = express.Router();
 
+router.get('/health/live', (req, res) => res.json({ status: 'alive' }));
+router.get('/health/ready', (req, res) => {
+  const ready = mongoose.connection.readyState === 1 && !req.app.locals.draining;
+  res.status(ready ? 200 : 503).json({ status: ready ? 'ready' : 'unavailable' });
+});
+
 router.get('/health', (req, res) => {
   const health = {
     uptime: process.uptime(),
@@ -16,7 +22,7 @@ router.get('/health', (req, res) => {
     const dbState = mongoose.connection.readyState;
     health.database = dbState === 1 ? 'connected' : 'disconnected';
     
-    if (dbState !== 1) {
+    if (dbState !== 1 || req.app.locals.draining) {
       return res.status(503).json(health);
     }
 

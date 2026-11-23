@@ -13,7 +13,7 @@ router.post("/login", loginUserController);
 
 router.post("/logout", logOutController);
 
-router.get(
+if (config.GOOGLE_AUTH_ENABLED) router.get(
   "/google",
   passport.authenticate("google", {
     scope: ["profile", "email"],
@@ -21,7 +21,7 @@ router.get(
   })
 );
 
-router.get(
+if (config.GOOGLE_AUTH_ENABLED) router.get(
   "/google/callback",
   passport.authenticate("google", {
     failureRedirect: "/login",

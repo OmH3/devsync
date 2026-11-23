@@ -1,17 +1,18 @@
 import path from "path";
 import { spawn } from "child_process";
 import fs from "fs/promises";
-import { v4 as uuidv4 } from "uuid"; 
-import { BadRequestException } from "../utils/app-error.js"; 
+import { v4 as uuidv4 } from "uuid";
+import { BadRequestException } from "../utils/app-error.js";
 const EXECUTION_TIMEOUT = 30000;
-const TEMP_DIR = "./temp_executions"; 
+const TEMP_DIR = "./temp_executions";
 
 // Ensure temp directory exists
-await fs.mkdir(TEMP_DIR, { recursive: true }); 
+
 
 // ...existing code...
 export const executeJavaScript = async (code, input, filename) => {
   const filepath = path.join(TEMP_DIR, `${filename}.js`);
+  await fs.mkdir(TEMP_DIR, { recursive: true });
   await fs.writeFile(filepath, code);
 
   return new Promise((resolve) => {
@@ -83,6 +84,7 @@ export const cleanupTempFiles = async (filename) => {
 
 export const executePython = async (code, input, filename) => {
   const filepath = path.join(TEMP_DIR, `${filename}.py`);
+  await fs.mkdir(TEMP_DIR, { recursive: true });
   await fs.writeFile(filepath, code);
 
   return new Promise((resolve) => {
@@ -134,7 +136,8 @@ export const executePython = async (code, input, filename) => {
 export const executeCpp = async (code, input, filename) => {
   const sourceFile = path.join(TEMP_DIR, `${filename}.cpp`);
   const executableFile = path.join(TEMP_DIR, filename);
-  
+
+  await fs.mkdir(TEMP_DIR, { recursive: true });
   await fs.writeFile(sourceFile, code);
 
   // Compile first

@@ -1,0 +1,344 @@
+{
+  "label": "baseline-r3",
+  "commit": "5172bf7",
+  "workingTreeDirty": true,
+  "timestamp": "2026-11-16T07:26:40.031Z",
+  "machine": {
+    "platform": "win32",
+    "arch": "x64",
+    "cpu": "Intel(R) Core(TM) Ultra 5 225H",
+    "cores": 14,
+    "memGB": 15.5,
+    "node": "v24.18.0"
+  },
+  "schemaVersion": 2,
+  "source": {
+    "appSha256": "194477faab0e2981191685e233ad18ad4b95688d0301a8aa4850bb7aec4190fb",
+    "harnessSha256": "25ea9b043ebb6032142a0f8927f75de7d20f6f908dde27ffbaff34635b081eed",
+    "lockSha256": "f85eb9f264c688f2e70d7aed6540c72221b96f3346963156fdc51308b94ad2ab"
+  },
+  "profiling": false,
+  "phases": [
+    "http-health",
+    "http-authenticated-read",
+    "join-storm",
+    "draw"
+  ],
+  "params": {
+    "httpConnections": 50,
+    "httpSeconds": 15,
+    "socketLevels": [
+      5,
+      10,
+      20,
+      40
+    ],
+    "sendHz": 60,
+    "socketSeconds": 15,
+    "joinClients": 100,
+    "warmupSeconds": 2,
+    "drainTimeoutSeconds": 5
+  },
+  "results": [
+    {
+      "name": "http-health",
+      "path": "/health",
+      "reqPerSec": 17247,
+      "latencyMs": {
+        "avg": 2.51,
+        "p50": 2,
+        "p97_5": 6,
+        "p99": 7,
+        "max": 14
+      },
+      "non2xx": 0,
+      "errors": 0,
+      "timeouts": 0,
+      "completedRequests": 258690,
+      "elapsedSeconds": 15.01,
+      "server": {
+        "resourceElapsedMs": 15009.45,
+        "sampleCount": 30,
+        "sampleErrors": 0,
+        "cpuAvgPct": 102.12,
+        "cpuMaxPct": 112.54,
+        "rssMaxMB": 293.22,
+        "eventLoopLagMs": {
+          "mean": 10.93,
+          "p50": 10.535,
+          "p99": 15.139,
+          "max": 18.596
+        }
+      },
+      "generatorCpuPct": 53.62,
+      "generatorEventLoopLagMs": {
+        "p99": 12.567,
+        "max": 14.705
+      },
+      "generatorBound": false
+    },
+    {
+      "name": "http-authenticated-read",
+      "path": "/workspace/all",
+      "reqPerSec": 707,
+      "latencyMs": {
+        "avg": 70.22,
+        "p50": 70,
+        "p97_5": 88,
+        "p99": 94,
+        "max": 156
+      },
+      "non2xx": 0,
+      "errors": 0,
+      "timeouts": 0,
+      "completedRequests": 10610,
+      "elapsedSeconds": 15.04,
+      "server": {
+        "resourceElapsedMs": 15056.98,
+        "sampleCount": 30,
+        "sampleErrors": 0,
+        "cpuAvgPct": 103.77,
+        "cpuMaxPct": 119.91,
+        "rssMaxMB": 317.93,
+        "eventLoopLagMs": {
+          "mean": 13.69,
+          "p50": 13.369,
+          "p99": 20.103,
+          "max": 29.639
+        }
+      },
+      "generatorCpuPct": 6.64,
+      "generatorEventLoopLagMs": {
+        "p99": 20.611,
+        "max": 23.724
+      },
+      "generatorBound": false
+    },
+    {
+      "name": "join-storm",
+      "clients": 100,
+      "failures": 0,
+      "wallMs": 341,
+      "connectMs": {
+        "p50": 102.8,
+        "p95": 172.1
+      },
+      "joinMs": {
+        "p50": 103,
+        "p95": 139.2
+      },
+      "totalMs": {
+        "p50": 211.7,
+        "p95": 316.1,
+        "p99": 324.4,
+        "max": 324.4
+      },
+      "server": {
+        "resourceElapsedMs": 425.832,
+        "sampleCount": 1,
+        "sampleErrors": 0,
+        "cpuAvgPct": 121.17,
+        "cpuMaxPct": 121.18,
+        "rssMaxMB": 323.89,
+        "eventLoopLagMs": {
+          "mean": 26.29,
+          "p50": 19.874,
+          "p99": 63.078,
+          "max": 63.078
+        }
+      }
+    },
+    {
+      "name": "whiteboard-draw-fanout",
+      "clientsInRoom": 5,
+      "sendHzPerClient": 60,
+      "seconds": 15,
+      "sendElapsedMs": 15013.438,
+      "drainElapsedMs": 0.039,
+      "sent": 4480,
+      "expectedDeliveries": 17920,
+      "receivedDuringSend": 17920,
+      "receivedDuringDrain": 0,
+      "missingDeliveries": 0,
+      "duplicateDeliveries": 0,
+      "invalidDeliveries": 0,
+      "inboundMsgPerSec": 298.4,
+      "actualSendHzPerClient": 59.68,
+      "deliveredMsgPerSec": 1193.6,
+      "deliveredIncludingDrainPerSec": 1193.59,
+      "deliveredRatio": 1,
+      "latencyMs": {
+        "p50": 0.576,
+        "p95": 1.045,
+        "p99": 1.233,
+        "max": 10.279
+      },
+      "server": {
+        "resourceElapsedMs": 15014.736,
+        "sampleCount": 30,
+        "sampleErrors": 0,
+        "cpuAvgPct": 7.49,
+        "cpuMaxPct": 33.95,
+        "rssMaxMB": 324.13,
+        "eventLoopLagMs": {
+          "mean": 15.856,
+          "p50": 15.868,
+          "p99": 18.612,
+          "max": 25.051
+        }
+      },
+      "generatorCpuPct": 8.54,
+      "generatorEventLoopLagMs": {
+        "p99": 17.744,
+        "max": 22.675
+      },
+      "generatorBound": false,
+      "targetRateMissed": false,
+      "capacityClaimValid": true
+    },
+    {
+      "name": "whiteboard-draw-fanout",
+      "clientsInRoom": 10,
+      "sendHzPerClient": 60,
+      "seconds": 15,
+      "sendElapsedMs": 15008.437,
+      "drainElapsedMs": 0.022,
+      "sent": 8940,
+      "expectedDeliveries": 80460,
+      "receivedDuringSend": 80460,
+      "receivedDuringDrain": 0,
+      "missingDeliveries": 0,
+      "duplicateDeliveries": 0,
+      "invalidDeliveries": 0,
+      "inboundMsgPerSec": 595.66,
+      "actualSendHzPerClient": 59.57,
+      "deliveredMsgPerSec": 5360.98,
+      "deliveredIncludingDrainPerSec": 5360.98,
+      "deliveredRatio": 1,
+      "latencyMs": {
+        "p50": 0.932,
+        "p95": 2.227,
+        "p99": 2.877,
+        "max": 5.007
+      },
+      "server": {
+        "resourceElapsedMs": 15009.363,
+        "sampleCount": 30,
+        "sampleErrors": 0,
+        "cpuAvgPct": 9.27,
+        "cpuMaxPct": 25,
+        "rssMaxMB": 100.74,
+        "eventLoopLagMs": {
+          "mean": 15.816,
+          "p50": 15.86,
+          "p99": 24.592,
+          "max": 25.69
+        }
+      },
+      "generatorCpuPct": 9.16,
+      "generatorEventLoopLagMs": {
+        "p99": 24.576,
+        "max": 25.575
+      },
+      "generatorBound": false,
+      "targetRateMissed": false,
+      "capacityClaimValid": true
+    },
+    {
+      "name": "whiteboard-draw-fanout",
+      "clientsInRoom": 20,
+      "sendHzPerClient": 60,
+      "seconds": 15,
+      "sendElapsedMs": 15008.798,
+      "drainElapsedMs": 0.007,
+      "sent": 17880,
+      "expectedDeliveries": 339720,
+      "receivedDuringSend": 339720,
+      "receivedDuringDrain": 0,
+      "missingDeliveries": 0,
+      "duplicateDeliveries": 0,
+      "invalidDeliveries": 0,
+      "inboundMsgPerSec": 1191.3,
+      "actualSendHzPerClient": 59.57,
+      "deliveredMsgPerSec": 22634.72,
+      "deliveredIncludingDrainPerSec": 22634.71,
+      "deliveredRatio": 1,
+      "latencyMs": {
+        "p50": 2.549,
+        "p95": 5.815,
+        "p99": 7.543,
+        "max": 11.271
+      },
+      "server": {
+        "resourceElapsedMs": 15009.643,
+        "sampleCount": 30,
+        "sampleErrors": 0,
+        "cpuAvgPct": 28.32,
+        "cpuMaxPct": 62.82,
+        "rssMaxMB": 107.26,
+        "eventLoopLagMs": {
+          "mean": 15.75,
+          "p50": 15.819,
+          "p99": 23.265,
+          "max": 25.313
+        }
+      },
+      "generatorCpuPct": 26.55,
+      "generatorEventLoopLagMs": {
+        "p99": 23.347,
+        "max": 25.412
+      },
+      "generatorBound": false,
+      "targetRateMissed": false,
+      "capacityClaimValid": true
+    },
+    {
+      "name": "whiteboard-draw-fanout",
+      "clientsInRoom": 40,
+      "sendHzPerClient": 60,
+      "seconds": 15,
+      "sendElapsedMs": 15000.412,
+      "drainElapsedMs": 25.082,
+      "sent": 35680,
+      "expectedDeliveries": 1391520,
+      "receivedDuringSend": 1391386,
+      "receivedDuringDrain": 134,
+      "missingDeliveries": 0,
+      "duplicateDeliveries": 0,
+      "invalidDeliveries": 0,
+      "inboundMsgPerSec": 2378.6,
+      "actualSendHzPerClient": 59.47,
+      "deliveredMsgPerSec": 92756.52,
+      "deliveredIncludingDrainPerSec": 92610.6,
+      "deliveredRatio": 1,
+      "latencyMs": {
+        "p50": 9.759,
+        "p95": 29.167,
+        "p99": 46.495,
+        "max": 82.047
+      },
+      "server": {
+        "resourceElapsedMs": 15026.499,
+        "sampleCount": 30,
+        "sampleErrors": 0,
+        "cpuAvgPct": 84.54,
+        "cpuMaxPct": 98.08,
+        "rssMaxMB": 134.7,
+        "eventLoopLagMs": {
+          "mean": 17.437,
+          "p50": 15.499,
+          "p99": 48.234,
+          "max": 70.517
+        }
+      },
+      "generatorCpuPct": 76.56,
+      "generatorEventLoopLagMs": {
+        "p99": 23.314,
+        "max": 25.362
+      },
+      "generatorBound": false,
+      "targetRateMissed": false,
+      "capacityClaimValid": true
+    }
+  ]
+}

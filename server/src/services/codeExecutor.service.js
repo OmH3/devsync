@@ -5,9 +5,11 @@ import { NotFoundException, BadRequestException } from "../utils/app-error.js";
 import MemberModel from "../models/Member.model.js";
 import { executeByLanguage } from "../coderunners/scripts.runner.js";
 import { getMemberRoleInWorkspace } from "./member.service.js";
+import { config } from '../config/app.config.js';
 
 //FIXED: Execute code service with proper workspace permissions
 export const executeCodeService = async (codeEditorId, userId, body) => {
+  if (!config.CODE_EXECUTION_ENABLED) throw new BadRequestException('Code execution is disabled in this deployment');
   //Extract parameters correctly (matching your original structure)
   const { code, input = "", language, saveBeforeExecution = true } = body;
 

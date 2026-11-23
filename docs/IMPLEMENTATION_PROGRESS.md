@@ -9,7 +9,7 @@ commit `f8471a2`. Original benchmark artifacts remain on disk; their SHA256 hash
 are recorded in `BASELINE_ARTIFACT_HASHES.json`. CPU profiles are ignored rather
 than deleted. The implementation plan is committed with the checkpoint.
 
-M00 stack separation removes 99 tracked Go/Next implementation, documentation,
+M00 stack separation removes 99 tracked obsolete implementation implementation, documentation,
 and deployment files. The unused root tldraw dependency was removed after a
 reference search. The C++ code-runner Dockerfile remains because it belongs to
 the retained application's execution feature. Production deployment replacement
@@ -107,3 +107,7 @@ member role promotion to ADMIN with toast verification, live document sync & sav
 live whiteboard drawing sync & persistence, live code editor file creation/sync/save
 & capability gating, and logout store cleanup) passed with **0 page exceptions** and
 **0 HTTP >= 400 errors**.
+
+## 23 November 2026 branch publication
+
+Published the current implementation snapshot on perf/node-react-ux. Removed obsolete architecture artifacts and documentation references. Production client build, 11 unit tests, and 2 real MongoDB/HTTP/Socket.IO integration tests passed immediately before publication. Backend environment validation, lifecycle, logging, and revocable-session work is included. The complete implementation plan remains unfinished; this publication does not claim completion of every milestone. Local secrets, cookie jars, dependencies, and CPU profiles are excluded. Existing commit history is retained.

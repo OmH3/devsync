@@ -6,12 +6,28 @@ import { setupFileSystemHandlers } from '../handlers/filesystem.handlers.js';
 import { setupWorkspaceHandlers } from '../handlers/workspace.handlers.js';
 import { setupAudioRoomHandlers } from '../handlers/audioroom.handlers.js';
 import { Server } from 'socket.io';
+import { config } from './app.config.js';
+import { sessionEvents } from '../auth/sessions.js';
+import { verifySessionToken } from '../utils/jwt.js';
 
 export const setupSocketIO = (io) => {
   // Authentication middleware
   io.use(authenticateSocket);
 
   io.on('connection', (socket) => {
+    const revoke = sid => { if (sid === socket.sessionId) socket.disconnect(true); };
+    sessionEvents.on('revoked', revoke);
+    const check = setInterval(() => {
+      verifySessionToken(socket.sessionToken).catch(() => socket.disconnect(true));
+    }, 10000);
+    check.unref();
+    const expiry = setTimeout(() => socket.disconnect(true), Math.max(0, socket.sessionExpiresAt - Date.now()));
+    expiry.unref();
+    socket.once('disconnect', () => {
+      sessionEvents.off('revoked', revoke);
+      clearInterval(check);
+      clearTimeout(expiry);
+    });
     console.log(`User connected: ${socket.userId} (${socket.userEmail})`);
 
     // Setup handlers for different features
@@ -21,7 +37,7 @@ export const setupSocketIO = (io) => {
     setupCodeEditorHandlers(socket, io);
     setupFileSystemHandlers(socket, io);
     //FIX: Remove the third parameter
-    setupAudioRoomHandlers(socket, io);
+    if (config.AUDIO_ENABLED) setupAudioRoomHandlers(socket, io);
 
     // Handle disconnection
     socket.on('disconnect', () => {

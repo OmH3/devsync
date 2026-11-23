@@ -152,7 +152,7 @@ export const verifyUserService = async ({
   }
 
   const user = await UserModel.findById(account.userId).select('+password');
-  if (!user) {
+  if (!user || !user.isActive) {
     throw new NotFoundException("User not found for the given account");
   }
 

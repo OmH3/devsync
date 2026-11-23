@@ -1,13 +1,11 @@
 # DevSync - Real-time Collaborative Development Platform
 
-This branch maintains the React/Vite client and Node/Express server. The alternative
-Go/Next.js implementation is preserved in Git history and is not part of this branch.
+This branch maintains the React/Vite client and Node/Express server.
 
 Implementation and verification are tracked in
 [the implementation plan](docs/NODE_REACT_IMPLEMENTATION_PLAN.md).
 See [benchmark evidence](server/BENCHMARKS.md) for methodology and limitations.
-Production deployment packaging is being rebuilt for this stack; the previous
-deployment scripts targeted the removed implementation and must not be used.
+Deployment packaging for this stack is available in deploy/ and docker-compose.prod.yml.
 
 A comprehensive real-time collaborative platform that enables teams to work together seamlessly with integrated tools for document editing, whiteboard collaboration, code editing, and audio communication.
 

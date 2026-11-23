@@ -1,9 +1,10 @@
 import { createSecretKey } from "node:crypto";
 import jwt from "jsonwebtoken";
-import { config } from "../config/app.config.js";
+import { config } from '../config/app.config.js';
+import { createSession, resolveSession, revokeSession } from '../auth/sessions.js';
 
 const COOKIE_NAME = "session";
-const MAX_AGE_MS = 24 * 60 * 60 * 1000;
+const MAX_AGE_MS = config.SESSION_TTL_SECONDS * 1000;
 const SECRET_KEY = createSecretKey(Buffer.from(config.SESSION_SECRET, "utf8"));
 
 export const createSessionPayload = (user) => ({
@@ -14,22 +15,37 @@ export const createSessionPayload = (user) => ({
   currentWorkspace: user.currentWorkspace?._id?.toString?.() ?? user.currentWorkspace?.toString?.() ?? null,
 });
 
-export const signSessionToken = (user) =>
-  jwt.sign(createSessionPayload(user), SECRET_KEY, {
-    algorithm: "HS256",
-    expiresIn: config.SESSION_EXPIRES_IN || "1d",
+export const signSessionToken = async (user) => {
+  const sid = await createSession(user._id);
+  return jwt.sign({ sid }, SECRET_KEY, {
+    subject: user._id.toString(), algorithm: 'HS256',
+    issuer: 'devsync', audience: 'devsync-web', expiresIn: config.SESSION_TTL_SECONDS,
   });
+};
 
-export const verifySessionToken = (token) =>
-  jwt.verify(token, SECRET_KEY, { algorithms: ["HS256"] });
+const verifyClaims = token => jwt.verify(token, SECRET_KEY, {
+  algorithms: ['HS256'], issuer: 'devsync', audience: 'devsync-web',
+});
 
-export const setSessionCookie = (res, user) => {
-  const token = signSessionToken(user);
+export const verifySessionToken = async token => {
+  const claims = verifyClaims(token);
+  const user = await resolveSession(claims.sid, claims.sub);
+  return { ...user, sessionId: claims.sid, sessionExpiresAt: claims.exp * 1000 };
+};
+
+export const revokeSessionToken = async token => {
+  if (!token) return;
+  let claims;
+  try { claims = verifyClaims(token); } catch { return; }
+  await revokeSession(claims.sid);
+};
+export const setSessionCookie = async (res, user) => {
+  const token = await signSessionToken(user);
   res.cookie(COOKIE_NAME, token, {
     maxAge: MAX_AGE_MS,
-    secure: true,
+    secure: config.COOKIE_SECURE,
     httpOnly: true,
-    sameSite: "none",
+    sameSite: config.COOKIE_SAME_SITE,
     path: "/",
   });
   return token;
@@ -38,8 +54,8 @@ export const setSessionCookie = (res, user) => {
 export const clearSessionCookie = (res) => {
   res.clearCookie(COOKIE_NAME, {
     httpOnly: true,
-    secure: true,
-    sameSite: "none",
+    secure: config.COOKIE_SECURE,
+    sameSite: config.COOKIE_SAME_SITE,
     path: "/",
   });
 };

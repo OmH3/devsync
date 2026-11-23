@@ -12,7 +12,7 @@ The intended result is a coherent collaboration product with measured performanc
 | --- | --- |
 | Implementation branch | `perf/node-react-ux`, based on a preserved checkpoint of the local `perf/benchmarks` work |
 | Frontend | React 19, Vite, Tailwind; preserve current major versions initially |
-| Backend | Node.js ESM and Express 5; no Fastify, Go, Next.js, C++, or microservice rewrite |
+| Backend | Node.js ESM and Express 5; retain the current application stack |
 | Language | JavaScript with JSDoc for important interfaces; no repository-wide TypeScript conversion |
 | Database | MongoDB with a replica set for existing transactions; explicit indexes and migrations |
 | HTTP data state | TanStack Query; existing dependency, currently underused |
@@ -28,7 +28,7 @@ The intended result is a coherent collaboration product with measured performanc
 | Audio/video | Optional Stream integration; off in the strict cloud-only demonstration profile |
 | Code execution | Off in public deployments until a separate isolated runner is implemented and tested |
 
-Do not interpret removing Go/Next.js as removing the user's ability to edit C++ code. `Dockerfile.cpp` belongs to a code execution path and must be evaluated separately from the Go implementation.
+Dockerfile.cpp belongs to the optional code execution feature.
 
 ### Required release scope
 
@@ -245,12 +245,12 @@ Commit `.env.example` files with placeholders and explanations. Ignore `.env` an
 2. Inventory tracked modifications and untracked benchmark artifacts. Record paths and hashes without including environment files or secrets. Preserve raw results under their existing names.
 3. Create `perf/node-react-ux` from the current checkout, carrying the existing changes. If that branch already exists, inspect it and use it only if it is the intended continuation. Never force-reset or overwrite an existing branch.
 4. Review and checkpoint the existing application/harness changes separately from new work. Stage explicit paths, not `git add .`. Keep large `.cpuprofile` files locally unless there is a deliberate artifact-storage decision; record checksums and location. Do not silently drop them.
-5. Verify which files are exclusive to Go/Next.js: `v2_backend/`, `v2_frontend/`, `v2_planning_guides/`, v2 diagrams/plans, `deploy.sh`, `start_frontend.sh`, and the current production Compose file. Inspect scripts before removing/replacing them.
+5. Inventory obsolete implementation files, diagrams, scripts, and deployment configurations before removing them.
 6. Remove only confirmed v2-exclusive files from this branch. On Windows, resolve each deletion target and verify it is beneath this repository before any recursive operation. Preserve the original branch/history.
 7. Audit root `tldraw` dependency usage with `rg`. Keep it only if actually imported by the retained implementation; the current canvas does not justify a second whiteboard stack by itself.
-8. Clean obsolete Go/Next ignore entries and documentation. Add an architecture scope statement to README and links to this plan and benchmark methodology.
+8. Clean obsolete obsolete implementation ignore entries and documentation. Add an architecture scope statement to README and links to this plan and benchmark methodology.
 
-**Acceptance:** Existing changes/results remain recoverable; branch contains no active Go/Next source, build instructions, dependencies, or deployment references; Node/React install/build still work. A historical mention explaining the separation is allowed.
+**Acceptance:** Existing changes/results remain recoverable; branch contains no active obsolete implementation source, build instructions, dependencies, or deployment references; Node/React install/build still work. Documentation must describe only the retained application.
 
 **Rollback:** Revert the cleanup commit on this branch; do not rewrite or delete original history.
 
@@ -812,7 +812,7 @@ Each row is a reviewable change group, not a request to make all edits before te
 | Sequence | Change group | Must be true before proceeding |
 | --- | --- | --- |
 | 1 | Preserve local optimization/harness checkpoint | Existing changes and evidence recoverable |
-| 2 | Remove Go/Next stack and clarify README | Retained app installs/builds; no active v2 deployment |
+| 2 | Remove obsolete implementation stack and clarify README | Retained app installs/builds; no active v2 deployment |
 | 3 | Correct/validate benchmark provenance | Preserved checkpoint measurement reproducible |
 | 4 | Tooling, environment validation, app/bootstrap split | Imports/startup/shutdown tests pass |
 | 5 | Logging, safe errors, API validation | Redaction and failure-contract tests pass |
@@ -860,7 +860,7 @@ Use these defaults without reopening already settled architectural choices:
 ## Release checklist
 
 - [ ] Node/React branch created and original/local work preserved.
-- [ ] No active Go/Next source, dependencies, or deployment/configuration references remain in the branch.
+- [ ] No active obsolete implementation source, dependencies, or deployment/configuration references remain in the branch.
 - [ ] Environment examples, config validation, runtime versions, and package locks agree.
 - [ ] App imports are side-effect free; startup/readiness/shutdown behave correctly.
 - [ ] Structured logs are correlated, bounded, and free of secrets/user content.

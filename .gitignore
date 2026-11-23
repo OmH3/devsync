@@ -31,3 +31,6 @@ temp_executions/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Local session cookies
+jar.txt

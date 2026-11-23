@@ -5,7 +5,8 @@ import { NotFoundException } from "../utils/app-error.js";
 import { loginOrCreateAccountService, verifyUserService } from "../services/auth.service.js";
 import { ProviderEnum } from "../enums/account-provider.enum.js";
 import { Strategy as LocalStrategy } from "passport-local";
-passport.use(
+export function configurePassport() {
+if (config.GOOGLE_AUTH_ENABLED) passport.use(
   new GoogleStrategy(
     {
       clientID: config.GOOGLE_CLIENT_ID,
@@ -52,3 +53,4 @@ passport.use(
     }
   )
 );
+}
