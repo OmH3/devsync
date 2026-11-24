@@ -33,6 +33,39 @@ const ViewSkeleton = () => (
   </div>
 );
 
+class ViewErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { error: null };
+  }
+  static getDerivedStateFromError(error) {
+    return { error };
+  }
+  componentDidUpdate(prevProps) {
+    if (prevProps.resetKey !== this.props.resetKey && this.state.error) {
+      this.setState({ error: null });
+    }
+  }
+  render() {
+    if (this.state.error) {
+      return (
+        <div role="alert" className="rounded-lg border border-red-200 bg-red-50 p-6 text-sm text-red-800">
+          <h3 className="font-semibold">This view encountered an unexpected error</h3>
+          <p className="mt-1 text-red-700">{this.state.error?.message || 'Unable to render view.'}</p>
+          <button
+            type="button"
+            onClick={() => this.setState({ error: null })}
+            className="mt-3 rounded-md bg-red-700 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-800"
+          >
+            Try again
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 const Dashboard = () => {
   const { user, logout } = useAuth();
   const { workspaces, currentWorkspace, fetchUserWorkspaces, setCurrentWorkspace, isLoading, error } = useWorkspaceStore();
@@ -268,7 +301,9 @@ const Dashboard = () => {
         </header>
 
         <main className="workspace-main flex-1 p-4 sm:p-6">
-          <Suspense fallback={<ViewSkeleton />}>{currentWorkspace ? renderTool() : renderWorkspacePicker()}</Suspense>
+          <ViewErrorBoundary resetKey={`${currentWorkspace?._id || 'none'}:${activeView}`}>
+            <Suspense fallback={<ViewSkeleton />}>{currentWorkspace ? renderTool() : renderWorkspacePicker()}</Suspense>
+          </ViewErrorBoundary>
         </main>
       </div>
 

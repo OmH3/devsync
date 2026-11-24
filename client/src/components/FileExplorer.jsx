@@ -11,6 +11,8 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
   const [, setRenamingItem] = useState(null);
   const [selectedItems, setSelectedItems] = useState(new Set());
   const [showBulkActions, setShowBulkActions] = useState(false);
+  const [draggedItem, setDraggedItem] = useState(null);
+  const [dropTarget, setDropTarget] = useState(null);
 
   //Real-time collaboration states
   const [isConnected, setIsConnected] = useState(false);
@@ -32,6 +34,7 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
     createFileSystemItem,
     deleteFileSystemItem,
     updateFileSystemItem,
+    moveFileSystemItem,
     duplicateFileSystemItem,
     bulkDeleteItems,
     setCurrentFolder,
@@ -201,7 +204,11 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
   //Build hierarchical file tree
   const buildFileTree = useCallback((items, parentId = null) => {
     return items
-      .filter(item => item.parentId === parentId)
+      .filter(item => {
+        const itemParentId = item.parentId ? String(item.parentId) : null;
+        const targetParentId = parentId ? String(parentId) : null;
+        return itemParentId === targetParentId;
+      })
       .sort((a, b) => {
         // Folders first, then files, alphabetically
         if (a.type !== b.type) {
@@ -214,6 +221,85 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
         children: item.type === 'folder' ? buildFileTree(items, item._id) : []
       }));
   }, []);
+
+  // Check if targetFolderId is a descendant of sourceFolderId (prevent circular moves)
+  const isDescendantFolder = useCallback((sourceFolderId, targetFolderId) => {
+    if (!sourceFolderId || !targetFolderId) return false;
+    let current = fileSystemItems.find(i => String(i._id) === String(targetFolderId));
+    while (current && current.parentId) {
+      if (String(current.parentId) === String(sourceFolderId)) return true;
+      current = fileSystemItems.find(i => String(i._id) === String(current.parentId));
+    }
+    return false;
+  }, [fileSystemItems]);
+
+  // Drag and drop handlers (VS Code style: drag file/folder into folder or root)
+  const handleDragStart = (e, item) => {
+    e.stopPropagation();
+    setDraggedItem(item);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', item._id);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedItem(null);
+    setDropTarget(null);
+  };
+
+  const handleDragOverFolder = (e, targetFolder) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!draggedItem) return;
+
+    const targetId = targetFolder ? targetFolder._id : 'root';
+    if (targetFolder) {
+      if (targetFolder.type !== 'folder') return;
+      if (String(draggedItem._id) === String(targetFolder._id)) return;
+      if (String(draggedItem.parentId || '') === String(targetFolder._id)) return;
+      if (draggedItem.type === 'folder' && isDescendantFolder(draggedItem._id, targetFolder._id)) return;
+    } else {
+      // Root drop check: only highlight if item is currently inside a folder
+      if (!draggedItem.parentId) return;
+    }
+
+    e.dataTransfer.dropEffect = 'move';
+    if (dropTarget !== targetId) {
+      setDropTarget(targetId);
+    }
+  };
+
+  const handleDragLeaveFolder = (e, targetId) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (dropTarget === targetId) {
+      setDropTarget(null);
+    }
+  };
+
+  const handleDropOnFolder = async (e, targetFolder) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDropTarget(null);
+
+    const itemToMove = draggedItem;
+    setDraggedItem(null);
+    if (!itemToMove) return;
+
+    const newParentId = targetFolder ? targetFolder._id : null;
+    const currentParentId = itemToMove.parentId || null;
+
+    if (String(currentParentId || '') === String(newParentId || '')) return;
+    if (targetFolder && String(itemToMove._id) === String(targetFolder._id)) return;
+    if (targetFolder && itemToMove.type === 'folder' && isDescendantFolder(itemToMove._id, targetFolder._id)) return;
+
+    const result = await moveFileSystemItem(itemToMove._id, newParentId);
+    if (result.success) {
+      if (newParentId) {
+        setExpandedFolders(prev => new Set([...prev, newParentId]));
+      }
+      await fetchWorkspaceFileSystem(workspaceId);
+    }
+  };
 
   //Get file icon with better visual indicators
   const getFileIcon = (item) => {
@@ -330,6 +416,8 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
     const hasChildren = item.children && item.children.length > 0;
     const isExpanded = expandedFolders.has(item._id);
     const isSelected = selectedItems.has(item._id);
+    const isDragging = draggedItem?._id === item._id;
+    const isDropTarget = item.type === 'folder' && dropTarget === item._id;
     const paddingLeft = level * 20;
 
     useEffect(() => {
@@ -342,8 +430,28 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
     return (
       <div>
         <div
-          className={`flex items-center py-1 px-2 cursor-pointer group relative ${
+          draggable={!isRenaming}
+          onDragStart={(e) => handleDragStart(e, item)}
+          onDragEnd={handleDragEnd}
+          onDragOver={(e) => {
+            if (item.type === 'folder') {
+              handleDragOverFolder(e, item);
+            }
+          }}
+          onDragLeave={(e) => {
+            if (item.type === 'folder') {
+              handleDragLeaveFolder(e, item._id);
+            }
+          }}
+          onDrop={(e) => {
+            if (item.type === 'folder') {
+              handleDropOnFolder(e, item);
+            }
+          }}
+          className={`flex items-center py-1 px-2 cursor-pointer group relative transition-colors ${
             isSelected ? 'bg-blue-100 border-l-2 border-blue-500' : 'hover:bg-gray-100'
+          } ${isDragging ? 'opacity-50' : ''} ${
+            isDropTarget ? 'bg-indigo-50 ring-2 ring-indigo-500 ring-inset rounded' : ''
           }`}
           style={{ paddingLeft: `${paddingLeft + 8}px` }}
           onClick={(e) => {
@@ -803,7 +911,14 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
       )}
 
       {/* File Tree */}
-      <div className="flex-1 overflow-y-auto">
+      <div
+        className={`flex-1 overflow-y-auto ${
+          dropTarget === 'root' ? 'bg-indigo-50/60 ring-2 ring-indigo-400 ring-inset' : ''
+        }`}
+        onDragOver={(e) => handleDragOverFolder(e, null)}
+        onDragLeave={(e) => handleDragLeaveFolder(e, 'root')}
+        onDrop={(e) => handleDropOnFolder(e, null)}
+      >
         {isLoading ? (
           <div className="flex justify-center items-center h-20">
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600"></div>

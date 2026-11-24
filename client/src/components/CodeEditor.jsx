@@ -5,6 +5,21 @@ import { useCodeEditorStore } from '../store/codeeditorStore.js';
 import { useAuth } from '../hooks/useAuth.js';
 import { useCapabilities } from '../hooks/useCapabilities.js';
 
+const SUPPORTED_LANGUAGES = ['javascript', 'python', 'cpp'];
+const normalizeLanguage = (lang) => (SUPPORTED_LANGUAGES.includes(lang) ? lang : 'javascript');
+const getLanguageFromExtension = (extension) => {
+  const langMap = {
+    'js': 'javascript',
+    'jsx': 'javascript',
+    'py': 'python',
+    'cpp': 'cpp',
+    'cc': 'cpp',
+    'cxx': 'cpp',
+    'hpp': 'cpp'
+  };
+  return langMap[extension?.toLowerCase()] || 'javascript';
+};
+
 const CodeEditor = ({ fileItem, onClose }) => {
   const [code, setCode] = useState('');
   const [title, setTitle] = useState('');
@@ -135,29 +150,7 @@ const CodeEditor = ({ fileItem, onClose }) => {
       setTitle(currentEditor.title || '');
       setLanguage(normalizeLanguage(currentEditor.language));
     }
-  }, [currentEditor, normalizeLanguage]);
-
-  //Update line count and scroll sync
-  useEffect(() => {
-    updateLineNumbers();
-  }, [code, lineNumbers]);
-
-  const SUPPORTED_LANGUAGES = ['javascript', 'python', 'cpp'];
-  const normalizeLanguage = useCallback((lang) => (SUPPORTED_LANGUAGES.includes(lang) ? lang : 'javascript'), []);
-
-  //Get language from file extension
-  const getLanguageFromExtension = useCallback((extension) => {
-    const langMap = {
-      'js': 'javascript',
-      'jsx': 'javascript',
-      'py': 'python',
-      'cpp': 'cpp',
-      'cc': 'cpp',
-      'cxx': 'cpp',
-      'hpp': 'cpp'
-    };
-    return langMap[extension?.toLowerCase()] || 'javascript';
-  }, []);
+  }, [currentEditor]);
 
   //Update line numbers display
   const updateLineNumbers = useCallback(() => {
@@ -170,6 +163,11 @@ const CodeEditor = ({ fileItem, onClose }) => {
     // Sync scroll
     lineNumbersRef.current.scrollTop = textareaRef.current.scrollTop;
   }, [code, lineNumbers]);
+
+  //Update line count and scroll sync
+  useEffect(() => {
+    updateLineNumbers();
+  }, [updateLineNumbers]);
 
   //Join code editor room
   const joinCodeEditor = useCallback(() => {
@@ -577,7 +575,7 @@ const CodeEditor = ({ fileItem, onClose }) => {
 
   //FIXED: Handle code changes (matching docs pattern)
   const handleCodeChange = useCallback((e) => {
-    const newCode = e.target.value;
+    const newCode = typeof e === 'string' ? e : (e?.target?.value ?? '');
 
     //Always allow local state update for real-time display (like docs)
     setCode(newCode);
@@ -600,26 +598,27 @@ const CodeEditor = ({ fileItem, onClose }) => {
     //Broadcast change to other users (only if user can edit)
     broadcastChange(title, newCode, language);
 
-    //Update and broadcast cursor position
-    const textarea = e.target;
-    const position = {
-      line: newCode.substring(0, textarea.selectionStart).split('\n').length - 1,
-      column: textarea.selectionStart - newCode.lastIndexOf('\n', textarea.selectionStart - 1) - 1
-    };
+    //Update and broadcast cursor position if native textarea selection is present
+    const textarea = e?.target;
+    if (textarea && typeof textarea.selectionStart === 'number') {
+      const position = {
+        line: newCode.substring(0, textarea.selectionStart).split('\n').length - 1,
+        column: textarea.selectionStart - newCode.lastIndexOf('\n', textarea.selectionStart - 1) - 1
+      };
 
-    const selection = {
-      start: textarea.selectionStart,
-      end: textarea.selectionEnd
-    };
+      const selection = {
+        start: textarea.selectionStart,
+        end: textarea.selectionEnd
+      };
 
-    cursorPositionRef.current = position;
-    broadcastCursor(position, selection);
+      cursorPositionRef.current = position;
+      broadcastCursor(position, selection);
+    }
   }, [
     editorPermissions?.canEdit,
     title,
     language,
     broadcastChange,
-
     broadcastCursor
   ]);
 

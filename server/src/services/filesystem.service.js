@@ -554,7 +554,7 @@ export const updateFileSystemItemService = async (
 };
 
 export const moveFileSystemItemService = async (fileSystemId, userId, body) => {
-  const { newParentId } = body;
+  let { newParentId } = body;
 
   // Ensure empty string or undefined becomes null
   if (newParentId === "" || newParentId === undefined) {
@@ -578,6 +578,9 @@ export const moveFileSystemItemService = async (fileSystemId, userId, body) => {
 
   // Verify new parent exists and is a folder (if provided)
   if (newParentId) {
+    if (newParentId.toString() === fileSystemId.toString()) {
+      throw new BadRequestException("Cannot move a folder into itself");
+    }
     const newParent = await FileSystemModel.findById(newParentId);
     if (!newParent) {
       throw new BadRequestException("New parent directory not found");
@@ -587,6 +590,10 @@ export const moveFileSystemItemService = async (fileSystemId, userId, body) => {
     }
     if (newParent.workspaceId.toString() !== fileSystemItem.workspaceId.toString()) {
       throw new BadRequestException("Cannot move items between workspaces");
+    }
+    // Prevent circular folder nesting (moving a folder into one of its descendants)
+    if (fileSystemItem.type === "folder" && newParent.path.startsWith(`${fileSystemItem.path}/`)) {
+      throw new BadRequestException("Cannot move a folder into its own subfolder");
     }
   }
 
