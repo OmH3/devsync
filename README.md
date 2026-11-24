@@ -1,341 +1,132 @@
-# DevSync - Real-time Collaborative Development Platform
+# DevSync — Real-Time Collaborative Workspace Platform
 
-This branch maintains the React/Vite client and Node/Express server.
+DevSync is a real-time collaborative workspace built with **React 19 + Vite** and **Node.js + Express 5 + Socket.IO + MongoDB**. It brings rich documents, interactive whiteboards, a multi-file code editor, and Discord-style audio rooms into a Notion-inspired workspace with built-in **Black / Light** themes.
 
-Implementation and verification are tracked in
-[the implementation plan](docs/NODE_REACT_IMPLEMENTATION_PLAN.md).
-See [benchmark evidence](server/BENCHMARKS.md) for methodology and limitations.
-Deployment packaging for this stack is available in deploy/ and docker-compose.prod.yml.
-
-A comprehensive real-time collaborative platform that enables teams to work together seamlessly with integrated tools for document editing, whiteboard collaboration, code editing, and audio communication.
-
-## 🌟 Project Overview
-
-DevSync solves the challenge of remote team collaboration by providing an all-in-one platform where developers and teams can:
-
-- **Collaborate in real-time** on documents, whiteboards, and code
-- **Communicate effectively** through integrated audio rooms
-- **Manage projects** with workspace-based organization
-- **Share ideas visually** with interactive whiteboards
-- **Code together** with synchronized code editing
-
-### Key Features
-
-- 🔄 **Real-time Collaboration** - Live editing across all tools
-- 📝 **Document Editor** - Rich text editing with auto-save
-- 🎨 **Interactive Whiteboard** - Drawing, shapes, and collaborative sketching
-- 💻 **Code Editor** - Syntax highlighting and live code sharing
-- 🎙️ **Audio Rooms** - Voice communication during collaboration
-- 👥 **Workspace Management** - Role-based access control (Owner, Admin, Member)
-- 🔐 **Authentication** - Google OAuth and local authentication
-- 📱 **Responsive Design** - Works on desktop and mobile devices
-
-## 🛠️ Tech Stack
-
-### Frontend (Client)
-- **React** 19.1.0 - Modern UI library
-- **Vite** - Fast build tool and development server
-- **TailwindCSS** 4.1.11 - Utility-first CSS framework
-- **Zustand** 5.0.6 - State management
-- **React Router** 7.6.2 - Client-side routing
-- **Socket.io Client** 4.8.1 - Real-time communication
-- **Axios** 1.11.0 - HTTP client
-- **WebRTC** - Microphone-only workspace audio rooms
-
-### Backend (Server)
-- **Node.js** with **Express** 5.1.0 - Web server framework
-- **MongoDB** with **Mongoose** 8.16.0 - Database and ODM
-- **Socket.io** 4.8.1 - Real-time WebSocket communication
-- **Passport.js** - Authentication middleware
-- **JWT** - Token-based authentication
-- **Zod** 3.25.75 - Schema validation
-- **Socket.IO** - Authorized audio signaling
-- **bcrypt** - Password hashing
-
-### Development Tools
-- **ESLint** - Code linting
-- **Nodemon** - Development server auto-restart
-- **UUID** - Unique identifier generation
-
-## 🚀 Installation & Setup
-
-### Prerequisites
-- **Node.js** 18.0.0 or higher
-- **npm** or **yarn** package manager
-- **MongoDB** database (local or cloud)
-- Microphone permission for audio rooms (no external account required)
-
-### 1. Clone the Repository
-```bash
-git clone https://github.com/yourusername/devsync.git
-cd devsync
-```
-
-### 2. Server Setup
-```bash
-# Navigate to server directory
-cd server
-
-# Install dependencies
-npm install
-
-# Create environment file
-cp .env.example .env
-
-# Configure environment variables (see Environment Variables section)
-# Start development server
-npm run dev
-```
-
-### 3. Client Setup
-```bash
-# Open new terminal and navigate to client directory
-cd client
-
-# Install dependencies
-npm install
-
-# Create environment file
-cp .env.example .env
-
-# Configure environment variables
-# Start development server
-npm run dev
-```
-
-### 4. Environment Variables
-
-#### Server (.env)
-```env
-# Database
-MONGO_URI=mongodb+srv://username:password@cluster.mongodb.net/devsync?retryWrites=true&w=majority&appName=Cluster0
-# For local development:
-# MONGO_URI=mongodb://localhost:27017/devsync
-
-# Server Configuration
-NODE_ENV=production
-# For development: NODE_ENV=development
-PORT=8000
-# For development: PORT=5000
-
-# Session Configuration
-SESSION_SECRET=your-super-secret-session-key-here
-SESSION_EXPIRES_IN=1d
-
-# Google OAuth
-GOOGLE_CLIENT_ID=your-google-client-id
-GOOGLE_CLIENT_SECRET=your-google-client-secret
-GOOGLE_CALLBACK_URL=https://your-backend-url.onrender.com/api/auth/google/callback
-# For development: GOOGLE_CALLBACK_URL=http://localhost:5000/api/auth/google/callback
-
-# Frontend Configuration
-FRONTEND_ORIGIN=https://your-frontend-url.vercel.app
-FRONTEND_GOOGLE_CALLBACK_URL=https://your-frontend-url.vercel.app/google/callback
-# For development: 
-# FRONTEND_ORIGIN=http://localhost:5173
-# FRONTEND_GOOGLE_CALLBACK_URL=http://localhost:5173/google/callback
-
-# Native audio rooms
-AUDIO_ENABLED=true
-```
-
-#### Client (.env)
-```env
-# API Configuration
-VITE_API_BASE_URL=https://your-backend-url.onrender.com
-# For development: VITE_API_BASE_URL=http://localhost:5000
-
-# Environment
-VITE_NODE_ENV=production
-# For development: VITE_NODE_ENV=development
-```
-
-### 5. Database Setup
-
-#### Option A: Local MongoDB
-1. Install MongoDB locally
-2. Start MongoDB service
-3. The application will create necessary collections automatically
-
-#### Option B: MongoDB Atlas (Cloud)
-1. Create account at [MongoDB Atlas](https://www.mongodb.com/atlas)
-2. Create a new cluster
-3. Get connection string and add to `MONGODB_URI`
-
-### 6. Audio rooms
-Set `AUDIO_ENABLED=true` on the server. Join the Team lounge in the workspace sidebar and allow microphone access. Mute, deafen and leave controls are available; camera tracks are never requested. Rooms support up to eight participants using peer-to-peer WebRTC. HTTPS (or localhost) is required for microphone access. Restrictive networks may require a TURN relay; this local implementation currently uses a public STUN server.
-
-### Workspace editors
-Documents use TipTap rich text, code uses locally bundled Monaco workers, and new whiteboards use Excalidraw. Existing canvas data retains its original renderer. The Node API, MongoDB storage and authorized Socket.IO events remain in use. Document saves retain revision-conflict protection; automatic CRDT merging is not implemented.
-
-## 📋 Usage Instructions
-
-### Running the Application
-
-1. **Start the backend server:**
-   ```bash
-   cd server
-   npm run dev
-   ```
-   Server will run on `http://localhost:5000`
-
-2. **Start the frontend client:**
-   ```bash
-   cd client
-   npm run dev
-   ```
-   Client will run on `http://localhost:5173`
-
-3. **Access the application:**
-   Open your browser and navigate to `http://localhost:5173`
-
-### Basic Workflow
-
-1. **Register/Login** - Create an account or sign in with Google
-2. **Create Workspace** - Set up a new collaborative workspace
-3. **Invite Members** - Add team members with different roles
-4. **Start Collaborating** - Use documents, whiteboard, or code editor
-5. **Communicate** - Join audio rooms for voice communication
-
-### API Endpoints
-
-#### Authentication
-- `POST /api/auth/register` - User registration
-- `POST /api/auth/login` - User login
-- `GET /api/auth/google` - Google OAuth
-- `POST /api/auth/logout` - User logout
-
-#### Workspaces
-- `GET /api/workspaces` - Get user workspaces
-- `POST /api/workspaces/create` - Create workspace
-- `PUT /api/workspaces/:id` - Update workspace
-- `DELETE /api/workspaces/:id` - Delete workspace
-
-#### Documents
-- `GET /api/docs/workspace/:workspaceId` - Get workspace documents
-- `POST /api/docs/create` - Create document
-- `PUT /api/docs/:id` - Update document
-- `DELETE /api/docs/:id` - Delete document
-
-#### Real-time Events (Socket.io)
-- `join-workspace` - Join workspace for real-time updates
-- `doc-text-change` - Real-time document editing
-- `whiteboard-update` - Real-time whiteboard changes
-- `code-change` - Real-time code editing
-
-## 🏗️ Build & Deployment
-
-### Development Build
-```bash
-# Client
-cd client
-npm run build
-
-# Server
-cd server
-npm start
-```
-
-### Production Deployment
-
-#### Manual Deployment
-1. **Build client:**
-   ```bash
-   cd client
-   npm run build
-   ```
-
-2. **Deploy server:**
-   ```bash
-   cd server
-   npm start
-   ```
-
-### Environment-Specific Configuration
-
-- **Development:** Local MongoDB, verbose logging
-- **Staging:** Cloud database, moderate logging
-- **Production:** Optimized builds, minimal logging, HTTPS
-
-## 🤝 Contributing
-
-We welcome contributions! Please follow these guidelines:
-
-### Development Workflow
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Make your changes
-4. Run tests: `npm test`
-5. Commit changes: `git commit -m 'Add amazing feature'`
-6. Push to branch: `git push origin feature/amazing-feature`
-7. Open a Pull Request
-
-### Coding Standards
-- Use ESLint configuration provided
-- Follow React best practices
-- Write meaningful commit messages
-- Add comments for complex logic
-- Ensure responsive design
-
-### Code Structure
-```
-client/
-├── src/
-│   ├── components/     # Reusable UI components
-│   ├── pages/         # Route components
-│   ├── hooks/         # Custom React hooks
-│   ├── store/         # Zustand state management
-│   ├── services/      # API service layers
-│   └── utils/         # Utility functions
-
-server/
-├── src/
-│   ├── controllers/   # Route handlers
-│   ├── services/      # Business logic
-│   ├── models/        # Database models
-│   ├── routes/        # Express routes
-│   ├── middleware/    # Custom middleware
-│   ├── handlers/      # Socket.io handlers
-│   └── validation/    # Input validation schemas
-```
-
-## 🐛 Known Issues & Roadmap
-
-### Known Issues
-- Audio rooms may have connectivity issues on some networks
-- Large whiteboard drawings may cause performance lag
-
-### Upcoming Features
-- 🎨 **Themes** - Dark mode and custom themes
-- 🤖 **AI Integration** - AI-powered code suggestions
-- 📈 **Version Control** - Document and code versioning
-
-### Performance Improvements
-- Optimize real-time sync algorithms
-- Implement lazy loading for large documents
-- Add caching for frequently accessed data
-
-## 📜 License
-
-This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
-
-## 👥 Credits
-
-### Core Contributors
-- **Development Team** - Full-stack development and architecture
-- **UI/UX Design** - Interface design and user experience
-
-### Libraries & Services
-- **React Team** - React framework
-- **Socket.io** - Real-time communication
-- **MongoDB** - Database solution
-- **TipTap, Monaco and Excalidraw** - Workspace editors
-- **Tailwind CSS** - CSS framework
-
-### Special Thanks
-- Open source community for invaluable libraries and tools
-- Beta testers for feedback and bug reports
+- **Implementation Plan**: [docs/NODE_REACT_IMPLEMENTATION_PLAN.md](docs/NODE_REACT_IMPLEMENTATION_PLAN.md)
+- **AWS Free Tier Deployment Guide**: [docs/DEPLOY_AWS_FREE_TIER.md](docs/DEPLOY_AWS_FREE_TIER.md)
+- **Benchmark Methodology & Results**: [server/BENCHMARKS.md](server/BENCHMARKS.md)
 
 ---
 
-**DevSync** - Empowering teams to collaborate seamlessly in real-time 🚀
+## ✨ Key Features
+
+- 📝 **Rich Document Editor (TipTap)** — Real-time collaborative rich-text editing with headings, lists, blockquotes, code blocks, auto-save, and revision-conflict (`409`) protection.
+- 🎨 **Interactive Whiteboard (Excalidraw)** — Real-time collaborative canvas for diagrams, shapes, and freehand sketching with backward compatibility for legacy canvas boards.
+- 💻 **Collaborative Code Editor (Monaco)** — VS Code–powered editor supporting **JavaScript**, **Python**, and **C++**, with a hierarchical file explorer, VS Code–style drag-and-drop of files into folders, live peer cursors, auto-save, and optional code execution.
+- 🎙️ **Team Lounge Audio Rooms (WebRTC)** — Discord-style microphone-only peer-to-peer voice rooms (up to 8 participants per workspace) with mute, deafen, and live participant indicators—no third-party voice SDK or API keys required.
+- 🌗 **Black & Light Theme Toggle** — Notion-inspired warm neutral Light mode and high-contrast Black mode (`#191919` / `#202020`) synchronized across workspace views, Monaco (`vs-dark` / `vs`), and Excalidraw (`dark` / `light`).
+- 🔐 **Role-Based Access Control** — Granular workspace permissions (`OWNER`, `ADMIN`, `MEMBER`) enforced on both REST endpoints and per-packet Socket.IO resource events.
+
+---
+
+## 🛠️ Tech Stack
+
+### Frontend (`client/`)
+- **React 19** + **Vite 7** + **Tailwind CSS 4**
+- **TipTap** (`@tiptap/react`, `@tiptap/starter-kit`) for rich documents
+- **Monaco Editor** (`@monaco-editor/react`, `monaco-editor`) with local web workers for code editing
+- **Excalidraw** (`@excalidraw/excalidraw`) for whiteboards
+- **Zustand 5** + **TanStack React Query 5** for state and server cache
+- **Socket.IO Client 4.8** (single shared tab-wide connection with workspace room reference counting)
+- **Native WebRTC** (`RTCPeerConnection`) for microphone-only audio rooms
+
+### Backend (`server/`)
+- **Node.js 22** + **Express 5**
+- **MongoDB 7** + **Mongoose 8** (replica set transaction support for multi-collection operations)
+- **Socket.IO 4.8** with per-packet resource authorization middleware
+- **Zod** for strict environment and request schema validation
+- **Pino** for structured JSON logging with automatic credential/cookie redaction
+
+---
+
+## 🚀 Local Development Setup
+
+### Prerequisites
+- **Node.js** `>= 18` (Node 22 LTS recommended)
+- **MongoDB 7** (replica set recommended for multi-document transactions, e.g. `mongodb://127.0.0.1:27017/devsync?replicaSet=rs0`)
+
+### 1. Clone & Install
+```bash
+git clone https://github.com/OmH3/devsync.git
+cd devsync
+
+# Install backend dependencies
+cd server && npm install
+
+# Install frontend dependencies
+cd ../client && npm install
+```
+
+### 2. Configure Environment Variables
+Copy the example environment file into `server/.env`:
+```bash
+cp .env.example server/.env
+```
+*(Optional)* For the frontend, no `.env` is required in development or same-origin production because Vite proxies `/api` and `/socket.io` to `http://localhost:8000` automatically. See `client/.env.example` if hosting the API on a separate origin.
+
+#### Required vs. Optional Server Environment Variables (`server/.env`)
+
+| Variable | Required? | Default | Purpose |
+| :--- | :--- | :--- | :--- |
+| `MONGO_URI` | **Yes** | — | MongoDB connection string (`mongodb://...` or `mongodb+srv://...`) |
+| `SESSION_SECRET` | **Yes** | — | Secret key (**minimum 32 characters**) used to sign session tokens |
+| `PORT` | No | `8000` | HTTP/Socket.IO listen port |
+| `FRONTEND_ORIGIN` | No | `http://localhost:5173` | Allowed CORS origin for the frontend |
+| `AUDIO_ENABLED` | No | `true` | Enables native WebRTC voice rooms in the workspace sidebar |
+| `CODE_EXECUTION_ENABLED` | No | `false` | Enables local code execution (`JavaScript`, `Python`, `C++`) in the Code Editor (must be `false` when `NODE_ENV=production`) |
+| `GOOGLE_AUTH_ENABLED` | No | `false` | Enables Google Sign-In (requires `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_CALLBACK_URL` when `true`) |
+| `PUBLIC_ORIGIN` | Prod only | — | Required when `NODE_ENV=production` (must be `https://...`) |
+
+### 3. Seed Roles & Start Servers
+```bash
+# Seed OWNER / ADMIN / MEMBER role permissions (idempotent)
+cd server
+npm run seed
+
+# Start backend on http://localhost:8000
+npm run dev
+```
+
+In a second terminal:
+```bash
+# Start frontend on http://localhost:5173
+cd client
+npm run dev
+```
+
+Open `http://localhost:5173` in your browser.
+
+---
+
+## 🧪 Testing & Verification
+
+Run the backend unit & security test suite (environment validation, log redaction, per-packet socket authorization, WebRTC voice signaling, and benchmark metrics):
+```bash
+cd server
+npm test
+```
+
+Build the production frontend bundle:
+```bash
+cd client
+npm run build
+```
+
+---
+
+## ☁️ Production Deployment (Docker Compose & AWS Free Tier)
+
+Production packaging is included in [`docker-compose.prod.yml`](docker-compose.prod.yml), [`server/Dockerfile`](server/Dockerfile), [`deploy/web.Dockerfile`](deploy/web.Dockerfile), and [`deploy/Caddyfile`](deploy/Caddyfile):
+
+1. Copy [`.env.production.example`](.env.production.example) to `.env.production` and set `DOMAIN`, `PUBLIC_ORIGIN`, `FRONTEND_ORIGIN`, and a 32+ byte `SESSION_SECRET`.
+2. Start the stack:
+   ```bash
+   docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build
+   ```
+3. Initialize the MongoDB replica set and seed roles as documented in [`docs/DEPLOY_AWS_FREE_TIER.md`](docs/DEPLOY_AWS_FREE_TIER.md).
+
+---
+
+## 📜 License
+
+Licensed under the [MIT License](LICENSE).
