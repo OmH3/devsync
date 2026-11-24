@@ -152,6 +152,28 @@ html[data-theme="dark"] .bg-slate-100,
 html[data-theme="dark"] .bg-stone-200\/60 {
   background-color: #2a2a2a !important;
 }
+html[data-theme="dark"] .bg-gray-200,
+html[data-theme="dark"] .bg-gray-300 {
+  background-color: #2f2f2f !important;
+  color: #e6e6e4 !important;
+}
+html[data-theme="dark"] .hover\:bg-gray-300:hover,
+html[data-theme="dark"] .hover\:bg-gray-400:hover {
+  background-color: #3a3a3a !important;
+  color: #ffffff !important;
+}
+html[data-theme="dark"] .disabled\:bg-gray-300:disabled {
+  background-color: #2a2a2a !important;
+  color: #787774 !important;
+}
+html[data-theme="dark"] .bg-indigo-600 {
+  background-color: #3b82f6 !important;
+  color: #ffffff !important;
+}
+html[data-theme="dark"] .hover\:bg-indigo-700:hover {
+  background-color: #2563eb !important;
+  color: #ffffff !important;
+}
 html[data-theme="dark"] .from-indigo-50 {
   --tw-gradient-from: #222222 !important;
 }
