@@ -107,7 +107,7 @@ const CodeEditor = ({ fileItem, onClose }) => {
           const editor = editorResult.editor;
           setCode(editor.content || '');
           setTitle(editor.title || fileItem.name);
-          setLanguage(editor.language || getLanguageFromExtension(fileItem.metadata?.extension));
+          setLanguage(normalizeLanguage(editor.language || getLanguageFromExtension(fileItem.metadata?.extension)));
 
           // Fetch permissions
           const permResult = await fetchUserRoleInCodeEditor(editor._id);
@@ -133,41 +133,30 @@ const CodeEditor = ({ fileItem, onClose }) => {
     if (currentEditor && !isUpdatingFromSocketRef.current && !pendingSaveRef.current) {
       setCode(currentEditor.content || '');
       setTitle(currentEditor.title || '');
-      setLanguage(currentEditor.language || 'javascript');
+      setLanguage(normalizeLanguage(currentEditor.language));
     }
-  }, [currentEditor]);
+  }, [currentEditor, normalizeLanguage]);
 
   //Update line count and scroll sync
   useEffect(() => {
     updateLineNumbers();
   }, [code, lineNumbers]);
 
+  const SUPPORTED_LANGUAGES = ['javascript', 'python', 'cpp'];
+  const normalizeLanguage = useCallback((lang) => (SUPPORTED_LANGUAGES.includes(lang) ? lang : 'javascript'), []);
+
   //Get language from file extension
   const getLanguageFromExtension = useCallback((extension) => {
     const langMap = {
       'js': 'javascript',
       'jsx': 'javascript',
-      'ts': 'typescript',
-      'tsx': 'typescript',
       'py': 'python',
-      'java': 'java',
       'cpp': 'cpp',
-      'c': 'c',
-      'html': 'html',
-      'css': 'css',
-      'scss': 'scss',
-      'sass': 'sass',
-      'json': 'json',
-      'xml': 'xml',
-      'md': 'markdown',
-      'php': 'php',
-      'rb': 'ruby',
-      'go': 'go',
-      'rs': 'rust',
-      'kt': 'kotlin',
-      'swift': 'swift'
+      'cc': 'cpp',
+      'cxx': 'cpp',
+      'hpp': 'cpp'
     };
-    return langMap[extension?.toLowerCase()] || 'text';
+    return langMap[extension?.toLowerCase()] || 'javascript';
   }, []);
 
   //Update line numbers display
@@ -836,10 +825,7 @@ const handleExecuteCode = useCallback(async () => {
 
   const getLanguageIcon = (lang) => {
     const icons = {
-      'javascript': '', 'typescript': '', 'python': '', 'java': '',
-      'cpp': '', 'c': '', 'html': '', 'css': '', 'scss': '',
-      'json': '', 'markdown': '', 'php': '', 'ruby': '',
-      'go': '', 'rust': '', 'kotlin': '', 'swift': ''
+      'javascript': '', 'python': '', 'cpp': ''
     };
     return icons[lang] || '';
   };
@@ -928,15 +914,8 @@ const handleExecuteCode = useCallback(async () => {
               className="text-sm border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100"
             >
               <option value="javascript">JavaScript</option>
-              <option value="typescript">TypeScript</option>
               <option value="python">Python</option>
-              <option value="java">Java</option>
               <option value="cpp">C++</option>
-              <option value="c">C</option>
-              <option value="html">HTML</option>
-              <option value="css">CSS</option>
-              <option value="json">JSON</option>
-              <option value="markdown">Markdown</option>
             </select>
           </div>
 
@@ -1071,7 +1050,7 @@ const handleExecuteCode = useCallback(async () => {
         {/* Code Editor */}
         <div className="flex-1 flex flex-col">
           {/* Input Panel */}
-          {['python', 'java', 'cpp', 'c'].includes(language) && (
+          {['python', 'cpp'].includes(language) && (
             <div className="border-b border-gray-200 p-3 bg-gray-50">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Program Input (optional):

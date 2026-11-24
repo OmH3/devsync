@@ -10,7 +10,6 @@ const CodeEditorMain = ({ workspaceId, workspace }) => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [showEditor, setShowEditor] = useState(false);
   const [showWelcome, setShowWelcome] = useState(true);
-  const [recentFiles, setRecentFiles] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState('split'); // 'split', 'editor-only', 'explorer-only'
   const [sidebarWidth, setSidebarWidth] = useState(300);
@@ -18,7 +17,6 @@ const CodeEditorMain = ({ workspaceId, workspace }) => {
 
   //Real-time collaboration states
   const [isConnected, setIsConnected] = useState(false);
-  const [globalActiveUsers, setGlobalActiveUsers] = useState([]);
   const [workspaceUserCount, setWorkspaceUserCount] = useState(1);
   const [hasJoinedWorkspace, setHasJoinedWorkspace] = useState(false);
 
@@ -33,7 +31,6 @@ const CodeEditorMain = ({ workspaceId, workspace }) => {
   const { 
     fileSystemItems,
     fetchWorkspaceFileSystem,
-    createFileSystemItem,
     error: fsError,
     isLoading: fsLoading,
     clearError: clearFsError
@@ -56,7 +53,6 @@ const CodeEditorMain = ({ workspaceId, workspace }) => {
     setShowWelcome(true);
     setSearchQuery('');
     setHasJoinedWorkspace(false);
-    setGlobalActiveUsers([]);
     setWorkspaceUserCount(1);
 
     // Clear editor state
@@ -90,7 +86,6 @@ const CodeEditorMain = ({ workspaceId, workspace }) => {
       console.log(' Leaving workspace from code editor main:', workspaceId);
       socket.emit('leave-workspace', workspaceId);
       setHasJoinedWorkspace(false);
-      setGlobalActiveUsers([]);
       setWorkspaceUserCount(1);
     };
 
@@ -100,16 +95,6 @@ const CodeEditorMain = ({ workspaceId, workspace }) => {
       setHasJoinedWorkspace(true);
       setWorkspaceUserCount(data.userCount || 1);
       isJoiningRef.current = false;
-    };
-
-    const handleUserJoinedWorkspace = (userData) => {
-      console.log(' User joined workspace:', userData);
-      setGlobalActiveUsers(prev => [...prev.filter(u => u.userId !== userData.userId), userData]);
-    };
-
-    const handleUserLeftWorkspace = (userData) => {
-      console.log(' User left workspace:', userData);
-      setGlobalActiveUsers(prev => prev.filter(u => u.userId !== userData.userId));
     };
 
     const handleWorkspaceUserCount = (payload) => {
@@ -127,7 +112,6 @@ const CodeEditorMain = ({ workspaceId, workspace }) => {
       console.log(' Socket disconnected from code editor main');
       setIsConnected(false);
       setHasJoinedWorkspace(false);
-      setGlobalActiveUsers([]);
       setWorkspaceUserCount(1);
       isJoiningRef.current = false;
     };
@@ -140,34 +124,18 @@ const CodeEditorMain = ({ workspaceId, workspace }) => {
     socket.on('connect', handleConnect);
     socket.on('disconnect', handleDisconnect);
     socket.on('workspace-joined', handleWorkspaceJoined);
-    socket.on('user-joined-workspace', handleUserJoinedWorkspace);
-    socket.on('user-left-workspace', handleUserLeftWorkspace);
     socket.on('workspace-user-count', handleWorkspaceUserCount);
 
     return () => {
       socket.off('connect', handleConnect);
       socket.off('disconnect', handleDisconnect);
       socket.off('workspace-joined', handleWorkspaceJoined);
-      socket.off('user-joined-workspace', handleUserJoinedWorkspace);
-      socket.off('user-left-workspace', handleUserLeftWorkspace);
       socket.off('workspace-user-count', handleWorkspaceUserCount);
       leaveWorkspace();
     };
   }, [socket, workspaceId, hasJoinedWorkspace]);
 
-  //Load recent files from localStorage
-  useEffect(() => {
-    const savedRecent = localStorage.getItem(`recent-files-${workspaceId}`);
-    if (savedRecent) {
-      try {
-        setRecentFiles(JSON.parse(savedRecent));
-      } catch (error) {
-        console.error('Failed to parse recent files:', error);
-      }
-    }
-  }, [workspaceId]);
-
-  //Handle file selection with recent files tracking
+  //Handle file selection
   const handleFileSelect = useCallback((file) => {
     if (file.type !== 'file') return;
 
@@ -175,15 +143,7 @@ const CodeEditorMain = ({ workspaceId, workspace }) => {
     setSelectedFile(file);
     setShowEditor(true);
     setShowWelcome(false);
-
-    // Add to recent files
-    setRecentFiles(prev => {
-      const filtered = prev.filter(f => f._id !== file._id);
-      const updated = [file, ...filtered].slice(0, 10); // Keep last 10
-      localStorage.setItem(`recent-files-${workspaceId}`, JSON.stringify(updated));
-      return updated;
-    });
-  }, [workspaceId]);
+  }, []);
 
   //Handle editor close with confirmation if unsaved changes
   const handleCloseEditor = useCallback((hasUnsavedChanges = false) => {
@@ -201,27 +161,6 @@ const CodeEditorMain = ({ workspaceId, workspace }) => {
     clearEditor();
     return true;
   }, [clearEditor]);
-
-  //Handle file creation with automatic opening
-  const handleCreateFile = useCallback(async (fileName, fileType = 'file', parentId = null) => {
-    if (!fileName.trim()) return null;
-
-    const result = await createFileSystemItem({
-      name: fileName.trim(),
-      type: fileType,
-      parentId,
-      workspaceId
-    });
-
-    if (result.success && result.item.type === 'file') {
-      // Auto-open newly created files
-      setTimeout(() => {
-        handleFileSelect(result.item);
-      }, 100);
-    }
-
-    return result;
-  }, [createFileSystemItem, workspaceId, handleFileSelect]);
 
   //Handle sidebar resize
   const handleMouseDown = useCallback((e) => {
@@ -257,212 +196,15 @@ const CodeEditorMain = ({ workspaceId, workspace }) => {
     file.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  //Get file language for syntax highlighting preview
-  const getFileLanguage = (file) => {
-    const ext = file.metadata?.extension?.toLowerCase();
-    const langMap = {
-      'js': 'JavaScript', 'jsx': 'React', 'ts': 'TypeScript', 'tsx': 'TypeScript React',
-      'py': 'Python', 'java': 'Java', 'cpp': 'C++', 'c': 'C',
-      'html': 'HTML', 'css': 'CSS', 'scss': 'SCSS', 'json': 'JSON',
-      'md': 'Markdown', 'php': 'PHP', 'rb': 'Ruby', 'go': 'Go'
-    };
-    return langMap[ext] || 'Text';
-  };
-
   //Get file icon
   const getFileIcon = (file) => {
     const ext = file.metadata?.extension?.toLowerCase();
     const icons = {
-      'js': '', 'jsx': '', 'ts': '', 'tsx': '',
-      'py': '', 'java': '', 'cpp': '', 'c': '',
-      'html': '', 'css': '', 'scss': '', 'json': '',
-      'md': '', 'php': '', 'rb': '', 'go': ''
+      'js': 'JS', 'jsx': 'JS',
+      'py': 'PY', 'cpp': 'C+', 'cc': 'C+', 'cxx': 'C+', 'hpp': 'C+'
     };
-    return icons[ext] || '';
+    return icons[ext] || '📄';
   };
-
-  //Quick Actions Component
-  const QuickActions = () => (
-    <div className="bg-white rounded-lg border border-gray-200 p-6">
-      <h4 className="font-medium text-gray-900 mb-4">Quick Actions</h4>
-      <div className="grid grid-cols-2 gap-3">
-        <button
-          onClick={() => handleCreateFile('script.js')}
-          className="flex items-center space-x-2 p-3 text-left rounded-lg border border-gray-200 hover:border-yellow-400 hover:bg-yellow-50 transition-colors"
-        >
-          <span className="text-xl"></span>
-          <div>
-            <div className="font-medium text-sm">New JavaScript</div>
-            <div className="text-xs text-gray-500">Create JS file</div>
-          </div>
-        </button>
-
-        <button
-          onClick={() => handleCreateFile('script.py')}
-          className="flex items-center space-x-2 p-3 text-left rounded-lg border border-gray-200 hover:border-green-400 hover:bg-green-50 transition-colors"
-        >
-          <span className="text-xl"></span>
-          <div>
-            <div className="font-medium text-sm">New Python</div>
-            <div className="text-xs text-gray-500">Create PY file</div>
-          </div>
-        </button>
-
-        <button
-          onClick={() => handleCreateFile('index.html')}
-          className="flex items-center space-x-2 p-3 text-left rounded-lg border border-gray-200 hover:border-blue-400 hover:bg-blue-50 transition-colors"
-        >
-          <span className="text-xl"></span>
-          <div>
-            <div className="font-medium text-sm">New HTML</div>
-            <div className="text-xs text-gray-500">Create HTML file</div>
-          </div>
-        </button>
-
-        <button
-          onClick={() => handleCreateFile('style.css')}
-          className="flex items-center space-x-2 p-3 text-left rounded-lg border border-gray-200 hover:border-pink-400 hover:bg-pink-50 transition-colors"
-        >
-          <span className="text-xl"></span>
-          <div>
-            <div className="font-medium text-sm">New CSS</div>
-            <div className="text-xs text-gray-500">Create CSS file</div>
-          </div>
-        </button>
-      </div>
-    </div>
-  );
-
-  //Recent Files Component
-  const RecentFiles = () => (
-    <div className="bg-white rounded-lg border border-gray-200 p-6">
-      <h4 className="font-medium text-gray-900 mb-4">Recent Files</h4>
-      {recentFiles.length === 0 ? (
-        <div className="text-center text-gray-500 py-4">
-          <div className="text-gray-400 mb-2"></div>
-          <p className="text-sm">No recent files</p>
-        </div>
-      ) : (
-        <div className="space-y-2">
-          {recentFiles.slice(0, 5).map(file => (
-            <button
-              key={file._id}
-              onClick={() => handleFileSelect(file)}
-              className="w-full flex items-center space-x-3 p-2 text-left rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              <span className="text-lg flex-shrink-0">{getFileIcon(file)}</span>
-              <div className="flex-1 min-w-0">
-                <div className="font-medium text-sm text-gray-900 truncate">
-                  {file.name}
-                </div>
-                <div className="text-xs text-gray-500">
-                  {getFileLanguage(file)} • {file.path}
-                </div>
-              </div>
-            </button>
-          ))}
-          {recentFiles.length > 5 && (
-            <div className="text-xs text-gray-500 text-center pt-2">
-              +{recentFiles.length - 5} more files
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-
-  //Workspace Stats Component
-  const WorkspaceStats = () => {
-    const totalFiles = fileSystemItems.filter(item => item.type === 'file').length;
-    const totalFolders = fileSystemItems.filter(item => item.type === 'folder').length;
-    const languageStats = fileSystemItems
-      .filter(item => item.type === 'file')
-      .reduce((acc, file) => {
-        const lang = getFileLanguage(file);
-        acc[lang] = (acc[lang] || 0) + 1;
-        return acc;
-      }, {});
-
-    return (
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <h4 className="font-medium text-gray-900 mb-4">Workspace Stats</h4>
-
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <div className="text-center p-3 bg-blue-50 rounded-lg">
-            <div className="text-2xl font-bold text-blue-600">{totalFiles}</div>
-            <div className="text-sm text-blue-800">Files</div>
-          </div>
-          <div className="text-center p-3 bg-green-50 rounded-lg">
-            <div className="text-2xl font-bold text-green-600">{totalFolders}</div>
-            <div className="text-sm text-green-800">Folders</div>
-          </div>
-        </div>
-
-        {Object.keys(languageStats).length > 0 && (
-          <div>
-            <div className="text-sm font-medium text-gray-700 mb-2">Languages:</div>
-            <div className="space-y-1">
-              {Object.entries(languageStats)
-                .sort(([,a], [,b]) => b - a)
-                .slice(0, 4)
-                .map(([lang, count]) => (
-                  <div key={lang} className="flex justify-between text-sm">
-                    <span className="text-gray-600">{lang}</span>
-                    <span className="font-medium text-gray-900">{count}</span>
-                  </div>
-                ))
-              }
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  //Connection Status Component
-  const ConnectionStatus = () => (
-    <div className="bg-white rounded-lg border border-gray-200 p-6">
-      <h4 className="font-medium text-gray-900 mb-4">Collaboration Status</h4>
-
-      <div className="space-y-3">
-        <div className="flex items-center space-x-2">
-          <div className={`w-3 h-3 rounded-full ${
-            isConnected && hasJoinedWorkspace ? 'bg-green-500' : 
-            isConnected ? 'bg-yellow-500' : 'bg-red-500'
-          }`}></div>
-          <span className="text-sm text-gray-700">
-            {isConnected && hasJoinedWorkspace ? 'Connected' :
-             isConnected ? 'Connecting...' : 'Disconnected'}
-          </span>
-        </div>
-
-        <div className="flex items-center space-x-2">
-          <span className="text-gray-500"></span>
-          <span className="text-sm text-gray-700">
-            {workspaceUserCount} user{workspaceUserCount !== 1 ? 's' : ''} online
-          </span>
-        </div>
-
-        {globalActiveUsers.length > 0 && (
-          <div className="pt-2 border-t border-gray-200">
-            <div className="text-xs text-gray-500 mb-2">Active Users:</div>
-            <div className="space-y-1">
-              {globalActiveUsers.slice(0, 3).map(activeUser => (
-                <div key={activeUser.userId} className="text-xs text-gray-600">
-                  {activeUser.userName}
-                </div>
-              ))}
-              {globalActiveUsers.length > 3 && (
-                <div className="text-xs text-gray-500">
-                  +{globalActiveUsers.length - 3} more
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
 
   //Handle view mode changes
   const handleViewModeChange = (mode) => {
@@ -741,7 +483,7 @@ const CodeEditorMain = ({ workspaceId, workspace }) => {
                 </p>
 
                 {/* Getting Started Steps */}
-                <div className="bg-gradient-to-r from-indigo-50 to-blue-50 rounded-xl p-8 mb-8">
+                <div className="bg-gradient-to-r from-indigo-50 to-blue-50 rounded-xl p-8">
                   <h3 className="text-xl font-semibold text-gray-900 mb-6">Getting Started</h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="text-center">
@@ -765,118 +507,6 @@ const CodeEditorMain = ({ workspaceId, workspace }) => {
                       <h4 className="font-medium text-gray-900 mb-2">Execute & Share</h4>
                       <p className="text-sm text-gray-600">Share edits with your team. Code execution depends on deployment capabilities.</p>
                     </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Dashboard Grid */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
-                <div className="xl:col-span-1">
-                  <QuickActions />
-                </div>
-
-                <div className="xl:col-span-1">
-                  <RecentFiles />
-                </div>
-
-                <div className="xl:col-span-1 lg:col-span-2">
-                  <div className="grid grid-cols-1 gap-6">
-                    <WorkspaceStats />
-                    <ConnectionStatus />
-                  </div>
-                </div>
-              </div>
-
-              {/* Features Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                <div className="bg-white rounded-lg border border-gray-200 p-6">
-                  <div className="text-center">
-                    <div className="text-3xl mb-3"></div>
-                    <h4 className="font-medium text-gray-900 mb-2">Code workspace</h4>
-                    <p className="text-sm text-gray-600">
-                      Edit files with your team. Execution controls appear only when enabled for this deployment.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="bg-white rounded-lg border border-gray-200 p-6">
-                  <div className="text-center">
-                    <div className="text-3xl mb-3"></div>
-                    <h4 className="font-medium text-gray-900 mb-2">Live Collaboration</h4>
-                    <p className="text-sm text-gray-600">
-                      Code together in real-time. See cursor positions, edits, and execution results from your teammates.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="bg-white rounded-lg border border-gray-200 p-6">
-                  <div className="text-center">
-                    <div className="text-3xl mb-3"></div>
-                    <h4 className="font-medium text-gray-900 mb-2">Auto-save</h4>
-                    <p className="text-sm text-gray-600">
-                      Changes save after you pause typing. Check the save indicator before leaving.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="bg-white rounded-lg border border-gray-200 p-6">
-                  <div className="text-center">
-                    <div className="text-3xl mb-3"></div>
-                    <h4 className="font-medium text-gray-900 mb-2">Language selection</h4>
-                    <p className="text-sm text-gray-600">
-                      Choose a language for your file in the editor.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="bg-white rounded-lg border border-gray-200 p-6">
-                  <div className="text-center">
-                    <div className="text-3xl mb-3"></div>
-                    <h4 className="font-medium text-gray-900 mb-2">Role-based Access</h4>
-                    <p className="text-sm text-gray-600">
-                      Control who can view, edit, and execute code with granular permission management.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="bg-white rounded-lg border border-gray-200 p-6">
-                  <div className="text-center">
-                    <div className="text-3xl mb-3"></div>
-                    <h4 className="font-medium text-gray-900 mb-2">File Management</h4>
-                    <p className="text-sm text-gray-600">
-                      Organize code with folders, drag-and-drop files, and powerful search capabilities.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Keyboard Shortcuts */}
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <h4 className="font-medium text-gray-900 mb-4">Keyboard Shortcuts</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Save file</span>
-                    <kbd className="px-2 py-1 text-xs font-semibold text-gray-800 bg-gray-100 border border-gray-300 rounded">Ctrl+S</kbd>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Execute code</span>
-                    <kbd className="px-2 py-1 text-xs font-semibold text-gray-800 bg-gray-100 border border-gray-300 rounded">Ctrl+Enter</kbd>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Tab indent</span>
-                    <kbd className="px-2 py-1 text-xs font-semibold text-gray-800 bg-gray-100 border border-gray-300 rounded">Tab</kbd>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Search files</span>
-                    <kbd className="px-2 py-1 text-xs font-semibold text-gray-800 bg-gray-100 border border-gray-300 rounded">Ctrl+P</kbd>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Toggle console</span>
-                    <kbd className="px-2 py-1 text-xs font-semibold text-gray-800 bg-gray-100 border border-gray-300 rounded">Ctrl+`</kbd>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">New file</span>
-                    <kbd className="px-2 py-1 text-xs font-semibold text-gray-800 bg-gray-100 border border-gray-300 rounded">Ctrl+N</kbd>
                   </div>
                 </div>
               </div>

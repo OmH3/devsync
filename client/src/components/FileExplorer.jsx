@@ -7,8 +7,6 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [createType, setCreateType] = useState('file');
   const [contextMenu, setContextMenu] = useState(null);
-  const [draggedItem, setDraggedItem] = useState(null);
-  const [dropTarget, setDropTarget] = useState(null);
   const [expandedFolders, setExpandedFolders] = useState(new Set());
   const [, setRenamingItem] = useState(null);
   const [selectedItems, setSelectedItems] = useState(new Set());
@@ -21,7 +19,6 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
   const [hasJoinedWorkspace, setHasJoinedWorkspace] = useState(false);
 
   //Refs for managing state
-  const dropZoneRef = useRef(null);
   const isJoiningRef = useRef(false);
 
   //Hooks
@@ -35,7 +32,6 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
     createFileSystemItem,
     deleteFileSystemItem,
     updateFileSystemItem,
-    moveFileSystemItem,
     duplicateFileSystemItem,
     bulkDeleteItems,
     setCurrentFolder,
@@ -228,71 +224,10 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
     const ext = item.metadata?.extension?.toLowerCase();
     switch (ext) {
       case 'js': case 'jsx': return 'JS';
-      case 'ts': case 'tsx': return 'TS';
       case 'py': return 'PY';
-      case 'java': return 'JV';
-      case 'cpp': case 'c': return 'C+';
-      case 'html': return '<>';
-      case 'css': case 'scss': case 'sass': return '#';
-      case 'json': return '{}';
-      case 'md': case 'markdown': return 'MD';
-      case 'txt': return '📄';
+      case 'cpp': case 'cc': case 'cxx': case 'hpp': return 'C+';
       default: return '📄';
     }
-  };
-
-  //Handle drag and drop operations
-  const handleDragStart = (e, item) => {
-    if (!permissions?.canMove && item.creatorId !== user._id) {
-      e.preventDefault();
-      return;
-    }
-    
-    setDraggedItem(item);
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', item._id);
-    
-    // Add visual feedback
-    e.target.style.opacity = '0.5';
-  };
-
-  const handleDragEnd = (e) => {
-    e.target.style.opacity = '1';
-    setDraggedItem(null);
-    setDropTarget(null);
-  };
-
-  const handleDragOver = (e, targetItem) => {
-    if (!draggedItem || draggedItem._id === targetItem._id) return;
-    if (targetItem.type !== 'folder' && !targetItem.isRoot) return;
-    
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    setDropTarget(targetItem);
-  };
-
-  const handleDragLeave = () => {
-    setDropTarget(null);
-  };
-
-  const handleDrop = async (e, targetItem) => {
-    e.preventDefault();
-    setDropTarget(null);
-    
-    if (!draggedItem) return;
-    
-    const targetParentId = targetItem.isRoot ? null : targetItem._id;
-    
-    // Prevent dropping item into itself or its children
-    if (draggedItem._id === targetParentId) return;
-    
-    try {
-      await moveFileSystemItem(draggedItem._id, targetParentId);
-    } catch (error) {
-      console.error('Move failed:', error);
-    }
-    
-    setDraggedItem(null);
   };
 
   //Handle item operations
@@ -396,8 +331,6 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
     const isExpanded = expandedFolders.has(item._id);
     const isSelected = selectedItems.has(item._id);
     const paddingLeft = level * 20;
-    const isDroppable = item.type === 'folder' && draggedItem && draggedItem._id !== item._id;
-    const isBeingDraggedOver = dropTarget && dropTarget._id === item._id;
 
     useEffect(() => {
       if (isRenaming && inputRef.current) {
@@ -411,14 +344,8 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
         <div
           className={`flex items-center py-1 px-2 cursor-pointer group relative ${
             isSelected ? 'bg-blue-100 border-l-2 border-blue-500' : 'hover:bg-gray-100'
-          } ${isBeingDraggedOver ? 'bg-green-100 border-green-500' : ''}`}
+          }`}
           style={{ paddingLeft: `${paddingLeft + 8}px` }}
-          draggable={!isRenaming}
-          onDragStart={(e) => handleDragStart(e, item)}
-          onDragEnd={handleDragEnd}
-          onDragOver={isDroppable ? (e) => handleDragOver(e, item) : undefined}
-          onDragLeave={isDroppable ? handleDragLeave : undefined}
-          onDrop={isDroppable ? (e) => handleDrop(e, item) : undefined}
           onClick={(e) => {
             if (isRenaming) return;
             
@@ -632,7 +559,7 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
               />
               {selectedType === 'file' && (
                 <p className="mt-1 text-xs text-gray-500">
-                  Include file extension (e.g., script.js, document.txt)
+                  Include file extension (e.g., script.js, main.py, app.cpp)
                 </p>
               )}
             </div>
@@ -757,7 +684,6 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
   };
 
   const fileTree = buildFileTree(fileSystemItems);
-  const rootItem = { _id: null, isRoot: true, type: 'folder' };
 
   return (
     <div className="h-full flex flex-col bg-white">
@@ -877,18 +803,7 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
       )}
 
       {/* File Tree */}
-      <div 
-        ref={dropZoneRef}
-        className="flex-1 overflow-y-auto"
-        onDragOver={(e) => {
-          if (draggedItem) {
-            e.preventDefault();
-            setDropTarget(rootItem);
-          }
-        }}
-        onDragLeave={() => setDropTarget(null)}
-        onDrop={(e) => handleDrop(e, rootItem)}
-      >
+      <div className="flex-1 overflow-y-auto">
         {isLoading ? (
           <div className="flex justify-center items-center h-20">
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600"></div>
