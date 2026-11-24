@@ -40,7 +40,7 @@ DevSync solves the challenge of remote team collaboration by providing an all-in
 - **React Router** 7.6.2 - Client-side routing
 - **Socket.io Client** 4.8.1 - Real-time communication
 - **Axios** 1.11.0 - HTTP client
-- **Stream.io SDK** 1.19.2 - Audio room functionality
+- **WebRTC** - Microphone-only workspace audio rooms
 
 ### Backend (Server)
 - **Node.js** with **Express** 5.1.0 - Web server framework
@@ -49,7 +49,7 @@ DevSync solves the challenge of remote team collaboration by providing an all-in
 - **Passport.js** - Authentication middleware
 - **JWT** - Token-based authentication
 - **Zod** 3.25.75 - Schema validation
-- **Stream Chat** 9.14.0 - Audio room backend
+- **Socket.IO** - Authorized audio signaling
 - **bcrypt** - Password hashing
 
 ### Development Tools
@@ -63,7 +63,7 @@ DevSync solves the challenge of remote team collaboration by providing an all-in
 - **Node.js** 18.0.0 or higher
 - **npm** or **yarn** package manager
 - **MongoDB** database (local or cloud)
-- **Stream.io account** for audio rooms
+- Microphone permission for audio rooms (no external account required)
 
 ### 1. Clone the Repository
 ```bash
@@ -135,9 +135,8 @@ FRONTEND_GOOGLE_CALLBACK_URL=https://your-frontend-url.vercel.app/google/callbac
 # FRONTEND_ORIGIN=http://localhost:5173
 # FRONTEND_GOOGLE_CALLBACK_URL=http://localhost:5173/google/callback
 
-# Stream.io (for audio rooms)
-STREAM_API_KEY=your-stream-api-key
-STREAM_API_SECRET=your-stream-api-secret
+# Native audio rooms
+AUDIO_ENABLED=true
 ```
 
 #### Client (.env)
@@ -145,14 +144,6 @@ STREAM_API_SECRET=your-stream-api-secret
 # API Configuration
 VITE_API_BASE_URL=https://your-backend-url.onrender.com
 # For development: VITE_API_BASE_URL=http://localhost:5000
-
-# Stream.io Configuration
-VITE_STREAM_API_KEY=your-stream-api-key
-
-# Optional: Pre-configured Stream.io settings (for development/testing)
-# VITE_STREAM_TOKEN=your-stream-token
-# VITE_STREAM_USER_ID=your-stream-user-id
-# VITE_STREAM_CALL_ID=your-stream-call-id
 
 # Environment
 VITE_NODE_ENV=production
@@ -171,11 +162,11 @@ VITE_NODE_ENV=production
 2. Create a new cluster
 3. Get connection string and add to `MONGODB_URI`
 
-### 6. Stream.io Setup (Audio Rooms)
-1. Create account at [Stream.io](https://getstream.io/)
-2. Create a new app
-3. Get API Key and Secret
-4. Add to environment variables
+### 6. Audio rooms
+Set `AUDIO_ENABLED=true` on the server. Join the Team lounge in the workspace sidebar and allow microphone access. Mute, deafen and leave controls are available; camera tracks are never requested. Rooms support up to eight participants using peer-to-peer WebRTC. HTTPS (or localhost) is required for microphone access. Restrictive networks may require a TURN relay; this local implementation currently uses a public STUN server.
+
+### Workspace editors
+Documents use TipTap rich text, code uses locally bundled Monaco workers, and new whiteboards use Excalidraw. Existing canvas data retains its original renderer. The Node API, MongoDB storage and authorized Socket.IO events remain in use. Document saves retain revision-conflict protection; automatic CRDT merging is not implemented.
 
 ## 📋 Usage Instructions
 
@@ -338,7 +329,7 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 - **React Team** - React framework
 - **Socket.io** - Real-time communication
 - **MongoDB** - Database solution
-- **Stream.io** - Audio room infrastructure
+- **TipTap, Monaco and Excalidraw** - Workspace editors
 - **Tailwind CSS** - CSS framework
 
 ### Special Thanks

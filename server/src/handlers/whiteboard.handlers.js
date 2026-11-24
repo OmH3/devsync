@@ -5,6 +5,10 @@ import MemberModel from '../models/Member.model.js';
 const roomUsers = {};
 
 export const setupWhiteboardHandlers = (socket, io) => {
+  socket.on('whiteboard:scene', ({ whiteboardId, scene } = {}) => {
+    if (!scene || !Array.isArray(scene.elements) || JSON.stringify(scene).length > 500000) return;
+    socket.to(`whiteboard:${whiteboardId}`).emit('whiteboard:scene', { whiteboardId, scene });
+  });
   // Join whiteboard room
   socket.on('join-whiteboard', async (whiteboardId) => {
     try {
@@ -73,7 +77,6 @@ export const setupWhiteboardHandlers = (socket, io) => {
       // Broadcast user count to all users in room
       io.to(roomId).emit('user-count', userCount);
 
-      console.log(`User ${socket.userId} joined whiteboard ${whiteboardId}, room size: ${userCount}`);
     } catch (error) {
       socket.emit('error', { message: 'Failed to join whiteboard' });
     }

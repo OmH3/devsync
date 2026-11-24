@@ -213,7 +213,7 @@ export const useDocumentStore = create(
 
         set({ error: null });
         try {
-          const response = await documentService.updateDocument(documentId, documentData);
+          const response = await documentService.updateDocument(documentId, { ...documentData, revision: get().currentDocument?.__v ?? 0 });
           const updatedDocument = response.doc;
           
           set(state => ({
@@ -281,6 +281,7 @@ export const useDocumentStore = create(
 
         try {
           const response = await documentService.updateDocument(documentId, {
+            revision: get().currentDocument?.__v ?? 0,
             title: title.trim(),
             content: content
           });
@@ -301,12 +302,12 @@ export const useDocumentStore = create(
           console.error('Failed to save document:', error);
           const errorMessage = error.response?.data?.message || 'Failed to save document';
           set({ error: errorMessage });
-          return { success: false, error: error.message };
+          return { success: false, error: errorMessage };
         }
       },
 
       //Real-time document updates (for socket integration)
-      updateDocumentContentFromSocket: (documentId, title, content, userId) => {
+      updateDocumentContentFromSocket: (documentId, title, content) => {
         // Don't update if this is our own change
         const { currentDocument } = get();
         if (currentDocument?._id === documentId) {

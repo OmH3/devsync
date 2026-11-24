@@ -10,7 +10,7 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
   const [draggedItem, setDraggedItem] = useState(null);
   const [dropTarget, setDropTarget] = useState(null);
   const [expandedFolders, setExpandedFolders] = useState(new Set());
-  const [renamingItem, setRenamingItem] = useState(null);
+  const [, setRenamingItem] = useState(null);
   const [selectedItems, setSelectedItems] = useState(new Set());
   const [showBulkActions, setShowBulkActions] = useState(false);
 
@@ -51,8 +51,7 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
     isLoading, 
     error,
     clearError,
-    permissions,
-    fetchUserRoleInFileSystem
+    permissions
   } = useFilesystemStore();
 
   //Fetch file system on mount

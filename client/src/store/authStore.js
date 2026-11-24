@@ -20,7 +20,7 @@ export const useAuthStore = create(
     (set) => ({
       user: null,
       isAuthenticated: false,
-      isLoading: false,
+      isLoading: true,
       error: null,
 
       // Actions
@@ -50,6 +50,7 @@ export const useAuthStore = create(
         try {
           const response = await authService.login(credentials);
           const user = response.user;
+          localStorage.removeItem('logout-pending');
           set({ 
             user, 
             isAuthenticated: true, 
@@ -68,17 +69,18 @@ export const useAuthStore = create(
         set({ isLoading: true });
         try {
           await authService.logout();
+          localStorage.removeItem('logout-pending');
         } catch {
-          // Even if the network request fails, clear local session state
+          localStorage.setItem('logout-pending', 'true');
         }
         clearAccountStores();
         set({ 
           user: null, 
           isAuthenticated: false, 
           isLoading: false,
-          error: null 
+          error: localStorage.getItem('logout-pending') ? 'Signed out locally. Server sign-out will retry when you reconnect.' : null
         });
-        return { success: true };
+        return { success: !localStorage.getItem('logout-pending') };
       },
 
       googleLogin: () => {
@@ -88,7 +90,12 @@ export const useAuthStore = create(
       checkAuth: async () => {
         set({ isLoading: true });
         try {
+          if (localStorage.getItem('logout-pending')) {
+            await authService.logout();
+            localStorage.removeItem('logout-pending');
+          }
           const { isAuthenticated, user } = await authService.checkAuthStatus();
+          if (!isAuthenticated) clearAccountStores();
           set({ 
             isAuthenticated, 
             user, 
@@ -126,3 +133,6 @@ export const useAuthStore = create(
     }
   )
 );
+window.addEventListener('devsync:unauthorized', () => useAuthStore.getState().clearAuth());
+
+window.addEventListener('online', () => { if (localStorage.getItem('logout-pending')) useAuthStore.getState().checkAuth(); });

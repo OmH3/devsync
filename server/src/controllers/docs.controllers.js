@@ -25,19 +25,13 @@ import {workspaceIdSchema} from "../validation/workspace.validation.js"
 let io;
 export const setSocketIO = (socketIO) => {
   io = socketIO;
-  console.log(' Socket.IO instance set for docs controller');
+
 };
 
 export const createDocController = asyncHandler(async (req, res) => {
   const body = createDocSchema.parse(req.body);
   const userId = req.user?._id;
   const workspaceId = body.workspaceId || (await UserModel.findById(userId).select('currentWorkspace'))?.currentWorkspace;
-
-  console.log(' Create document request:', {
-    userId,
-    workspaceId,
-    body
-  });
 
   //Check if user has a current workspace
   if (!workspaceId) {
@@ -46,14 +40,13 @@ export const createDocController = asyncHandler(async (req, res) => {
 
   //Get user role and check permissions
   const { role } = await getMemberRoleInWorkspace(userId, workspaceId);
-  console.log(' User role for creating document:', role);
 
   //Allow OWNER, ADMIN, and MEMBER to create documents (same as whiteboard for creation)
   try {
     roleGuard(role, [Permissions.EDIT_DOCS]);
-    console.log(' Permission check passed for role:', role);
+
   } catch (error) {
-    console.error(' Permission check failed:', error.message);
+
     return res.status(HTTPSTATUS.FORBIDDEN).json({
       message: "You do not have permission to create documents",
       error: "Permission denied",
@@ -67,8 +60,6 @@ export const createDocController = asyncHandler(async (req, res) => {
     ...body, 
     workspaceId 
   });
-
-  console.log(' Document created successfully:', doc._id);
 
   //Emit socket event (matching whiteboard pattern)
   if (io) {
@@ -95,8 +86,7 @@ export const getWorkspaceDocsController = asyncHandler(async (req, res) => {
   //Allow all workspace members to VIEW documents (matching whiteboard pattern)
   try {
     const { role } = await getMemberRoleInWorkspace(userId, workspaceId);
-    console.log('User role for viewing documents:', role);
-    
+
     //As long as user has any role in workspace, they can view documents
     if (!role) {
       return res.status(HTTPSTATUS.FORBIDDEN).json({
@@ -129,8 +119,7 @@ export const getDocByIdController = asyncHandler(async (req, res) => {
   //Allow all workspace members to VIEW documents
   try {
     const { role } = await getMemberRoleInWorkspace(userId, doc.workspaceId);
-    console.log('User role for viewing document:', role);
-    
+
     //As long as user has any role in workspace, they can view the document
     if (!role) {
       return res.status(HTTPSTATUS.FORBIDDEN).json({
@@ -156,34 +145,16 @@ export const updateDocController = asyncHandler(async (req, res) => {
   const body = updateDocSchema.parse(req.body);
   const userId = req.user?._id;
 
-  console.log(' Update document request:', {
-    docId,
-    userId,
-    body: { title: body.title?.substring(0, 30), contentLength: body.content?.length }
-  });
-
   //Get document first to check workspace
   const { doc: existingDoc } = await getDocByIdService(docId);
-  console.log(' Existing document:', {
-    creatorId: existingDoc.creatorId._id || existingDoc.creatorId,
-    workspaceId: existingDoc.workspaceId
-  });
 
   //Check permissions for editing
   const { role } = await getMemberRoleInWorkspace(userId, existingDoc.workspaceId);
-  console.log(' User role in workspace:', role);
 
   //Check if user is document owner
   const isDocumentOwner = existingDoc.creatorId._id ? 
     existingDoc.creatorId._id.toString() === userId.toString() : 
     existingDoc.creatorId.toString() === userId.toString();
-  
-  console.log(' Permission check:', {
-    role,
-    isDocumentOwner,
-    userId,
-    creatorId: existingDoc.creatorId._id || existingDoc.creatorId
-  });
 
   //Enhanced permission logic
   let canEdit = false;
@@ -206,13 +177,6 @@ export const updateDocController = asyncHandler(async (req, res) => {
     permissionReason = 'not a workspace member';
   }
 
-  console.log(' Final permission decision:', {
-    canEdit,
-    permissionReason,
-    role,
-    isDocumentOwner
-  });
-
   if (!canEdit) {
     return res.status(HTTPSTATUS.FORBIDDEN).json({
       message: `You do not have permission to edit this document (${permissionReason})`,
@@ -223,7 +187,6 @@ export const updateDocController = asyncHandler(async (req, res) => {
     });
   }
 
-  console.log(' Permission check passed, updating document');
   const { doc } = await updateDocService(docId, userId, body);
 
   //Emit socket event for real-time updates
@@ -294,21 +257,17 @@ export const deleteDocController = asyncHandler(async (req, res) => {
 
 //FIX: New function name and implementation (matching whiteboard pattern exactly)
 export const getUserRoleInWorkspaceController = asyncHandler(async (req, res) => {
-  console.log('getUserRoleInWorkspaceController called with:', req.params);
-  
+
   const workspaceId = workspaceIdSchema.parse(req.params.workspaceId);
   const userId = req.user?._id;
-
-  console.log('Fetching role for userId:', userId, 'in workspace:', workspaceId);
 
   try {
     //Get user's role in the workspace (exactly like whiteboard)
     const { role } = await getMemberRoleInWorkspace(userId, workspaceId);
-    console.log('Found role:', role, 'for user in workspace:', workspaceId);
 
     //Check if role was found
     if (!role) {
-      console.error('No role found for user in workspace');
+
       return res.status(HTTPSTATUS.FORBIDDEN).json({
         message: "You are not a member of this workspace",
         error: "Access denied"
@@ -328,13 +287,6 @@ export const getUserRoleInWorkspaceController = asyncHandler(async (req, res) =>
     const isWorkspaceOwner = role === 'OWNER';
     const isAdmin = role === 'ADMIN';
 
-    console.log('Calculated permissions:', { 
-      role,
-      permissions,
-      isWorkspaceOwner,
-      isAdmin
-    });
-
     //Return comprehensive response (exactly matching whiteboard pattern)
     return res.status(HTTPSTATUS.OK).json({
       message: "User role fetched successfully",
@@ -348,7 +300,7 @@ export const getUserRoleInWorkspaceController = asyncHandler(async (req, res) =>
       permissions
     });
   } catch (error) {
-    console.error('Error fetching user role in workspace:', error);
+
     return res.status(HTTPSTATUS.INTERNAL_SERVER_ERROR).json({
       message: "Error fetching user permissions",
       error: error.message

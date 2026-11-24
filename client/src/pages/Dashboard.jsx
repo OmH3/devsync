@@ -9,7 +9,8 @@ import JoinWorkspace from '../components/JoinWorkspace.jsx';
 import WorkspaceList from '../components/WorkspaceList.jsx';
 import WorkspaceSettings from '../components/WorkspaceSettings.jsx';
 import MemberManagement from '../components/MemberManagement.jsx';
-import AudioRoomButton from '../components/AudioRoomButton.jsx';
+import VoiceRoom from '../components/VoiceRoom.jsx';
+import { Home, FileText, PenTool, Code2, ChevronRight, Menu } from 'lucide-react';
 
 // Heavy editors are loaded on demand, only when their view is opened.
 const DocumentsList = lazy(() => import('../components/DocumentsList.jsx'));
@@ -17,10 +18,10 @@ const WhiteboardMain = lazy(() => import('../components/WhiteboardMain.jsx'));
 const CodeEditorMain = lazy(() => import('../components/CodeEditorMain.jsx'));
 
 const VIEWS = [
-  { id: 'overview', label: 'Overview', hint: 'Workspace home' },
-  { id: 'documents', label: 'Documents', hint: 'Collaborative writing' },
-  { id: 'whiteboard', label: 'Whiteboard', hint: 'Sketch ideas together' },
-  { id: 'code', label: 'Code', hint: 'Edit and run code' },
+  { id: 'overview', label: 'Overview', hint: 'Workspace home', icon: Home },
+  { id: 'documents', label: 'Documents', hint: 'Notes, plans & shared thinking', icon: FileText },
+  { id: 'whiteboard', label: 'Whiteboard', hint: 'A canvas for your ideas', icon: PenTool },
+  { id: 'code', label: 'Code', hint: 'Build something together', icon: Code2 },
 ];
 const VIEW_IDS = VIEWS.map((view) => view.id);
 
@@ -76,25 +77,27 @@ const Dashboard = () => {
     switch (activeView) {
       case 'documents':
         return (
-          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="tool-surface bg-white p-4">
             <DocumentsList {...props} />
           </div>
         );
       case 'whiteboard':
         return (
-          <div className="h-[calc(100vh-9.5rem)] min-h-[480px] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+          <div className="h-[calc(100vh-9.5rem)] min-h-[480px] overflow-hidden tool-surface bg-white">
             <WhiteboardMain {...props} />
           </div>
         );
       case 'code':
         return (
-          <div className="h-[calc(100vh-9.5rem)] min-h-[480px] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+          <div className="h-[calc(100vh-9.5rem)] min-h-[480px] overflow-hidden tool-surface bg-white">
             <CodeEditorMain {...props} />
           </div>
         );
       default:
         return (
-          <div className="space-y-6">
+          <div className="workspace-home space-y-6">
+            <div className="page-intro"><div className="page-symbol"><FileText size={44} strokeWidth={1.2}/></div><p>YOUR SHARED SPACE</p><h2>{currentWorkspace.name}</h2><span>{currentWorkspace.description || 'A little clarity. A lot of possibility.'}</span></div>
+            <div className="section-heading">Jump back in <ChevronRight size={14}/></div>
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {VIEWS.filter((view) => view.id !== 'overview').map((view) => (
                 <button
@@ -103,12 +106,12 @@ const Dashboard = () => {
                   onClick={() => openView(view.id)}
                   className="rounded-xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:border-indigo-300 hover:shadow-md"
                 >
-                  <div className="text-base font-semibold text-slate-900">{view.label}</div>
+                  <div className="text-base font-semibold text-slate-900"><view.icon size={16} className="inline-block mr-2 text-stone-400" />{view.label}</div>
                   <div className="mt-1 text-sm text-slate-500">{view.hint}</div>
                 </button>
               ))}
             </div>
-            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="tool-surface bg-white p-4">
               <WorkspaceList onSelectWorkspace={selectWorkspace} />
             </div>
           </div>
@@ -117,17 +120,17 @@ const Dashboard = () => {
   };
 
   const renderWorkspacePicker = () => (
-    <div className="mx-auto max-w-3xl rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+    <div className="mx-auto max-w-3xl tool-surface bg-white p-4">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-lg font-semibold text-slate-900">Choose a workspace</h2>
           <p className="text-sm text-slate-500">Pick a workspace to start collaborating, or create a new one.</p>
         </div>
         <div className="flex gap-2">
-          <button type="button" onClick={() => setShowJoinForm(true)} className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+          <button type="button" onClick={() => setShowJoinForm(true)} className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-white">
             Join with code
           </button>
-          <button type="button" onClick={() => setShowCreateForm(true)} className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700">
+          <button type="button" onClick={() => setShowCreateForm(true)} className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-stone-800 hover:bg-indigo-700">
             New workspace
           </button>
         </div>
@@ -149,10 +152,10 @@ const Dashboard = () => {
   );
 
   const sidebar = (
-    <nav aria-label="Workspace navigation" className="flex h-full flex-col bg-slate-900 text-slate-300">
+    <nav aria-label="Workspace navigation" className="workspace-sidebar flex h-full flex-col">
       <div className="flex items-center gap-2 px-4 py-4">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-500 font-bold text-white" aria-hidden="true">D</div>
-        <span className="text-base font-semibold text-white">DevSync</span>
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-stone-700 font-bold text-white" aria-hidden="true">D</div>
+        <span className="text-base font-semibold text-stone-800">DevSync</span>
       </div>
 
       <div className="px-3">
@@ -164,7 +167,7 @@ const Dashboard = () => {
             const next = workspaces.find((workspace) => workspace._id === event.target.value);
             if (next) selectWorkspace(next);
           }}
-          className="mt-1 w-full rounded-md border border-slate-700 bg-slate-800 px-2 py-2 text-sm text-white"
+          className="mt-1 w-full rounded-md border border-stone-200 bg-stone-200/60 px-2 py-2 text-sm text-stone-800"
         >
           <option value="" disabled>Select a workspace…</option>
           {workspaces.map((workspace) => (
@@ -172,8 +175,8 @@ const Dashboard = () => {
           ))}
         </select>
         <div className="mt-2 flex gap-2 text-xs">
-          <button type="button" onClick={() => setShowCreateForm(true)} className="flex-1 rounded-md bg-slate-800 px-2 py-1.5 hover:bg-slate-700">+ New</button>
-          <button type="button" onClick={() => setShowJoinForm(true)} className="flex-1 rounded-md bg-slate-800 px-2 py-1.5 hover:bg-slate-700">Join</button>
+          <button type="button" onClick={() => setShowCreateForm(true)} className="flex-1 rounded-md bg-stone-200/60 px-2 py-1.5 hover:bg-stone-200">+ New</button>
+          <button type="button" onClick={() => setShowJoinForm(true)} className="flex-1 rounded-md bg-stone-200/60 px-2 py-1.5 hover:bg-stone-200">Join</button>
         </div>
       </div>
 
@@ -186,20 +189,21 @@ const Dashboard = () => {
                 onClick={() => openView(view.id)}
                 aria-current={activeView === view.id ? 'page' : undefined}
                 className={`w-full rounded-md px-3 py-2 text-left text-sm transition ${
-                  activeView === view.id ? 'bg-slate-800 font-medium text-white' : 'hover:bg-slate-800/60 hover:text-white'
+                  activeView === view.id ? 'bg-stone-200/60 font-medium text-stone-800' : 'hover:bg-stone-200/60/60 hover:text-stone-800'
                 }`}
               >
-                {view.label}
+                <view.icon size={16} className="inline-block mr-2 text-stone-400" />{view.label}
               </button>
             </li>
           ))}
         </ul>
       )}
 
-      <div className="mt-auto border-t border-slate-800 p-3">
-        <div className="truncate px-1 text-sm text-white">{user?.name}</div>
+      {currentWorkspace && audioEnabled && <div className="mt-auto px-3 pt-6"><VoiceRoom key={currentWorkspace._id} workspaceId={currentWorkspace._id} /></div>}
+      <div className="border-t border-stone-200 p-3">
+        <div className="truncate px-1 text-sm text-stone-800">{user?.name}</div>
         <div className="truncate px-1 text-xs text-slate-500">{user?.email}</div>
-        <button type="button" onClick={() => logout()} className="mt-2 w-full rounded-md bg-slate-800 px-3 py-2 text-sm hover:bg-slate-700">
+        <button type="button" onClick={() => logout()} className="mt-2 w-full rounded-md bg-stone-200/60 px-3 py-2 text-sm hover:bg-stone-200">
           Sign out
         </button>
       </div>
@@ -207,17 +211,9 @@ const Dashboard = () => {
   );
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
-      {/* Desktop sidebar */}
-      <aside className="sticky top-0 hidden h-screen w-64 shrink-0 lg:block">{sidebar}</aside>
-
-      {/* Mobile drawer */}
-      {sidebarOpen && (
-        <div className="fixed inset-0 z-40 lg:hidden">
-          <button type="button" aria-label="Close menu" className="absolute inset-0 bg-slate-900/50" onClick={() => setSidebarOpen(false)} />
-          <aside className="absolute inset-y-0 left-0 w-64">{sidebar}</aside>
-        </div>
-      )}
+    <div className="workspace-shell flex min-h-screen bg-white">
+      {sidebarOpen && <button aria-label="Close menu" onClick={() => setSidebarOpen(false)} className="fixed inset-0 z-40 bg-black/20 lg:hidden" />}
+      <aside className={`${sidebarOpen ? 'block' : 'hidden'} fixed inset-y-0 left-0 z-50 w-60 shrink-0 lg:sticky lg:top-0 lg:block h-screen`}>{sidebar}</aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-slate-200 bg-white/90 px-4 py-3 backdrop-blur sm:px-6">
@@ -242,11 +238,11 @@ const Dashboard = () => {
           </div>
           {currentWorkspace && (
             <div className="flex items-center gap-2">
-              {audioEnabled && <AudioRoomButton workspaceId={currentWorkspace._id} />}
+
               <button
                 type="button"
                 onClick={() => copyInviteCode(currentWorkspace.inviteCode)}
-                className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-white"
                 title="Copy invite code"
               >
                 Invite · <code className="font-mono">{currentWorkspace.inviteCode}</code>
@@ -254,7 +250,7 @@ const Dashboard = () => {
               <button
                 type="button"
                 onClick={() => setShowMembers(true)}
-                className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-white"
                 title="Manage members"
               >
                 Members
@@ -262,7 +258,7 @@ const Dashboard = () => {
               <button
                 type="button"
                 onClick={() => setShowSettings(true)}
-                className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-white"
                 title="Workspace settings"
               >
                 Settings
@@ -271,7 +267,7 @@ const Dashboard = () => {
           )}
         </header>
 
-        <main className="flex-1 p-4 sm:p-6">
+        <main className="workspace-main flex-1 p-4 sm:p-6">
           <Suspense fallback={<ViewSkeleton />}>{currentWorkspace ? renderTool() : renderWorkspacePicker()}</Suspense>
         </main>
       </div>

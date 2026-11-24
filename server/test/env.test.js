@@ -14,7 +14,7 @@ test('optional integrations need no credentials and booleans parse explicitly', 
 test('invalid settings identify keys without leaking values', () => {
   assert.throws(() => parseEnv({ ...base, PORT: 'secret-sentinel' }), error => error.message.includes('PORT') && !error.message.includes('secret-sentinel'));
   assert.throws(() => parseEnv({ ...base, AUDIO_ENABLED: 'yes' }), /AUDIO_ENABLED/);
-  assert.throws(() => parseEnv({ ...base, AUDIO_ENABLED: 'true' }), /STREAM_API_SECRET/);
+  assert.equal(parseEnv({ ...base, AUDIO_ENABLED: 'true' }).AUDIO_ENABLED, true);
 });
 test('production rejects insecure cookies and host execution', () => {
   const production = { ...base, NODE_ENV: 'production', PUBLIC_ORIGIN: 'https://devsync.example' };

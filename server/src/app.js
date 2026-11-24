@@ -28,7 +28,7 @@ import docsRoutes from "./routes/docs.routes.js";
 import filesystemRoutes from "./routes/filesystem.routes.js";
 import codeeditorRoutes from "./routes/codeeditor.routes.js";
 import whiteboardRoutes from "./routes/whiteboard.routes.js";
-import audioRoomRoutes from "./routes/audioroom.routes.js";
+
 import healthRoutes from './routes/health.routes.js';
 
 // --- Controller Imports for Socket.IO ---
@@ -36,7 +36,7 @@ import { setSocketIO as setWhiteboardSocketIO } from "./controllers/whiteboard.c
 import { setSocketIO as setDocsSocketIO } from "./controllers/docs.controllers.js";
 import { setSocketIO as setCodeEditorSocketIO } from "./controllers/codeeditor.controller.js";
 import { setSocketIO as setFileSystemSocketIO } from "./controllers/filesystem.controller.js";
-import { setSocketIO as setAudioRoomSocketIO } from "./controllers/audioroom.controller.js";
+
 
 // --- App and Server Initialization ---
 export function createApplication() {
@@ -86,7 +86,7 @@ setWhiteboardSocketIO(io);
 setDocsSocketIO(io);
 setCodeEditorSocketIO(io);
 setFileSystemSocketIO(io);
-setAudioRoomSocketIO(io);
+
 
 // --- Routes ---
 // Health check route
@@ -108,7 +108,7 @@ app.use(`${BASE_PATH}/docs`, isAuthenticated, docsRoutes);
 app.use(`${BASE_PATH}/filesystem`, isAuthenticated, filesystemRoutes);
 app.use(`${BASE_PATH}/codeeditor`, isAuthenticated, codeeditorRoutes);
 app.use(`${BASE_PATH}/whiteboard`, isAuthenticated, whiteboardRoutes);
-if (config.AUDIO_ENABLED) app.use(`${BASE_PATH}/audioroom`, isAuthenticated, audioRoomRoutes);
+
 
 // --- Error Handling Middleware ---
 // The error handler must be the last middleware in the stack.

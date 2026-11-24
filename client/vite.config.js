@@ -1,3 +1,4 @@
+import process from 'node:process';
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
@@ -19,7 +20,6 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           if (!id.includes('node_modules')) return undefined
-          if (id.includes('@stream-io')) return 'stream'
           if (id.includes('react-router') || id.includes('/react-dom/') || id.includes('/react/') || id.includes('scheduler')) return 'react'
           if (id.includes('socket.io') || id.includes('engine.io')) return 'realtime'
           return undefined

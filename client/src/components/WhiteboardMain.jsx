@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import WhiteboardList from './WhiteboardList.jsx';
-import WhiteboardCanvas from './WhiteboardCanvas.jsx';
+import CanvasBoard from './editors/CanvasBoard.jsx';
 import { useWhiteboardStore } from '../store/whiteboardStore.js';
 
 const WhiteboardMain = React.memo(({ workspaceId }) => {
@@ -39,7 +39,7 @@ const WhiteboardMain = React.memo(({ workspaceId }) => {
           </span>
         </div>
         <div className="min-h-0 flex-1">
-          <WhiteboardCanvas whiteboard={selectedWhiteboard} />
+          <CanvasBoard key={selectedWhiteboard._id} whiteboard={selectedWhiteboard} />
         </div>
       </div>
     );

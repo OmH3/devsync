@@ -2,13 +2,11 @@
 const fileSystemRoomUsers = {};
 
 export const setupFileSystemHandlers = (socket, io) => {
-  console.log(' Setting up File System handlers for socket:', socket.id);
 
   //Join filesystem item room (for collaborative file editing)
   socket.on('join-filesystem-item', async (fileSystemId) => {
     try {
-      console.log(` User ${socket.userId} joining filesystem item: ${fileSystemId}`);
-      
+
       if (!socket.userId || !fileSystemId) {
         socket.emit('error', { message: 'Missing userId or fileSystemId' });
         return;
@@ -54,10 +52,8 @@ export const setupFileSystemHandlers = (socket, io) => {
       //Send updated user count
       io.to(`filesystem:${fileSystemId}`).emit('user-count', fileSystemRoomUsers[fileSystemId].length);
 
-      console.log(` User ${socket.userId} joined filesystem item ${fileSystemId}. Total users: ${fileSystemRoomUsers[fileSystemId].length}`);
-
     } catch (error) {
-      console.error(' Error joining filesystem item:', error);
+
       socket.emit('error', { message: 'Failed to join filesystem item' });
     }
   });
@@ -67,7 +63,7 @@ export const setupFileSystemHandlers = (socket, io) => {
     try {
       handleLeaveFileSystemItem(socket, io, fileSystemId);
     } catch (error) {
-      console.error(' Error leaving filesystem item:', error);
+
     }
   });
 
@@ -80,8 +76,6 @@ export const setupFileSystemHandlers = (socket, io) => {
         socket.emit('error', { message: 'Unauthorized or missing data' });
         return;
       }
-
-      console.log(` Filesystem structure change from ${socket.userId} in workspace ${workspaceId}`);
 
       //Broadcast to workspace members
       socket.to(`workspace-${workspaceId}`).emit('filesystem-structure-changed', {
@@ -96,7 +90,7 @@ export const setupFileSystemHandlers = (socket, io) => {
       });
 
     } catch (error) {
-      console.error(' Error handling filesystem structure change:', error);
+
     }
   });
 
@@ -110,8 +104,6 @@ export const setupFileSystemHandlers = (socket, io) => {
         return;
       }
 
-      console.log(` File content change from ${socket.userId} in file ${fileSystemId}`);
-
       //Broadcast to other users viewing the same file
       socket.to(`filesystem:${fileSystemId}`).emit('filesystem-content-changed', {
         fileSystemId,
@@ -124,7 +116,7 @@ export const setupFileSystemHandlers = (socket, io) => {
       });
 
     } catch (error) {
-      console.error(' Error handling file content change:', error);
+
     }
   });
 
@@ -134,8 +126,6 @@ export const setupFileSystemHandlers = (socket, io) => {
       const { fileSystemId, content } = data;
       
       if (!socket.userId || !fileSystemId) return;
-
-      console.log(` File saved by ${socket.userId}: ${fileSystemId}`);
 
       //Notify other users about save
       socket.to(`filesystem:${fileSystemId}`).emit('filesystem-saved', {
@@ -147,7 +137,7 @@ export const setupFileSystemHandlers = (socket, io) => {
       });
 
     } catch (error) {
-      console.error(' Error handling file save notification:', error);
+
     }
   });
 
@@ -158,7 +148,7 @@ export const setupFileSystemHandlers = (socket, io) => {
         handleLeaveFileSystemItem(socket, io, socket.currentFileSystemId);
       }
     } catch (error) {
-      console.error(' Error handling filesystem disconnect:', error);
+
     }
   });
 };
@@ -166,8 +156,6 @@ export const setupFileSystemHandlers = (socket, io) => {
 //Helper function to handle leaving filesystem item
 function handleLeaveFileSystemItem(socket, io, fileSystemId) {
   if (!fileSystemId || !fileSystemRoomUsers[fileSystemId]) return;
-
-  console.log(` User ${socket.userId} leaving filesystem item: ${fileSystemId}`);
 
   // Remove user from room tracking
   fileSystemRoomUsers[fileSystemId] = fileSystemRoomUsers[fileSystemId].filter(
@@ -194,7 +182,6 @@ function handleLeaveFileSystemItem(socket, io, fileSystemId) {
     delete fileSystemRoomUsers[fileSystemId];
   }
 
-  console.log(` User ${socket.userId} left filesystem item ${fileSystemId}. Remaining users: ${remainingUsers}`);
 }
 
 //Export room users for debugging

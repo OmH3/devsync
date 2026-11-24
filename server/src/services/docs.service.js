@@ -1,3 +1,4 @@
+import { AppError, NotFoundException, BadRequestException } from '../utils/app-error.js';
 import DocModel from "../models/Docs.model.js";
 import MemberModel from "../models/Member.model.js";
 import WorkspaceModel from "../models/Workspace.model.js";
@@ -77,7 +78,7 @@ export const getDocByIdService = async (docId) => {
   return { doc };
 };
 
-export const updateDocService = async (docId, userId, { title, content }) => {
+export const updateDocService = async (docId, userId, { title, content, revision }) => {
   const doc = await DocModel.findById(docId);
   if (!doc) {
     throw new NotFoundException("Document not found");
@@ -107,9 +108,13 @@ export const updateDocService = async (docId, userId, { title, content }) => {
   doc.lastEditedBy = userId;
   doc.metadata.lastSaved = new Date();
 
-  await doc.save();
-
-  return { doc };
+  const updated = await DocModel.findOneAndUpdate(
+    { _id: docId, __v: revision },
+    { $set: { title: doc.title, content: doc.content, metadata: doc.metadata, lastEditedBy: userId }, $inc: { __v: 1 } },
+    { new: true, runValidators: true }
+  );
+  if (!updated) throw new AppError('This document changed elsewhere. Copy your edits before reloading to merge them.', 409, 'REVISION_CONFLICT');
+  return { doc: updated };
 };
 
 export const deleteDocService = async (docId, userId) => {

@@ -30,7 +30,7 @@ import { getExecutionHistoryService } from "../services/codeExecutor.service.js"
 let io;
 export const setSocketIO = (socketIO) => {
   io = socketIO;
-  console.log(' Socket.IO instance set for code editor controller');
+
 };
 
 //Create new code editor (matching docs pattern)
@@ -80,8 +80,7 @@ export const getWorkspaceCodeEditorsController = asyncHandler(async (req, res) =
   //Allow all workspace members to VIEW code editors (matching docs pattern)
   try {
     const { role } = await getMemberRoleInWorkspace(userId, workspaceId);
-    console.log('User role for viewing code editors:', role);
-    
+
     //As long as user has any role in workspace, they can view code editors
     if (!role) {
       return res.status(HTTPSTATUS.FORBIDDEN).json({
@@ -115,8 +114,7 @@ export const getCodeEditorByIdController = asyncHandler(async (req, res) => {
   //Allow all workspace members to VIEW code editors
   try {
     const { role } = await getMemberRoleInWorkspace(userId, codeEditor.workspaceId);
-    console.log('User role for viewing code editor:', role);
-    
+
     //As long as user has any role in workspace, they can view the code editor
     if (!role) {
       return res.status(HTTPSTATUS.FORBIDDEN).json({
@@ -148,8 +146,7 @@ export const getCodeEditorByFileSystemIdController = asyncHandler(async (req, re
   //Allow all workspace members to VIEW code editors
   try {
     const { role } = await getMemberRoleInWorkspace(userId, codeEditor.workspaceId);
-    console.log('User role for viewing code editor:', role);
-    
+
     if (!role) {
       return res.status(HTTPSTATUS.FORBIDDEN).json({
         message: "You are not a member of this workspace",
@@ -271,14 +268,6 @@ export const executeCodeController = asyncHandler(async (req, res) => {
   const body = executeCodeSchema.parse(req.body);
   const userId = req.user?._id;
 
-  console.log(' Execute code request:', { 
-    codeEditorId, 
-    userId, 
-    bodyKeys: Object.keys(body),
-    language: body.language,
-    hasCode: !!body.code
-  });
-
   try {
     //Get code editor and check permissions
     const { codeEditor } = await getCodeEditorByIdService(codeEditorId);
@@ -292,8 +281,6 @@ export const executeCodeController = asyncHandler(async (req, res) => {
         error: "Access denied"
       });
     }
-
-    console.log(' User role in workspace:', role, '- execution allowed');
 
     //Execute the code with the full body object
     const { execution } = await executeCodeService(codeEditorId, userId, body);
@@ -315,18 +302,12 @@ export const executeCodeController = asyncHandler(async (req, res) => {
       });
     }
 
-    console.log(" Execution successful, returning:", {
-      id: execution._id,
-      status: execution.status,
-      outputLength: execution.output?.length || 0
-    });
-
     return res.status(HTTPSTATUS.OK).json({
       message: "Code executed successfully",
       execution,
     });
   } catch (error) {
-    console.error(' Execute code error:', error);
+
     return res.status(HTTPSTATUS.INTERNAL_SERVER_ERROR).json({
       message: "Code execution failed",
       error: error.message
@@ -405,26 +386,20 @@ export const deleteCodeEditorController = asyncHandler(async (req, res) => {
 
 //Get user role in code editor (matching docs pattern)
 export const getUserRoleInCodeEditorController = asyncHandler(async (req, res) => {
-  console.log('getUserRoleInCodeEditorController called with:', req.params);
-  
+
   const codeEditorId = codeEditorIdSchema.parse(req.params.codeEditorId);
   const userId = req.user?._id;
-
-  console.log('Fetching role for userId:', userId, 'in code editor:', codeEditorId);
 
   try {
     //Get code editor first
     const { codeEditor } = await getCodeEditorByIdService(codeEditorId);
-    
-    console.log('Found code editor:', codeEditor.title || codeEditor.fileName, 'in workspace:', codeEditor.workspaceId);
-    
+
     //Get user's role in the workspace
     const { role } = await getMemberRoleInWorkspace(userId, codeEditor.workspaceId);
-    console.log('Found role:', role, 'for user in workspace:', codeEditor.workspaceId);
 
     //Check if role was found
     if (!role) {
-      console.error('No role found for user in workspace');
+
       return res.status(HTTPSTATUS.FORBIDDEN).json({
         message: "You are not a member of this workspace",
         error: "Access denied"
@@ -435,8 +410,6 @@ export const getUserRoleInCodeEditorController = asyncHandler(async (req, res) =
     const isCodeEditorOwner = codeEditor.creatorId._id ? 
       codeEditor.creatorId._id.toString() === userId.toString() : 
       codeEditor.creatorId.toString() === userId.toString();
-    
-    console.log('Is code editor owner:', isCodeEditorOwner, 'creatorId:', codeEditor.creatorId, 'userId:', userId);
 
     const isWorkspaceOwner = role === 'OWNER';
     const isAdmin = role === 'ADMIN';
@@ -448,18 +421,6 @@ export const getUserRoleInCodeEditorController = asyncHandler(async (req, res) =
     const canCreate = isWorkspaceOwner || isAdmin || isMember; // All members can create
     const canDelete = isWorkspaceOwner || isAdmin || isCodeEditorOwner;
     const canExecute = true; // All workspace members can execute code
-
-    console.log('Calculated permissions:', { 
-      canEdit, 
-      canView, 
-      canCreate, 
-      canDelete,
-      canExecute,
-      isWorkspaceOwner,
-      isAdmin,
-      isCodeEditorOwner,
-      role 
-    });
 
     //Return comprehensive response (matching docs pattern)
     return res.status(HTTPSTATUS.OK).json({
@@ -484,7 +445,7 @@ export const getUserRoleInCodeEditorController = asyncHandler(async (req, res) =
       }
     });
   } catch (error) {
-    console.error('Error fetching user role in code editor:', error);
+
     return res.status(HTTPSTATUS.INTERNAL_SERVER_ERROR).json({
       message: "Error fetching user permissions",
       error: error.message

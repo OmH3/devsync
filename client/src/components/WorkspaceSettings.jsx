@@ -30,7 +30,7 @@ const WorkspaceSettings = ({ workspace, onClose }) => {
         if (result.success) {
           setMemberCount(result.members.length);
         }
-      } catch (error) {
+      } catch {
         console.log('Could not fetch member count');
       }
     };
@@ -321,13 +321,13 @@ const WorkspaceSettings = ({ workspace, onClose }) => {
                   <div className="border rounded-lg p-4">
                     <div className="flex items-center justify-between">
                       <div>
-                        <h5 className="font-medium">Video Call</h5>
-                        <p className="text-sm text-gray-600">Voice and video communication</p>
+                        <h5 className="font-medium">Audio Room</h5>
+                        <p className="text-sm text-gray-600">Voice channels for your team</p>
                       </div>
                       <div className={`px-2 py-1 rounded text-xs font-medium ${
-                        workspace.tools?.videoCall?.active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                        workspace.tools?.audioRoom?.active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
                       }`}>
-                        {workspace.tools?.videoCall?.active ? 'Active' : 'Inactive'}
+                        {workspace.tools?.audioRoom?.active ? 'Active' : 'Inactive'}
                       </div>
                     </div>
                   </div>

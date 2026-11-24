@@ -4,8 +4,7 @@ const codeEditorRoomUsers = {};
 //Helper function to handle joining code editor
 function handleJoinCodeEditor(socket, io, codeEditorId) {
   try {
-    console.log(` User ${socket.userId} joining code editor: ${codeEditorId}`);
-    
+
     if (!socket.userId || !codeEditorId) {
       socket.emit('error', { message: 'Missing userId or codeEditorId' });
       return;
@@ -27,6 +26,7 @@ function handleJoinCodeEditor(socket, io, codeEditorId) {
 
     // Add user to room
     const userInfo = {
+      socketId: socket.id,
       userId: socket.userId,
       userName: socket.userName || socket.userEmail,
       userColor: socket.userColor || '#3B82F6',
@@ -44,6 +44,7 @@ function handleJoinCodeEditor(socket, io, codeEditorId) {
 
     //Notify other users in the room
     socket.to(`code-editor:${codeEditorId}`).emit('user-joined-code-editor', {
+      socketId: socket.id,
       userId: socket.userId,
       userName: socket.userName || socket.userEmail,
       userColor: socket.userColor || '#3B82F6',
@@ -53,10 +54,8 @@ function handleJoinCodeEditor(socket, io, codeEditorId) {
     //Send updated user count to all users
     io.to(`code-editor:${codeEditorId}`).emit('user-count', codeEditorRoomUsers[codeEditorId].length);
 
-    console.log(` User ${socket.userId} joined code editor ${codeEditorId}. Total users: ${codeEditorRoomUsers[codeEditorId].length}`);
-
   } catch (error) {
-    console.error(' Error joining code editor:', error);
+
     socket.emit('error', { message: 'Failed to join code editor' });
   }
 }
@@ -64,8 +63,6 @@ function handleJoinCodeEditor(socket, io, codeEditorId) {
 //Helper function to handle leaving code editor
 function handleLeaveCodeEditor(socket, io, codeEditorId) {
   if (!codeEditorId || !codeEditorRoomUsers[codeEditorId]) return;
-
-  console.log(` User ${socket.userId} leaving code editor: ${codeEditorId}`);
 
   // Remove user from room tracking
   codeEditorRoomUsers[codeEditorId] = codeEditorRoomUsers[codeEditorId].filter(
@@ -78,7 +75,8 @@ function handleLeaveCodeEditor(socket, io, codeEditorId) {
 
   //Notify other users
   socket.to(`code-editor:${codeEditorId}`).emit('user-left-code-editor', {
-    userId: socket.userId,
+    socketId: socket.id,
+      userId: socket.userId,
     userName: socket.userName || socket.userEmail,
     codeEditorId
   });
@@ -92,7 +90,6 @@ function handleLeaveCodeEditor(socket, io, codeEditorId) {
     delete codeEditorRoomUsers[codeEditorId];
   }
 
-  console.log(` User ${socket.userId} left code editor ${codeEditorId}. Remaining users: ${remainingUsers}`);
 }
 
 //Handle real-time code changes (FIXED - matching frontend event names)
@@ -104,8 +101,6 @@ function handleCodeEditorChange(socket, io, data) {
     return;
   }
 
-  console.log(` Broadcasting code editor live change for room: code-editor:${codeEditorId}`);
-  
   //Broadcast to all users in the code editor room (except sender)
   //FIXED: Event name matches frontend listener 'code-editor-changed'
   socket.to(`code-editor:${codeEditorId}`).emit('code-editor-changed', {
@@ -114,7 +109,8 @@ function handleCodeEditorChange(socket, io, data) {
     content,
     language,
     timestamp,
-    userId: socket.userId,
+    socketId: socket.id,
+      userId: socket.userId,
     userName: socket.userName || socket.userEmail
   });
 }
@@ -125,14 +121,13 @@ function handleCodeEditorCursor(socket, io, data) {
   
   if (!socket.userId || !codeEditorId) return;
 
-  console.log(` Cursor movement from user ${socket.userId} in code editor ${codeEditorId}`);
-
   //Broadcast cursor position to other users
   socket.to(`code-editor:${codeEditorId}`).emit('code-editor-cursor-move', {
     codeEditorId,
     position,
     selection,
     user: {
+      socketId: socket.id,
       userId: socket.userId,
       userName: socket.userName || socket.userEmail,
       userColor: socket.userColor || '#3B82F6'
@@ -150,8 +145,6 @@ function handleCodeEditorExecution(socket, io, data) {
     return;
   }
 
-  console.log(` Code execution result from ${socket.userId} in code editor ${codeEditorId}`);
-
   //Broadcast execution results to other users
   //FIXED: Event name matches frontend listener 'code-editor-execution-result'
   socket.to(`code-editor:${codeEditorId}`).emit('code-editor-execution-result', {
@@ -162,6 +155,7 @@ function handleCodeEditorExecution(socket, io, data) {
     language,
     input,
     executedBy: {
+      socketId: socket.id,
       userId: socket.userId,
       userName: socket.userName || socket.userEmail
     },
@@ -175,8 +169,6 @@ function handleCodeEditorAutoSave(socket, io, data) {
   
   if (!socket.userId || !codeEditorId) return;
 
-  console.log(` Auto-save notification from user ${socket.userId} for code editor ${codeEditorId}`);
-
   //Broadcast auto-save to other users
   //FIXED: Event name matches frontend listener 'code-editor-content-saved'
   socket.to(`code-editor:${codeEditorId}`).emit('code-editor-content-saved', {
@@ -187,6 +179,7 @@ function handleCodeEditorAutoSave(socket, io, data) {
       language
     },
     savedBy: {
+      socketId: socket.id,
       userId: socket.userId,
       userName: socket.userName || socket.userEmail
     },
@@ -200,8 +193,6 @@ function handleCodeEditorSave(socket, io, data) {
   
   if (!socket.userId || !codeEditorId) return;
 
-  console.log(` Manual save from user ${socket.userId} for code editor ${codeEditorId}`);
-
   //Broadcast manual save to other users
   //FIXED: Different event name for manual vs auto save
   socket.to(`code-editor:${codeEditorId}`).emit('code-editor-saved', {
@@ -210,6 +201,7 @@ function handleCodeEditorSave(socket, io, data) {
     content,
     language,
     savedBy: {
+      socketId: socket.id,
       userId: socket.userId,
       userName: socket.userName || socket.userEmail
     },
@@ -219,28 +211,22 @@ function handleCodeEditorSave(socket, io, data) {
 
 //Main setup function - MATCHES both controller and frontend exactly
 export const setupCodeEditorHandlers = (socket, io) => {
-  console.log(' Setting up code editor handlers for user:', socket.userId);
 
   //Join code editor room
   socket.on('join-code-editor', (codeEditorId) => {
-    console.log(` Received join-code-editor event from ${socket.userId} for editor: ${codeEditorId}`);
+
     handleJoinCodeEditor(socket, io, codeEditorId);
   });
 
   //Leave code editor room
   socket.on('leave-code-editor', (codeEditorId) => {
-    console.log(` Received leave-code-editor event from ${socket.userId} for editor: ${codeEditorId}`);
+
     handleLeaveCodeEditor(socket, io, codeEditorId);
   });
 
   //Handle real-time code changes (FIXED - matches frontend emit)
   socket.on('code-editor-change', (data) => {
-    console.log(` Received code-editor-change from user ${socket.userId}:`, {
-      codeEditorId: data.codeEditorId,
-      titleLength: data.title?.length || 0,
-      contentLength: data.content?.length || 0,
-      language: data.language
-    });
+
     handleCodeEditorChange(socket, io, data);
   });
 
@@ -252,31 +238,30 @@ export const setupCodeEditorHandlers = (socket, io) => {
 
   //Handle code execution results (FIXED - matches frontend emit)
   socket.on('code-editor-execution', (data) => {
-    console.log(` Received code-editor-execution from user ${socket.userId} for editor: ${data.codeEditorId}`);
+
     handleCodeEditorExecution(socket, io, data);
   });
 
   //Handle auto-save notifications (FIXED - matches frontend emit)
   socket.on('code-editor-auto-save', (data) => {
-    console.log(` Received code-editor-auto-save from user ${socket.userId} for editor: ${data.codeEditorId}`);
+
     handleCodeEditorAutoSave(socket, io, data);
   });
 
   //Handle manual save notifications (FIXED - matches frontend emit)
   socket.on('code-editor-save', (data) => {
-    console.log(` Received code-editor-save from user ${socket.userId} for editor: ${data.codeEditorId}`);
+
     handleCodeEditorSave(socket, io, data);
   });
 
   //Handle disconnect - clean up when user disconnects
   socket.on('disconnect', () => {
-    console.log(` User ${socket.userId} disconnected from code editor`);
+
     if (socket.currentCodeEditorId) {
       handleLeaveCodeEditor(socket, io, socket.currentCodeEditorId);
     }
   });
 
-  console.log(' Code editor handlers setup complete for user:', socket.userId);
 };
 
 //Export room users for debugging

@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+
 import { useWorkspaceStore } from '../store/workspaceStore.js';
 
 export const useWorkspace = () => {

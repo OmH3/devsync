@@ -16,7 +16,8 @@ Browser --HTTPS--> Caddy (EC2) --+--> static React build
 ```
 
 Everything runs from [`docker-compose.prod.yml`](../docker-compose.prod.yml) on one instance.
-Code execution, Google sign-in and audio/video (Stream) are **off** in this profile.
+Code execution and Google sign-in are **off** in this profile; microphone-only WebRTC audio rooms
+(`AUDIO_ENABLED=true`) use peer-to-peer WebRTC with Socket.IO signaling and require no external paid SDK.
 
 ## 1. Provision (AWS console)
 

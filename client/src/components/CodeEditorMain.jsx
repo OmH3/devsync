@@ -4,7 +4,7 @@ import CodeEditor from './CodeEditor.jsx';
 import { useFilesystemStore } from '../store/filesystemStore.js';
 import { useCodeEditorStore } from '../store/codeeditorStore.js';
 import { useSocket } from '../hooks/useSocket.js';
-import { useAuth } from '../hooks/useAuth.js';
+
 
 const CodeEditorMain = ({ workspaceId, workspace }) => {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -27,14 +27,13 @@ const CodeEditorMain = ({ workspaceId, workspace }) => {
   const isJoiningRef = useRef(false);
 
   //Hooks
-  const { user } = useAuth();
+
   const socket = useSocket();
-  
+
   const { 
     fileSystemItems,
     fetchWorkspaceFileSystem,
     createFileSystemItem,
-    permissions,
     error: fsError,
     isLoading: fsLoading,
     clearError: clearFsError
@@ -50,7 +49,7 @@ const CodeEditorMain = ({ workspaceId, workspace }) => {
   //Initialize component
   useEffect(() => {
     console.log(' CodeEditorMain mounted for workspace:', workspaceId);
-    
+
     // Reset states
     setSelectedFile(null);
     setShowEditor(false);
@@ -59,11 +58,11 @@ const CodeEditorMain = ({ workspaceId, workspace }) => {
     setHasJoinedWorkspace(false);
     setGlobalActiveUsers([]);
     setWorkspaceUserCount(1);
-    
+
     // Clear editor state
     clearEditor();
     resetEditorState();
-    
+
     // Fetch file system
     if (workspaceId) {
       fetchWorkspaceFileSystem(workspaceId);
@@ -76,11 +75,11 @@ const CodeEditorMain = ({ workspaceId, workspace }) => {
 
     const joinWorkspace = () => {
       if (isJoiningRef.current || hasJoinedWorkspace) return;
-      
+
       console.log(' Joining workspace for code editor main:', workspaceId);
       isJoiningRef.current = true;
       socket.emit('join-workspace', workspaceId);
-      
+
       setTimeout(() => {
         isJoiningRef.current = false;
       }, 5000);
@@ -171,12 +170,12 @@ const CodeEditorMain = ({ workspaceId, workspace }) => {
   //Handle file selection with recent files tracking
   const handleFileSelect = useCallback((file) => {
     if (file.type !== 'file') return;
-    
+
     console.log(' File selected:', file.name);
     setSelectedFile(file);
     setShowEditor(true);
     setShowWelcome(false);
-    
+
     // Add to recent files
     setRecentFiles(prev => {
       const filtered = prev.filter(f => f._id !== file._id);
@@ -194,7 +193,7 @@ const CodeEditorMain = ({ workspaceId, workspace }) => {
       );
       if (!shouldClose) return false;
     }
-    
+
     console.log(' Closing code editor');
     setShowEditor(false);
     setSelectedFile(null);
@@ -232,7 +231,7 @@ const CodeEditorMain = ({ workspaceId, workspace }) => {
 
   const handleMouseMove = useCallback((e) => {
     if (!isResizing) return;
-    
+
     const newWidth = Math.min(Math.max(e.clientX, 200), 600);
     setSidebarWidth(newWidth);
   }, [isResizing]);
@@ -297,7 +296,7 @@ const CodeEditorMain = ({ workspaceId, workspace }) => {
             <div className="text-xs text-gray-500">Create JS file</div>
           </div>
         </button>
-        
+
         <button
           onClick={() => handleCreateFile('script.py')}
           className="flex items-center space-x-2 p-3 text-left rounded-lg border border-gray-200 hover:border-green-400 hover:bg-green-50 transition-colors"
@@ -308,7 +307,7 @@ const CodeEditorMain = ({ workspaceId, workspace }) => {
             <div className="text-xs text-gray-500">Create PY file</div>
           </div>
         </button>
-        
+
         <button
           onClick={() => handleCreateFile('index.html')}
           className="flex items-center space-x-2 p-3 text-left rounded-lg border border-gray-200 hover:border-blue-400 hover:bg-blue-50 transition-colors"
@@ -319,7 +318,7 @@ const CodeEditorMain = ({ workspaceId, workspace }) => {
             <div className="text-xs text-gray-500">Create HTML file</div>
           </div>
         </button>
-        
+
         <button
           onClick={() => handleCreateFile('style.css')}
           className="flex items-center space-x-2 p-3 text-left rounded-lg border border-gray-200 hover:border-pink-400 hover:bg-pink-50 transition-colors"
@@ -387,7 +386,7 @@ const CodeEditorMain = ({ workspaceId, workspace }) => {
     return (
       <div className="bg-white rounded-lg border border-gray-200 p-6">
         <h4 className="font-medium text-gray-900 mb-4">Workspace Stats</h4>
-        
+
         <div className="grid grid-cols-2 gap-4 mb-4">
           <div className="text-center p-3 bg-blue-50 rounded-lg">
             <div className="text-2xl font-bold text-blue-600">{totalFiles}</div>
@@ -424,7 +423,7 @@ const CodeEditorMain = ({ workspaceId, workspace }) => {
   const ConnectionStatus = () => (
     <div className="bg-white rounded-lg border border-gray-200 p-6">
       <h4 className="font-medium text-gray-900 mb-4">Collaboration Status</h4>
-      
+
       <div className="space-y-3">
         <div className="flex items-center space-x-2">
           <div className={`w-3 h-3 rounded-full ${
@@ -436,7 +435,7 @@ const CodeEditorMain = ({ workspaceId, workspace }) => {
              isConnected ? 'Connecting...' : 'Disconnected'}
           </span>
         </div>
-        
+
         <div className="flex items-center space-x-2">
           <span className="text-gray-500"></span>
           <span className="text-sm text-gray-700">
@@ -484,7 +483,7 @@ const CodeEditorMain = ({ workspaceId, workspace }) => {
         />
       );
     }
-    
+
     // Split view with editor
     return (
       <div className="h-full flex bg-gray-50">
@@ -574,7 +573,7 @@ const CodeEditorMain = ({ workspaceId, workspace }) => {
                   </button>
                 </div>
               </div>
-              
+
               {/* Search Bar */}
               <div className="mt-2">
                 <input
@@ -595,7 +594,7 @@ const CodeEditorMain = ({ workspaceId, workspace }) => {
                     Search Results ({filteredFiles.length})
                   </h4>
                 </div>
-                
+
                 {filteredFiles.length === 0 ? (
                   <div className="text-center text-gray-500 py-8">
                     <div className="text-gray-400 mb-2"></div>
@@ -654,7 +653,7 @@ const CodeEditorMain = ({ workspaceId, workspace }) => {
                 Collaborative development environment for {workspace?.name || 'your workspace'}
               </p>
             </div>
-            
+
             <div className="flex items-center space-x-3">
               {/* Connection indicator */}
               <div className="flex items-center space-x-2 text-sm text-gray-600">
@@ -757,14 +756,14 @@ const CodeEditorMain = ({ workspaceId, workspace }) => {
                         2
                       </div>
                       <h4 className="font-medium text-gray-900 mb-2">Write Code</h4>
-                      <p className="text-sm text-gray-600">Open any file to start coding with syntax highlighting and auto-save</p>
+                      <p className="text-sm text-gray-600">Open a file to edit its contents and track save status.</p>
                     </div>
                     <div className="text-center">
                       <div className="w-12 h-12 bg-indigo-600 text-white rounded-full flex items-center justify-center mx-auto mb-3 text-xl font-bold">
                         3
                       </div>
                       <h4 className="font-medium text-gray-900 mb-2">Execute & Share</h4>
-                      <p className="text-sm text-gray-600">Run your code and share results with your team in real-time</p>
+                      <p className="text-sm text-gray-600">Share edits with your team. Code execution depends on deployment capabilities.</p>
                     </div>
                   </div>
                 </div>
@@ -775,11 +774,11 @@ const CodeEditorMain = ({ workspaceId, workspace }) => {
                 <div className="xl:col-span-1">
                   <QuickActions />
                 </div>
-                
+
                 <div className="xl:col-span-1">
                   <RecentFiles />
                 </div>
-                
+
                 <div className="xl:col-span-1 lg:col-span-2">
                   <div className="grid grid-cols-1 gap-6">
                     <WorkspaceStats />
@@ -793,9 +792,9 @@ const CodeEditorMain = ({ workspaceId, workspace }) => {
                 <div className="bg-white rounded-lg border border-gray-200 p-6">
                   <div className="text-center">
                     <div className="text-3xl mb-3"></div>
-                    <h4 className="font-medium text-gray-900 mb-2">Real-time Execution</h4>
+                    <h4 className="font-medium text-gray-900 mb-2">Code workspace</h4>
                     <p className="text-sm text-gray-600">
-                      Run JavaScript, Python, Java, C++ and more. See results instantly with our integrated execution engine.
+                      Edit files with your team. Execution controls appear only when enabled for this deployment.
                     </p>
                   </div>
                 </div>
@@ -815,7 +814,7 @@ const CodeEditorMain = ({ workspaceId, workspace }) => {
                     <div className="text-3xl mb-3"></div>
                     <h4 className="font-medium text-gray-900 mb-2">Auto-save</h4>
                     <p className="text-sm text-gray-600">
-                      Never lose your work. Changes are automatically saved as you type with conflict resolution.
+                      Changes save after you pause typing. Check the save indicator before leaving.
                     </p>
                   </div>
                 </div>
@@ -823,9 +822,9 @@ const CodeEditorMain = ({ workspaceId, workspace }) => {
                 <div className="bg-white rounded-lg border border-gray-200 p-6">
                   <div className="text-center">
                     <div className="text-3xl mb-3"></div>
-                    <h4 className="font-medium text-gray-900 mb-2">Syntax Highlighting</h4>
+                    <h4 className="font-medium text-gray-900 mb-2">Language selection</h4>
                     <p className="text-sm text-gray-600">
-                      Beautiful syntax highlighting for 20+ programming languages with customizable themes.
+                      Choose a language for your file in the editor.
                     </p>
                   </div>
                 </div>

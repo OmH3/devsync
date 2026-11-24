@@ -25,9 +25,7 @@ const schema = z.object({
   GOOGLE_CLIENT_SECRET: optional,
   GOOGLE_CALLBACK_URL: optional,
   FRONTEND_GOOGLE_CALLBACK_URL: z.string().url().default('http://localhost:5173/google/callback'),
-  AUDIO_ENABLED: boolean(false),
-  STREAM_API_KEY: optional,
-  STREAM_API_SECRET: optional,
+  AUDIO_ENABLED: boolean(true),
   CODE_EXECUTION_ENABLED: boolean(false),
   REDIS_ENABLED: boolean(false),
   REDIS_URL: optional,
@@ -54,7 +52,6 @@ export function parseEnv(input) {
   const invalid = new Set();
   const requireKeys = keys => keys.forEach(key => { if (!value[key]) invalid.add(key); });
   if (value.GOOGLE_AUTH_ENABLED) requireKeys(['GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', 'GOOGLE_CALLBACK_URL']);
-  if (value.AUDIO_ENABLED) requireKeys(['STREAM_API_KEY', 'STREAM_API_SECRET']);
   if (value.REDIS_ENABLED) requireKeys(['REDIS_URL']);
   if (value.SAVE_MAX_WAIT_MS <= value.SAVE_DEBOUNCE_MS) invalid.add('SAVE_MAX_WAIT_MS');
   if (value.COOKIE_SAME_SITE === 'none' && !value.COOKIE_SECURE) invalid.add('COOKIE_SECURE');

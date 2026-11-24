@@ -18,6 +18,7 @@ export const docIdSchema = z
   .min(1, { message: "Document ID is required" });
 
 export const updateDocSchema = z.object({
+  revision: z.number().int().nonnegative(),
   title: titleSchema.optional(),
   content: contentSchema.optional(),
 });

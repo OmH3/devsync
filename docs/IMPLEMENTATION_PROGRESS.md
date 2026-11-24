@@ -111,3 +111,25 @@ live whiteboard drawing sync & persistence, live code editor file creation/sync/
 ## 23 November 2026 branch publication
 
 Published the current implementation snapshot on perf/node-react-ux. Removed obsolete architecture artifacts and documentation references. Production client build, 11 unit tests, and 2 real MongoDB/HTTP/Socket.IO integration tests passed immediately before publication. Backend environment validation, lifecycle, logging, and revocable-session work is included. The complete implementation plan remains unfinished; this publication does not claim completion of every milestone. Local secrets, cookie jars, dependencies, and CPU profiles are excluded. Existing commit history is retained.
+
+## 24 November 2026: Notion-style UI, TipTap/Monaco/Excalidraw editors, and Discord-style WebRTC audio room
+
+Adapted the editor experiences and audio-only lounge from the reference implementation into the
+Node/React stack on `perf/node-react-ux`, removed the third-party Stream video dependency, and
+restyled the workspace shell to a quiet Notion-style aesthetic:
+
+- **Audio-only WebRTC lounge (`VoiceRoom.jsx` + `voice.handlers.js`):** Replaced `@stream-io/video-react-sdk`
+  and `stream-chat` with native microphone-only WebRTC peer connections (`video: false`, SDP video
+  rejection on the server, max 8 participants per workspace room, mute/deafen/leave controls in the
+  sidebar `Team lounge`).
+- **Workspace editors (`client/src/components/editors/`):**
+  - `RichDocument.jsx`: TipTap rich-text editor (`StarterKit` + `Placeholder`) with formatting toolbar
+    and revision-conflict (409) protection.
+  - `SourceEditor.jsx`: Monaco code editor with locally bundled web workers and `Ctrl/Cmd+S` save binding.
+  - `CanvasBoard.jsx`: Excalidraw whiteboard with debounced scene persistence and real-time
+    `whiteboard:scene` socket sync, falling back to `WhiteboardCanvas.jsx` for legacy stroke boards.
+- **Notion-style UI (`index.css`, `Dashboard.jsx`):** Warm neutral stone sidebar (`#f7f7f5`), clean
+  content-first typography, Lucide icons, and responsive mobile drawer.
+- **Security & reliability hardening:** Per-packet socket resource authorization middleware
+  (`socket-resource.middleware.js`), atomic document revision checks, offline logout queue, and
+  updated deployment config (`web.Dockerfile`, `.env.production.example`, `DEPLOY_AWS_FREE_TIER.md`).

@@ -70,8 +70,7 @@ export const getWorkspaceWhiteboardsController = asyncHandler(async (req, res) =
   // Just check if user is a member of the workspace - no specific permission check
   try {
     const { role } = await getMemberRoleInWorkspace(userId, workspaceId);
-    console.log('User role for viewing whiteboards:', role);
-    
+
     //As long as user has any role in workspace, they can view whiteboards
     if (!role) {
       return res.status(HTTPSTATUS.FORBIDDEN).json({
@@ -104,8 +103,7 @@ export const getWhiteboardByIdController = asyncHandler(async (req, res) => {
   //Allow all workspace members to VIEW whiteboards (including MEMBER role)
   try {
     const { role } = await getMemberRoleInWorkspace(userId, whiteboard.workspaceId);
-    console.log('User role for viewing whiteboard:', role);
-    
+
     //As long as user has any role in workspace, they can view the whiteboard
     if (!role) {
       return res.status(HTTPSTATUS.FORBIDDEN).json({
@@ -182,12 +180,9 @@ export const deleteWhiteboardController = asyncHandler(async (req, res) => {
 });
 
 export const getUserRoleInWhiteboardController = asyncHandler(async (req, res) => {
-  console.log('getUserRoleInWhiteboardController called with:', req.params);
-  
+
   const whiteboardId = whiteboardIdSchema.parse(req.params.whiteboardId);
   const userId = req.user?._id;
-
-  console.log('Fetching role for userId:', userId, 'in whiteboard:', whiteboardId);
 
   //Get whiteboard first
   const { whiteboard } = await getWhiteboardByIdService(whiteboardId, userId);
@@ -195,11 +190,10 @@ export const getUserRoleInWhiteboardController = asyncHandler(async (req, res) =
   //Get user's role in the workspace
   try {
     const { role } = await getMemberRoleInWorkspace(userId, whiteboard.workspaceId);
-    console.log('Found role:', role, 'for user in workspace:', whiteboard.workspaceId);
 
     //Check if role was found
     if (!role) {
-      console.error('No role found for user in workspace');
+
       return res.status(HTTPSTATUS.FORBIDDEN).json({
         message: "You are not a member of this workspace",
         error: "Access denied"
@@ -218,7 +212,7 @@ export const getUserRoleInWhiteboardController = asyncHandler(async (req, res) =
       }
     });
   } catch (error) {
-    console.error('Error fetching member role:', error);
+
     return res.status(HTTPSTATUS.FORBIDDEN).json({
       message: "Access denied",
       error: error.message

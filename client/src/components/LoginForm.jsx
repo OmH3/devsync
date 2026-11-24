@@ -23,10 +23,10 @@ const LoginForm = () => {
     }
 
     // Redirect if already authenticated
-    if (isAuthenticated) {
+    if (isAuthenticated && !isLoading) {
       navigate('/dashboard');
     }
-  }, [isAuthenticated, navigate, location.state]);
+  }, [isAuthenticated, isLoading, navigate, location.state]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;

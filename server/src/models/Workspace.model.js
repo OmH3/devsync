@@ -41,7 +41,7 @@ const workspaceSchema = new mongoose.Schema(
           default: null,
         },
       },
-      videoCall: {
+      audioRoom: {
         active: { type: Boolean, default: true },
         sessionId: { type: String, default: null }, 
       },

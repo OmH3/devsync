@@ -171,14 +171,14 @@ const MemberManagement = ({ workspaceId, onClose }) => {
               
               <div className="space-y-3">
                 {workspaceMembers?.map((member) => (
-                  <div key={member._id} className="flex items-center justify-between bg-white p-4 rounded-md border">
+                  <div key={member._id} className="flex flex-col sm:flex-row items-start sm:items-center gap-3 justify-between bg-white p-4 rounded-md border">
                     <div className="flex items-center space-x-3">
                       <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-100 text-sm font-semibold text-indigo-700">
                         {(member.userId?.name || member.userId?.email || 'U').charAt(0).toUpperCase()}
                       </div>
                       <div>
                         <p className="font-medium text-gray-900">{member.userId?.name || 'Unknown User'}</p>
-                        <p className="text-sm text-gray-500">{member.userId?.email || 'No email'}</p>
+                        <p className="text-sm text-gray-500 break-all">{member.userId?.email || 'No email'}</p>
                         <p className="text-xs text-gray-400">
                           Joined {member.joinedAt ? new Date(member.joinedAt).toLocaleDateString() : 'Unknown'}
                         </p>
@@ -239,7 +239,7 @@ const MemberManagement = ({ workspaceId, onClose }) => {
                         />
                         <div className="flex-1">
                           <div className="font-medium text-gray-900">{role.name}</div>
-                          <div className="text-sm text-gray-500">
+                          <div className="text-sm text-gray-500 break-all">
                             {role.name?.toLowerCase() === 'admin' && 'Can manage workspace and members'}
                             {role.name?.toLowerCase() === 'member' && 'Can use all workspace tools'}
                             {role.name?.toLowerCase() === 'viewer' && 'Can only view workspace content'}

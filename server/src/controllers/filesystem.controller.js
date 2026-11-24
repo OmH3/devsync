@@ -34,7 +34,7 @@ import { workspaceIdSchema } from "../validation/workspace.validation.js";
 let io;
 export const setSocketIO = (socketIO) => {
   io = socketIO;
-  console.log(' Socket.IO instance set for filesystem controller');
+
 };
 
 //Create filesystem item (matching docs pattern)
@@ -85,8 +85,7 @@ export const getWorkspaceFileSystemController = asyncHandler(async (req, res) =>
   //Allow all workspace members to VIEW filesystem (matching docs pattern)
   try {
     const { role } = await getMemberRoleInWorkspace(userId, workspaceId);
-    console.log('User role for viewing filesystem:', role);
-    
+
     //As long as user has any role in workspace, they can view filesystem
     if (!role) {
       return res.status(HTTPSTATUS.FORBIDDEN).json({
@@ -149,8 +148,7 @@ export const getFileSystemItemByIdController = asyncHandler(async (req, res) => 
   //Allow all workspace members to VIEW filesystem items
   try {
     const { role } = await getMemberRoleInWorkspace(userId, fileSystemItem.workspaceId);
-    console.log('User role for viewing filesystem item:', role);
-    
+
     //As long as user has any role in workspace, they can view the item
     if (!role) {
       return res.status(HTTPSTATUS.FORBIDDEN).json({
@@ -486,26 +484,20 @@ export const deleteFileSystemItemController = asyncHandler(async (req, res) => {
 
 //Get user role in filesystem item (matching docs pattern)
 export const getUserRoleInFileSystemController = asyncHandler(async (req, res) => {
-  console.log('getUserRoleInFileSystemController called with:', req.params);
-  
+
   const fileSystemId = fileSystemIdSchema.parse(req.params.id);
   const userId = req.user?._id;
-
-  console.log('Fetching role for userId:', userId, 'in filesystem item:', fileSystemId);
 
   try {
     //Get filesystem item first
     const { fileSystemItem } = await getFileSystemItemByIdService(fileSystemId);
-    
-    console.log('Found filesystem item:', fileSystemItem.name, 'in workspace:', fileSystemItem.workspaceId);
-    
+
     //Get user's role in the workspace
     const { role } = await getMemberRoleInWorkspace(userId, fileSystemItem.workspaceId);
-    console.log('Found role:', role, 'for user in workspace:', fileSystemItem.workspaceId);
 
     //Check if role was found
     if (!role) {
-      console.error('No role found for user in workspace');
+
       return res.status(HTTPSTATUS.FORBIDDEN).json({
         message: "You are not a member of this workspace",
         error: "Access denied"
@@ -516,8 +508,6 @@ export const getUserRoleInFileSystemController = asyncHandler(async (req, res) =
     const isItemOwner = fileSystemItem.creatorId._id ? 
       fileSystemItem.creatorId._id.toString() === userId.toString() : 
       fileSystemItem.creatorId.toString() === userId.toString();
-    
-    console.log('Is filesystem item owner:', isItemOwner, 'creatorId:', fileSystemItem.creatorId, 'userId:', userId);
 
     const isWorkspaceOwner = role === 'OWNER';
     const isAdmin = role === 'ADMIN';
@@ -529,18 +519,6 @@ export const getUserRoleInFileSystemController = asyncHandler(async (req, res) =
     const canCreate = isWorkspaceOwner || isAdmin || isMember; // All members can create
     const canDelete = isWorkspaceOwner || isAdmin || isItemOwner;
     const canMove = isWorkspaceOwner || isAdmin || isItemOwner;
-
-    console.log('Calculated permissions:', { 
-      canEdit, 
-      canView, 
-      canCreate, 
-      canDelete,
-      canMove,
-      isWorkspaceOwner,
-      isAdmin,
-      isItemOwner,
-      role 
-    });
 
     //Return comprehensive response (matching docs pattern)
     return res.status(HTTPSTATUS.OK).json({
@@ -565,7 +543,7 @@ export const getUserRoleInFileSystemController = asyncHandler(async (req, res) =
       }
     });
   } catch (error) {
-    console.error('Error fetching user role in filesystem item:', error);
+
     return res.status(HTTPSTATUS.INTERNAL_SERVER_ERROR).json({
       message: "Error fetching user permissions",
       error: error.message

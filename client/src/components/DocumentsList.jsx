@@ -1,3 +1,4 @@
+import { documentText } from '../utils/documentText.js';
 import { notify } from '../store/toastStore.js';
 import React, { useState, useEffect } from 'react';
 import { useDocumentStore } from '../store/documentStore.js';
@@ -28,9 +29,6 @@ const DocumentsList = ({ workspaceId, workspace }) => {
     canView,
     canCreate,
     canDelete,
-    isDocumentOwner,
-    isWorkspaceOwner,
-    isAdmin,
     
     //Actions
     fetchUserRoleInDocument,
@@ -117,7 +115,7 @@ const DocumentsList = ({ workspaceId, workspace }) => {
 
   const getWordCount = (content) => {
     if (!content) return 0;
-    return content.split(/\s+/).filter(word => word.length > 0).length;
+    return documentText(content).split(/\s+/).filter(word => word.length > 0).length;
   };
 
   const getDocumentPermissions = (document) => {
@@ -354,7 +352,7 @@ const DocumentsList = ({ workspaceId, workspace }) => {
                       
                       <div className="text-sm text-gray-600 mb-4">
                         {document.content ? (
-                          <p className="line-clamp-3">{document.content.substring(0, 150)}...</p>
+                          <p className="line-clamp-3">{documentText(document.content).substring(0, 150)}...</p>
                         ) : (
                           <p className="italic text-gray-400">No content yet</p>
                         )}
