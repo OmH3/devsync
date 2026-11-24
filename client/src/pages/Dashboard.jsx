@@ -236,7 +236,7 @@ const Dashboard = () => {
                 onClick={() => openView(view.id)}
                 aria-current={activeView === view.id ? 'page' : undefined}
                 className={`w-full rounded-md px-3 py-2 text-left text-sm transition ${
-                  activeView === view.id ? 'bg-stone-200/60 font-medium text-stone-800' : 'hover:bg-stone-200/60/60 hover:text-stone-800'
+                  activeView === view.id ? 'bg-stone-200/60 font-medium text-stone-800' : 'hover:bg-stone-200/60 hover:text-stone-800'
                 }`}
               >
                 <view.icon size={16} className="inline-block mr-2 text-stone-400" />{view.label}
