@@ -142,49 +142,50 @@ export const useCodeEditorStore = create(
       },
 
       //Save code editor content (dedicated for real-time collaboration)
-      //FIXED: Save code editor content (matching the function you asked about)
-saveCodeEditorContent: async (editorId, title, content) => {
-  const { permissions } = get();
-  if (permissions && !permissions.canEdit) {
-    set({ error: 'You do not have permission to save this code editor' });
-    return { success: false, error: 'Permission denied' };
-  }
+      saveCodeEditorContent: async (editorId, title, content, language) => {
+        const { permissions } = get();
+        if (permissions && !permissions.canEdit) {
+          set({ error: 'You do not have permission to save this code editor' });
+          return { success: false, error: 'Permission denied' };
+        }
 
-  set({ isExecuting: true, error: null }); //FIXED: Use isExecuting for consistency
-  try {
-    const result = await codeeditorService.saveCodeEditorContent(
-      editorId, 
-      title, 
-      content,
-      get().currentEditor?.language || 'javascript' //FIXED: Include language
-    );
-    
-    if (result.codeEditor) {
-      //FIXED: Update current editor properly
-      set(state => ({
-        currentEditor: {
-          ...state.currentEditor,
-          ...result.codeEditor,
-          title: result.codeEditor.title,
-          content: result.codeEditor.content,
-          language: result.codeEditor.language
-        },
-        editorTitle: result.codeEditor.title || '',
-        editorContent: result.codeEditor.content || '',
-        hasUnsavedChanges: false,
-        lastSaved: new Date(),
-        isExecuting: false
-      }));
-    }
-    
-    return { success: true, editor: result.codeEditor };
-  } catch (error) {
-    console.error(' Save error:', error);
-    const errorMessage = error.response?.data?.message || 'Save failed';
-    set({ error: errorMessage, isExecuting: false });
-    return { success: false, error: errorMessage };
-  }
-},
+        set({ isSaving: true, error: null });
+        try {
+          const langToSave = language || get().currentEditor?.language || 'javascript';
+          const result = await codeeditorService.saveCodeEditorContent(
+            editorId,
+            title,
+            content,
+            langToSave
+          );
+
+          if (result.codeEditor) {
+            set(state => ({
+              currentEditor: {
+                ...state.currentEditor,
+                ...result.codeEditor,
+                title: result.codeEditor.title,
+                content: result.codeEditor.content,
+                language: result.codeEditor.language
+              },
+              editorTitle: result.codeEditor.title || '',
+              editorContent: result.codeEditor.content || '',
+              hasUnsavedChanges: false,
+              lastSaved: new Date(),
+              isSaving: false
+            }));
+          } else {
+            set({ isSaving: false });
+          }
+
+          return { success: true, editor: result.codeEditor };
+        } catch (error) {
+          console.error(' Save error:', error);
+          const errorMessage = error.response?.data?.message || 'Save failed';
+          set({ error: errorMessage, isSaving: false });
+          return { success: false, error: errorMessage };
+        }
+      },
 
       //Execute code
       executeCode: async (editorId, executionData) => {

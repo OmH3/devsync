@@ -15,6 +15,9 @@ self.MonacoEnvironment = { getWorker: (_, label) => {
 loader.config({ monaco });
 export default function SourceEditor({ value, language, readOnly, onChange, onSave }) {
   return <Editor height="100%" theme="vs" language={language} value={value} onChange={value => onChange({ target: { value: value || '' } })}
-    onMount={editor => editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, onSave)}
+    onMount={editor => {
+      window.__devsyncMonacoEditor = editor;
+      editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, onSave);
+    }}
     options={{ readOnly, minimap: { enabled: false }, fontSize: 14, padding: { top: 20 }, scrollBeyondLastLine: false, automaticLayout: true, wordWrap: 'on', ariaLabel: 'Code content' }} />;
 }

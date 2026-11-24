@@ -224,6 +224,9 @@ const CodeEditor = ({ fileItem, onClose }) => {
       console.log(' Successfully joined code editor:', data);
       setHasJoinedEditor(true);
       setUserCount(data.userCount || 1);
+      if (Array.isArray(data.users)) {
+        setActiveUsers(data.users.filter(u => u.userId !== user._id));
+      }
       setError('');
       isJoiningRef.current = false;
     };
@@ -528,7 +531,7 @@ const CodeEditor = ({ fileItem, onClose }) => {
 
     try {
       console.log(' Auto-saving code editor...');
-      const result = await saveCodeEditorContent(currentEditor._id, currentTitle, currentCode);
+      const result = await saveCodeEditorContent(currentEditor._id, currentTitle, currentCode, currentLanguage);
 
       if (result.success) {
         setLastSaved(new Date());
@@ -699,7 +702,7 @@ const CodeEditor = ({ fileItem, onClose }) => {
 
     try {
       console.log(' Manual save initiated');
-      const result = await saveCodeEditorContent(currentEditor._id, title.trim(), code);
+      const result = await saveCodeEditorContent(currentEditor._id, title.trim(), code, language);
 
       if (result.success) {
         setLastSaved(new Date());
@@ -822,13 +825,6 @@ const handleExecuteCode = useCallback(async () => {
     return { status: 'Connected', color: 'bg-green-500', icon: '' };
   };
 
-  const getLanguageIcon = (lang) => {
-    const icons = {
-      'javascript': '', 'python': '', 'cpp': ''
-    };
-    return icons[lang] || '';
-  };
-
   const connectionStatus = getConnectionStatus();
 
   if (!currentEditor) {
@@ -844,32 +840,32 @@ const handleExecuteCode = useCallback(async () => {
   }
 
   return (
-    <div className="h-full flex flex-col bg-white">
+    <div className="h-full min-w-0 flex flex-col bg-white overflow-hidden">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 border-b border-gray-200 bg-gray-50">
-        <div className="flex items-center space-x-4">
+      <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-2.5 border-b border-gray-200 bg-gray-50">
+        <div className="flex items-center space-x-3 min-w-0">
           <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            onClick={() => onClose?.(hasUnsavedChanges)}
+            className="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
+            title="Close file"
           >
-            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
 
-          <div className="flex-1">
+          <div className="min-w-0">
             <input
               type="text"
               value={title}
               onChange={handleTitleChange}
               placeholder="Code editor title..."
               readOnly={!editorPermissions?.canEdit}
-              className={`text-xl font-semibold text-gray-900 bg-transparent border-none focus:outline-none focus:ring-0 p-0 ${
+              className={`text-lg font-semibold text-gray-900 bg-transparent border-none focus:outline-none focus:ring-0 p-0 max-w-[220px] sm:max-w-[300px] truncate ${
                 !editorPermissions?.canEdit ? 'cursor-default opacity-80' : ''
               }`}
-              style={{ width: `${Math.max(title.length, 20)}ch` }}
             />
-            <div className="flex items-center space-x-4 text-sm text-gray-500 mt-1">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500 mt-0.5">
               <span>
                 {isSaving ? (
                   <span className="flex items-center">
@@ -881,36 +877,32 @@ const handleExecuteCode = useCallback(async () => {
                 )}
               </span>
 
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-1.5">
                 <div className={`w-2 h-2 rounded-full ${connectionStatus.color}`}></div>
-                <span className="text-xs">{connectionStatus.status}</span>
+                <span>{connectionStatus.status}</span>
               </div>
 
               <div className="flex items-center space-x-1">
-                <span></span>
                 <span className="font-medium">{userCount}</span>
                 <span>user{userCount !== 1 ? 's' : ''}</span>
               </div>
 
               {editorPermissions?.canEdit === false && (
-                <span className="text-yellow-600 text-xs font-medium flex items-center">
-                  <span className="mr-1"></span>
-                  Read Only
-                </span>
+                <span className="text-yellow-600 font-medium">Read Only</span>
               )}
             </div>
           </div>
         </div>
 
-        <div className="flex items-center space-x-3">
+        <div className="flex flex-wrap items-center gap-2">
           {/* Language selector */}
-          <div className="flex items-center space-x-2">
-            <span className="text-lg">{getLanguageIcon(language)}</span>
+          <div className="flex items-center">
             <select
+              aria-label="Code language"
               value={language}
               onChange={(e) => handleLanguageChange(e.target.value)}
               disabled={!editorPermissions?.canEdit}
-              className="text-sm border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100"
+              className="text-xs border border-gray-300 rounded px-2 py-1.5 bg-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100"
             >
               <option value="javascript">JavaScript</option>
               <option value="python">Python</option>
@@ -918,21 +910,21 @@ const handleExecuteCode = useCallback(async () => {
             </select>
           </div>
 
-          <div className="text-sm text-gray-600">
-            <span className="mr-3">Lines: {code.split('\n').length}</span>
+          <div className="hidden xl:flex items-center text-xs text-gray-500 space-x-2">
+            <span>Lines: {code.split('\n').length}</span>
             <span>Chars: {code.length}</span>
           </div>
 
           {hasUnsavedChanges && editorPermissions?.canEdit && (
             <div className="flex items-center text-xs text-orange-600 font-medium">
               <div className="w-2 h-2 bg-orange-500 rounded-full mr-1"></div>
-              Unsaved changes
+              Unsaved
             </div>
           )}
 
           <button
             onClick={() => setShowCollaborators(!showCollaborators)}
-            className={`px-2.5 py-1.5 rounded-md text-sm font-medium ${
+            className={`px-2.5 py-1.5 rounded-md text-xs font-medium ${
               showCollaborators ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
             title={`${activeUsers.length} active users`}
@@ -942,7 +934,7 @@ const handleExecuteCode = useCallback(async () => {
 
           <button
             onClick={() => setShowExecutionPanel(!showExecutionPanel)}
-            className={`px-3 py-2 rounded-md text-sm font-medium ${
+            className={`px-2.5 py-1.5 rounded-md text-xs font-medium ${
               showExecutionPanel
                 ? 'bg-indigo-100 text-indigo-700'
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -955,11 +947,11 @@ const handleExecuteCode = useCallback(async () => {
             <button
               onClick={handleManualSave}
               disabled={isSaving || !hasUnsavedChanges || pendingSaveRef.current}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-md text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {isSaving ? (
                 <span className="flex items-center">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-1.5"></div>
                   Saving...
                 </span>
               ) : (
@@ -972,11 +964,11 @@ const handleExecuteCode = useCallback(async () => {
             <button
               onClick={handleExecuteCode}
               disabled={isExecuting || !code.trim()}
-              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-md text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {isExecuting ? (
                 <span className="flex items-center">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-1.5"></div>
                   Running...
                 </span>
               ) : (
@@ -1045,9 +1037,9 @@ const handleExecuteCode = useCallback(async () => {
         </div>
       )}
 
-      <div className="flex-1 flex">
+      <div className="flex-1 min-h-0 min-w-0 flex overflow-hidden">
         {/* Code Editor */}
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 min-h-0 min-w-0 flex flex-col">
           {/* Input Panel */}
           {['python', 'cpp'].includes(language) && (
             <div className="border-b border-gray-200 p-3 bg-gray-50">
@@ -1065,8 +1057,8 @@ const handleExecuteCode = useCallback(async () => {
           )}
 
           {/* Code Editor Area */}
-          <div className="flex-1 flex relative">
-            <div className="flex-1 relative min-h-[400px]">
+          <div className="flex-1 min-h-0 min-w-0 flex relative">
+            <div className="flex-1 min-h-0 min-w-0 relative">
               <SourceEditor value={code} language={language} readOnly={!editorPermissions?.canEdit} onChange={handleCodeChange} onSave={handleManualSave} />
               {/* Other users' cursors */}
               {Object.entries(cursors).map(([userId, cursor]) => (
@@ -1135,7 +1127,7 @@ const handleExecuteCode = useCallback(async () => {
 
         {/* Execution Panel */}
         {showExecutionPanel && (
-          <div className="w-1/3 border-l border-gray-200 flex flex-col bg-white">
+          <div className="w-72 xl:w-80 flex-shrink-0 border-l border-gray-200 flex flex-col bg-white">
             <div className="p-4 border-b border-gray-200 bg-gray-50">
               <div className="flex items-center justify-between">
                 <h4 className="font-medium text-gray-900">Console Output</h4>

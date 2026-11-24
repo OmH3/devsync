@@ -27,6 +27,8 @@ export const codeEditorIdSchema = z
 
 
 export const executeCodeSchema = z.object({
+  code: z.string().optional(),
+  language: z.string().optional(),
   input: z.string().optional(),
   saveBeforeExecution: z.boolean().default(true),
 });

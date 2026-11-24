@@ -69,9 +69,8 @@ export const executeCodeService = async (codeEditorId, userId, body) => {
 
   await execution.save();
 
+  const startTime = Date.now();
   try {
-    const startTime = Date.now();
-
     //Execute code using your original executeByLanguage function
     const result = await executeByLanguage(
       languageToUse,

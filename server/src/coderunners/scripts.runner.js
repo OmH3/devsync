@@ -67,6 +67,7 @@ export const cleanupTempFiles = async (filename) => {
       `${filename}.py`,
       `${filename}.cpp`,
       filename, // executable
+      `${filename}.exe`, // Windows executable
     ];
 
     for (const file of possibleFiles) {
@@ -150,6 +151,16 @@ export const executeCpp = async (code, input, filename) => {
 
     compileChild.stderr.on("data", (data) => {
       compileError += data.toString();
+    });
+
+    compileChild.on("error", (err) => {
+      resolve({
+        output: "",
+        error: `C++ compiler (g++) not available: ${err.message}`,
+        status: "failed",
+        exitCode: -1,
+        executionTime: 0,
+      });
     });
 
     compileChild.on("close", (code) => {

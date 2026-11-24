@@ -8,7 +8,7 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
   const [createType, setCreateType] = useState('file');
   const [contextMenu, setContextMenu] = useState(null);
   const [expandedFolders, setExpandedFolders] = useState(new Set());
-  const [, setRenamingItem] = useState(null);
+  const [renamingItemId, setRenamingItemId] = useState(null);
   const [selectedItems, setSelectedItems] = useState(new Set());
   const [showBulkActions, setShowBulkActions] = useState(false);
   const [draggedItem, setDraggedItem] = useState(null);
@@ -22,6 +22,7 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
 
   //Refs for managing state
   const isJoiningRef = useRef(false);
+  const draggedItemRef = useRef(null);
 
   //Hooks
   const { user } = useAuth();
@@ -236,12 +237,16 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
   // Drag and drop handlers (VS Code style: drag file/folder into folder or root)
   const handleDragStart = (e, item) => {
     e.stopPropagation();
+    draggedItemRef.current = item;
     setDraggedItem(item);
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', item._id);
+    if (e.dataTransfer) {
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', item._id);
+    }
   };
 
   const handleDragEnd = () => {
+    draggedItemRef.current = null;
     setDraggedItem(null);
     setDropTarget(null);
   };
@@ -249,20 +254,23 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
   const handleDragOverFolder = (e, targetFolder) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!draggedItem) return;
+    const currentDragged = draggedItemRef.current || draggedItem;
+    if (!currentDragged) return;
 
     const targetId = targetFolder ? targetFolder._id : 'root';
     if (targetFolder) {
       if (targetFolder.type !== 'folder') return;
-      if (String(draggedItem._id) === String(targetFolder._id)) return;
-      if (String(draggedItem.parentId || '') === String(targetFolder._id)) return;
-      if (draggedItem.type === 'folder' && isDescendantFolder(draggedItem._id, targetFolder._id)) return;
+      if (String(currentDragged._id) === String(targetFolder._id)) return;
+      if (String(currentDragged.parentId || '') === String(targetFolder._id)) return;
+      if (currentDragged.type === 'folder' && isDescendantFolder(currentDragged._id, targetFolder._id)) return;
     } else {
       // Root drop check: only highlight if item is currently inside a folder
-      if (!draggedItem.parentId) return;
+      if (!currentDragged.parentId) return;
     }
 
-    e.dataTransfer.dropEffect = 'move';
+    if (e.dataTransfer) {
+      e.dataTransfer.dropEffect = 'move';
+    }
     if (dropTarget !== targetId) {
       setDropTarget(targetId);
     }
@@ -271,6 +279,9 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
   const handleDragLeaveFolder = (e, targetId) => {
     e.preventDefault();
     e.stopPropagation();
+    if (e.currentTarget && e.relatedTarget && e.currentTarget.contains(e.relatedTarget)) {
+      return;
+    }
     if (dropTarget === targetId) {
       setDropTarget(null);
     }
@@ -281,7 +292,13 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
     e.stopPropagation();
     setDropTarget(null);
 
-    const itemToMove = draggedItem;
+    const draggedId = e.dataTransfer?.getData('text/plain');
+    const itemToMove =
+      draggedItemRef.current ||
+      draggedItem ||
+      (draggedId ? fileSystemItems.find(i => String(i._id) === String(draggedId)) : null);
+
+    draggedItemRef.current = null;
     setDraggedItem(null);
     if (!itemToMove) return;
 
@@ -332,6 +349,10 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
       if (parentId) {
         setExpandedFolders(prev => new Set([...prev, parentId]));
       }
+      // Auto-open newly created file in the code editor
+      if (result.item?.type === 'file') {
+        onFileSelect?.(result.item);
+      }
     }
     return result;
   };
@@ -366,7 +387,7 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
     if (newName && newName !== item.name) {
       await updateFileSystemItem(item._id, { name: newName.trim() });
     }
-    setRenamingItem(null);
+    setRenamingItemId(null);
   };
 
   const handleDuplicateItem = async (item) => {
@@ -409,9 +430,15 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
 
   //Enhanced File Tree Node Component
   const FileTreeNode = ({ item, level = 0 }) => {
-    const [isRenaming, setIsRenaming] = useState(false);
+    const [isRenaming, setIsRenaming] = useState(renamingItemId === item._id);
     const [newName, setNewName] = useState(item.name);
     const inputRef = useRef(null);
+
+    useEffect(() => {
+      if (renamingItemId === item._id) {
+        setIsRenaming(true);
+      }
+    }, [item._id]);
 
     const hasChildren = item.children && item.children.length > 0;
     const isExpanded = expandedFolders.has(item._id);
@@ -430,6 +457,9 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
     return (
       <div>
         <div
+          data-item-id={item._id}
+          data-item-type={item.type}
+          data-item-name={item.name}
           draggable={!isRenaming}
           onDragStart={(e) => handleDragStart(e, item)}
           onDragEnd={handleDragEnd}
@@ -722,7 +752,7 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
           <>
             <button
               onClick={() => {
-                setRenamingItem(contextMenu.item);
+                setRenamingItemId(contextMenu.item._id);
                 setContextMenu(null);
               }}
               className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
@@ -821,6 +851,7 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
           
           <button
             onClick={() => {
+              setCurrentFolder(null);
               setCreateType('file');
               setShowCreateModal(true);
             }}
@@ -831,6 +862,7 @@ const FileExplorer = ({ workspaceId, onFileSelect }) => {
           </button>
           <button
             onClick={() => {
+              setCurrentFolder(null);
               setCreateType('folder');
               setShowCreateModal(true);
             }}
