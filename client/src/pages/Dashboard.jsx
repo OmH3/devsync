@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useEffect, useRef, useState } from 'react';
+import React, { lazy, Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
 import { useCapabilities } from '../hooks/useCapabilities.js';
@@ -11,7 +11,7 @@ import WorkspaceSettings from '../components/WorkspaceSettings.jsx';
 import MemberManagement from '../components/MemberManagement.jsx';
 import VoiceRoom from '../components/VoiceRoom.jsx';
 import { useThemeStore } from '../store/themeStore.js';
-import { Home, FileText, PenTool, Code2, ChevronRight, ChevronDown, Sun, Moon, Users, Settings, Check } from 'lucide-react';
+import { Home, FileText, PenTool, Code2, ChevronRight, Sun, Moon } from 'lucide-react';
 
 // Heavy editors are loaded on demand, only when their view is opened.
 const DocumentsList = lazy(() => import('../components/DocumentsList.jsx'));
@@ -78,21 +78,7 @@ const Dashboard = () => {
   const [showJoinForm, setShowJoinForm] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showMembers, setShowMembers] = useState(false);
-  const [modalWorkspace, setModalWorkspace] = useState(null);
-  const [workspaceDropdownOpen, setWorkspaceDropdownOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const dropdownRef = useRef(null);
-
-  useEffect(() => {
-    if (!workspaceDropdownOpen) return;
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setWorkspaceDropdownOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [workspaceDropdownOpen]);
 
   // The active view lives in the URL (?view=documents) so it can be bookmarked and shared.
   const requestedView = searchParams.get('view');
@@ -109,7 +95,6 @@ const Dashboard = () => {
   const selectWorkspace = (workspace) => {
     setCurrentWorkspace(workspace);
     setSearchParams({});
-    setWorkspaceDropdownOpen(false);
     setSidebarOpen(false);
   };
 
@@ -217,93 +202,22 @@ const Dashboard = () => {
         </button>
       </div>
 
-      <div className="px-3" ref={dropdownRef}>
-        <span className="px-1 text-xs font-medium uppercase tracking-wide text-slate-500">Workspace</span>
-        <div className="relative mt-1">
-          <button
-            type="button"
-            id="workspace-switcher"
-            aria-haspopup="listbox"
-            aria-expanded={workspaceDropdownOpen}
-            onClick={() => setWorkspaceDropdownOpen((open) => !open)}
-            className="flex w-full items-center justify-between rounded-md border border-stone-200 bg-stone-200/60 px-2.5 py-2 text-left text-sm font-semibold text-stone-800 hover:bg-stone-200"
-          >
-            <span className="truncate">{currentWorkspace ? currentWorkspace.name : 'Select a workspace…'}</span>
-            <ChevronDown size={15} className={`ml-2 shrink-0 text-stone-500 transition-transform ${workspaceDropdownOpen ? 'rotate-180' : ''}`} />
-          </button>
-
-          {workspaceDropdownOpen && (
-            <div
-              role="listbox"
-              aria-label="Your Workspaces"
-              className="absolute left-0 right-0 z-50 mt-1.5 max-h-80 overflow-y-auto rounded-lg border border-stone-200 bg-white p-1.5 shadow-lg"
-            >
-              <div className="px-2 py-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                Your Workspaces
-              </div>
-              {workspaces.length === 0 ? (
-                <div className="px-2 py-3 text-xs text-slate-500">No workspaces yet</div>
-              ) : (
-                <div className="space-y-1">
-                  {workspaces.map((ws) => {
-                    const isCurrent = currentWorkspace?._id === ws._id;
-                    return (
-                      <div
-                        key={ws._id}
-                        onClick={() => selectWorkspace(ws)}
-                        className={`group rounded-md p-2 cursor-pointer transition ${
-                          isCurrent ? 'bg-stone-200/60' : 'hover:bg-stone-100'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between gap-1">
-                          <div className="flex min-w-0 items-center gap-1.5">
-                            {isCurrent && <Check size={13} className="shrink-0 text-stone-700" />}
-                            <span className="truncate text-xs font-semibold text-stone-900">{ws.name}</span>
-                          </div>
-                          <div className="flex shrink-0 items-center gap-0.5">
-                            <button
-                              type="button"
-                              title="Manage Members"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setModalWorkspace(ws);
-                                setShowMembers(true);
-                                setWorkspaceDropdownOpen(false);
-                              }}
-                              className="rounded p-1 text-slate-400 hover:bg-stone-200 hover:text-stone-800"
-                            >
-                              <Users size={13} />
-                            </button>
-                            <button
-                              type="button"
-                              title="Workspace Settings"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setModalWorkspace(ws);
-                                setShowSettings(true);
-                                setWorkspaceDropdownOpen(false);
-                              }}
-                              className="rounded p-1 text-slate-400 hover:bg-stone-200 hover:text-stone-800"
-                            >
-                              <Settings size={13} />
-                            </button>
-                          </div>
-                        </div>
-                        {ws.description && (
-                          <p className="mt-0.5 truncate text-[11px] text-slate-500">{ws.description}</p>
-                        )}
-                        <div className="mt-1 flex items-center justify-between text-[10px] text-slate-400">
-                          <span>Invite: {ws.inviteCode}</span>
-                          {isCurrent && <span className="font-medium text-stone-700">Current</span>}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+      <div className="px-3">
+        <label htmlFor="workspace-switcher" className="px-1 text-xs font-medium uppercase tracking-wide text-slate-500">Workspace</label>
+        <select
+          id="workspace-switcher"
+          value={currentWorkspace?._id ?? ''}
+          onChange={(event) => {
+            const next = workspaces.find((workspace) => workspace._id === event.target.value);
+            if (next) selectWorkspace(next);
+          }}
+          className="mt-1 w-full rounded-md border border-stone-200 bg-stone-200/60 px-2 py-2 text-sm text-stone-800"
+        >
+          <option value="" disabled>Select a workspace…</option>
+          {workspaces.map((workspace) => (
+            <option key={workspace._id} value={workspace._id}>{workspace.name}</option>
+          ))}
+        </select>
         <div className="mt-2 flex gap-2 text-xs">
           <button type="button" onClick={() => setShowCreateForm(true)} className="flex-1 rounded-md bg-stone-200/60 px-2 py-1.5 hover:bg-stone-200">+ New</button>
           <button type="button" onClick={() => setShowJoinForm(true)} className="flex-1 rounded-md bg-stone-200/60 px-2 py-1.5 hover:bg-stone-200">Join</button>
@@ -389,10 +303,7 @@ const Dashboard = () => {
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
-                    setModalWorkspace(currentWorkspace);
-                    setShowMembers(true);
-                  }}
+                  onClick={() => setShowMembers(true)}
                   className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-white"
                   title="Manage members"
                 >
@@ -400,10 +311,7 @@ const Dashboard = () => {
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
-                    setModalWorkspace(currentWorkspace);
-                    setShowSettings(true);
-                  }}
+                  onClick={() => setShowSettings(true)}
                   className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-white"
                   title="Workspace settings"
                 >
@@ -427,23 +335,11 @@ const Dashboard = () => {
       {showJoinForm && (
         <JoinWorkspace onClose={() => setShowJoinForm(false)} onSuccess={fetchUserWorkspaces} />
       )}
-      {showSettings && (modalWorkspace || currentWorkspace) && (
-        <WorkspaceSettings
-          workspace={modalWorkspace || currentWorkspace}
-          onClose={() => {
-            setShowSettings(false);
-            setModalWorkspace(null);
-          }}
-        />
+      {showSettings && currentWorkspace && (
+        <WorkspaceSettings workspace={currentWorkspace} onClose={() => setShowSettings(false)} />
       )}
-      {showMembers && (modalWorkspace || currentWorkspace) && (
-        <MemberManagement
-          workspaceId={(modalWorkspace || currentWorkspace)._id}
-          onClose={() => {
-            setShowMembers(false);
-            setModalWorkspace(null);
-          }}
-        />
+      {showMembers && currentWorkspace && (
+        <MemberManagement workspaceId={currentWorkspace._id} onClose={() => setShowMembers(false)} />
       )}
     </div>
   );
