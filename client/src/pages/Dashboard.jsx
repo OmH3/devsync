@@ -10,7 +10,8 @@ import WorkspaceList from '../components/WorkspaceList.jsx';
 import WorkspaceSettings from '../components/WorkspaceSettings.jsx';
 import MemberManagement from '../components/MemberManagement.jsx';
 import VoiceRoom from '../components/VoiceRoom.jsx';
-import { Home, FileText, PenTool, Code2, ChevronRight, Menu } from 'lucide-react';
+import { useThemeStore } from '../store/themeStore.js';
+import { Home, FileText, PenTool, Code2, ChevronRight, Sun, Moon } from 'lucide-react';
 
 // Heavy editors are loaded on demand, only when their view is opened.
 const DocumentsList = lazy(() => import('../components/DocumentsList.jsx'));
@@ -70,6 +71,7 @@ const Dashboard = () => {
   const { user, logout } = useAuth();
   const { workspaces, currentWorkspace, fetchUserWorkspaces, setCurrentWorkspace, isLoading, error } = useWorkspaceStore();
   const { audio: audioEnabled } = useCapabilities();
+  const { theme, toggleTheme } = useThemeStore();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -186,9 +188,21 @@ const Dashboard = () => {
 
   const sidebar = (
     <nav aria-label="Workspace navigation" className="workspace-sidebar flex h-full flex-col">
-      <div className="flex items-center gap-2 px-4 py-4">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-stone-700 font-bold text-white" aria-hidden="true">D</div>
-        <span className="text-base font-semibold text-stone-800">DevSync</span>
+      <div className="flex items-center justify-between gap-2 px-4 py-4">
+        <div className="flex items-center gap-2">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-stone-700 font-bold text-white" aria-hidden="true">D</div>
+          <span className="text-base font-semibold text-stone-800">DevSync</span>
+        </div>
+        <button
+          type="button"
+          onClick={toggleTheme}
+          aria-label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
+          title={theme === 'dark' ? 'Light theme' : 'Black theme'}
+          className="flex items-center gap-1.5 rounded-md border border-stone-200 bg-stone-200/60 px-2.5 py-1.5 text-xs font-medium text-stone-800 hover:bg-stone-200"
+        >
+          {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
+          <span>{theme === 'dark' ? 'Light' : 'Black'}</span>
+        </button>
       </div>
 
       <div className="px-3">
@@ -269,35 +283,46 @@ const Dashboard = () => {
               <p className="truncate text-sm text-slate-500">{currentWorkspace.description}</p>
             )}
           </div>
-          {currentWorkspace && (
-            <div className="flex items-center gap-2">
-
-              <button
-                type="button"
-                onClick={() => copyInviteCode(currentWorkspace.inviteCode)}
-                className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-white"
-                title="Copy invite code"
-              >
-                Invite · <code className="font-mono">{currentWorkspace.inviteCode}</code>
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowMembers(true)}
-                className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-white"
-                title="Manage members"
-              >
-                Members
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowSettings(true)}
-                className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-white"
-                title="Workspace settings"
-              >
-                Settings
-              </button>
-            </div>
-          )}
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={toggleTheme}
+              aria-label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
+              title={theme === 'dark' ? 'Switch to light theme' : 'Switch to black theme'}
+              className="flex items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100"
+            >
+              {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
+              <span>{theme === 'dark' ? 'Light' : 'Black'}</span>
+            </button>
+            {currentWorkspace && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => copyInviteCode(currentWorkspace.inviteCode)}
+                  className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-white"
+                  title="Copy invite code"
+                >
+                  Invite · <code className="font-mono">{currentWorkspace.inviteCode}</code>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowMembers(true)}
+                  className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-white"
+                  title="Manage members"
+                >
+                  Members
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowSettings(true)}
+                  className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-white"
+                  title="Workspace settings"
+                >
+                  Settings
+                </button>
+              </>
+            )}
+          </div>
         </header>
 
         <main className="workspace-main flex-1 p-4 sm:p-6">
